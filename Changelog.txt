@@ -1,0 +1,2 @@
+1. Added develop upstream which was merged from master.
+2. Ran prebuild, art was generated. Gitignore ignores art, I added screenshots to the ignore. No other data is ignored. Just VS and C++ stuff.

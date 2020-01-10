@@ -41,6 +41,9 @@
 # Art
 Art/
 
+# Screenshots
+Screenshots/
+
 # Binary Shaders
 **/PCDX12/Binary/
 **/PCVulkan/Binary/
