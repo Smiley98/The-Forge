@@ -243,7 +243,7 @@ public:
 		RasterizerStateDesc rasterizerStateDesc = {};
 		rasterizerStateDesc.mCullMode = CULL_MODE_NONE;
 		addRasterizerState(pRenderer, &rasterizerStateDesc, &pSkyboxRast);
-		addRasterizerState(pRenderer, &rasterizerStateDesc, &pRaymarchingRast);
+		//addRasterizerState(pRenderer, &rasterizerStateDesc, &pRaymarchingRast);
 		rasterizerStateDesc.mCullMode = CULL_MODE_FRONT;
 		//addRasterizerState(pRenderer, &rasterizerStateDesc, &pSphereRast);
 
