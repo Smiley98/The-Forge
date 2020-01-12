@@ -124,6 +124,9 @@ UniformBlock     gUniformData;
 UniformBlock     gUniformDataSky;
 UniformBlock	 gUniformDataRaymarching;//Probably need to make an alternate structure.
 
+const uint32_t gNumUniformBlocks = 3;
+const uint32_t gNumUniformBuffers = 3 * gNumUniformBlocks;
+
 uint32_t gFrameIndex = 0;
 int              gNumberOfSpherePoints;
 PlanetInfoStruct gPlanetInfoData[gNumPlanets];
@@ -235,7 +238,9 @@ public:
 		// Specify that we want to send the texture data once, and the uniform data once per frame
 		DescriptorSetDesc desc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_NONE, 1 };
 		addDescriptorSet(pRenderer, &desc, &pDescriptorSetTexture);
-		desc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_PER_FRAME, gImageCount * 2 };
+
+		//We need num uniform buffers * num swap buffers to be passed (gNumUniformBuffers).
+		desc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_PER_FRAME, gNumUniformBuffers };
 		addDescriptorSet(pRenderer, &desc, &pDescriptorSetUniforms);
 
 		// addRasterizerState() copies the passed in RasterizerStateDesc to a native rasterizer state,
@@ -311,6 +316,7 @@ public:
 		BufferLoadDesc ubDesc = {};
 		ubDesc.mDesc.mDescriptors = DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		ubDesc.mDesc.mMemoryUsage = RESOURCE_MEMORY_USAGE_CPU_TO_GPU;
+		//I'm gonna need to change this if I'm making my own uniform block structure (assuming differnt size).
 		ubDesc.mDesc.mSize = sizeof(UniformBlock);
 		ubDesc.mDesc.mFlags = BUFFER_CREATION_FLAG_PERSISTENT_MAP_BIT;
 		ubDesc.pData = NULL;
@@ -319,6 +325,8 @@ public:
 			ubDesc.ppBuffer = &pProjViewUniformBuffer[i];
 			addResource(&ubDesc);
 			ubDesc.ppBuffer = &pSkyboxUniformBuffer[i];
+			addResource(&ubDesc);
+			ubDesc.ppBuffer = &pRaymarchingUniformBuffer[i];
 			addResource(&ubDesc);
 		}
 		finishResourceLoading();
@@ -507,11 +515,15 @@ public:
 		{
 			DescriptorData params[1] = {};
 			params[0].pName = "uniformBlock";
+
 			params[0].ppBuffers = &pSkyboxUniformBuffer[i];
-			updateDescriptorSet(pRenderer, i * 2 + 0, pDescriptorSetUniforms, 1, params);
+			updateDescriptorSet(pRenderer, i * gNumUniformBlocks + 0, pDescriptorSetUniforms, 1, params);
 
 			params[0].ppBuffers = &pProjViewUniformBuffer[i];
-			updateDescriptorSet(pRenderer, i * 2 + 1, pDescriptorSetUniforms, 1, params);
+			updateDescriptorSet(pRenderer, i * gNumUniformBlocks + 1, pDescriptorSetUniforms, 1, params);
+
+			params[0].ppBuffers = &pRaymarchingUniformBuffer[i];
+			updateDescriptorSet(pRenderer, i * gNumUniformBlocks + 2, pDescriptorSetUniforms, 1, params);
 		}
 
 		return true;
@@ -536,6 +548,7 @@ public:
 		{
 			removeResource(pProjViewUniformBuffer[i]);
 			removeResource(pSkyboxUniformBuffer[i]);
+			removeResource(pRaymarchingUniformBuffer[i]);
 		}
 
 		removeDescriptorSet(pRenderer, pDescriptorSetTexture);
@@ -778,7 +791,7 @@ public:
 		//// draw skybox
 		cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw Skybox", true);
 		cmdBindPipeline(cmd, pSkyBoxDrawPipeline);
-		cmdBindDescriptorSet(cmd, gFrameIndex * 2 + 0, pDescriptorSetUniforms);
+		cmdBindDescriptorSet(cmd, gFrameIndex * gNumUniformBlocks + 0, pDescriptorSetUniforms);
 		cmdBindVertexBuffer(cmd, 1, &pSkyBoxVertexBuffer, NULL);
 		cmdDraw(cmd, 36, 0);
 		cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
@@ -786,23 +799,20 @@ public:
 		////// draw planets
 		cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw Planets", true);
 		cmdBindPipeline(cmd, pSpherePipeline);
-		cmdBindDescriptorSet(cmd, gFrameIndex * 2 + 1, pDescriptorSetUniforms);
+		cmdBindDescriptorSet(cmd, gFrameIndex * gNumUniformBlocks + 1, pDescriptorSetUniforms);
 		cmdBindVertexBuffer(cmd, 1, &pSphereVertexBuffer, NULL);
 		cmdDrawInstanced(cmd, gNumberOfSpherePoints / 6, 0, gNumPlanets, 0);
 		cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
 		
-		/*The draw code from the raymarching module.
-		//cmdBeginDebugMarker(cmd, 0, 0, 1, "Draw");
-		cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw Rays", true);
+		///*
+		//cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw Rays", true);
 		cmdBindPipeline(cmd, pRaymarchingPipeline);
-		//Bind the uniform buffer. Crossing my fingers on this one for "gFrameIndex * 2 + 2".
-		//Okay this thing got fucked.
-		cmdBindDescriptorSet(cmd, gFrameIndex * 2 + 2, pDescriptorSetUniforms);
+		//Bind the uniform buffer. gFrameIndex ranges from 0 to 2.
+		cmdBindDescriptorSet(cmd, gFrameIndex * gNumUniformBlocks + 2, pDescriptorSetUniforms);
 		//No vertex buffer to bind because we store the vertices in-shader!
 		cmdDraw(cmd, 3, 0);
-		cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
-		//cmdEndDebugMarker(cmd);
-		*/
+		//cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
+		//*/
 
 	loadActions = {};
 	loadActions.mLoadActionsColor[0] = LOAD_ACTION_LOAD;
