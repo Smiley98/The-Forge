@@ -42,7 +42,6 @@ layout (std140, UPDATE_FREQ_PER_FRAME, binding=0) uniform uniformBlock{
 out gl_PerVertex
 {
   vec4 gl_Position;
-
 };
 
 layout(location = 0) out INVOCATION
@@ -54,12 +53,16 @@ layout(location = 0) out INVOCATION
 
 void main(void)
 {
-  vec4 p = vec4(vs_in_position.xyz,1.0);
-  mat4 m = viewProject;
-  m[3] = vec4(0.0, 0.0, 0.0, 1.0);
-  p = m * p;
-  gl_Position = vec4(p.x, p.y, p.w, p.w);
-  vs_out.texcoord = vs_in_position;
-  vs_out.side = int(vs_in_position.w);
-}
+    //Copy the matrix so modifying it doesn't affect the one in CPU memory.
+    mat4 m = viewProject;
+    m[3] = vec4(0.0, 0.0, 0.0, 1.0);
 
+    //We only care about the orientation of the vertices so we can lookup in our cube map (skybox) in the fragment shader.
+    gl_Position = m * vec4(vs_in_position.xyz, 1.0);
+    
+    //We use vertex positions as our texture coordinates since the texture is a cube not a 2d texture.
+    vs_out.texcoord = vs_in_position;
+
+    //Indicate which side of the skybox cube we're intersecting.
+    vs_out.side = int(vs_in_position.w);
+}
