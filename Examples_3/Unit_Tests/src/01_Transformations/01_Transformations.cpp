@@ -99,24 +99,33 @@ Pipeline* pSpherePipeline = NULL;
 Shader*        pSkyBoxDrawShader = NULL;
 Buffer*        pSkyBoxVertexBuffer = NULL;
 Pipeline*      pSkyBoxDrawPipeline = NULL;
-RootSignature* pRootSignature = NULL;
 Sampler*       pSamplerSkyBox = NULL;
 Texture*       pSkyBoxTextures[6];
+
+Shader* pRaymarchingShader = NULL;
+Buffer* pRaymarchingVertexBuffer = NULL;
+Pipeline* pRaymarchingPipeline = NULL;
+
+RootSignature* pRootSignature = NULL;
 DescriptorSet* pDescriptorSetTexture = { NULL };
 DescriptorSet* pDescriptorSetUniforms = { NULL };
 VirtualJoystickUI gVirtualJoystick;
 DepthState*      pDepth = NULL;
+
 RasterizerState* pSkyboxRast = NULL;
 RasterizerState* pSphereRast = NULL;
+RasterizerState* pRaymarchingRast = NULL;
 
 Buffer* pProjViewUniformBuffer[gImageCount] = { NULL };
 Buffer* pSkyboxUniformBuffer[gImageCount] = { NULL };
+Buffer* pRaymarchingUniformBuffer[gImageCount] = { NULL };
 
-uint32_t gFrameIndex = 0;
-
-int              gNumberOfSpherePoints;
 UniformBlock     gUniformData;
 UniformBlock     gUniformDataSky;
+UniformBlock	 gUniformDataRaymarching;//Probably need to make an alternate structure.
+
+uint32_t gFrameIndex = 0;
+int              gNumberOfSpherePoints;
 PlanetInfoStruct gPlanetInfoData[gNumPlanets];
 
 ICameraController* pCameraController = NULL;
@@ -155,7 +164,7 @@ public:
 		// window and renderer setup
 		RendererDesc settings = { 0 };
 		initRenderer(GetName(), &settings, &pRenderer);
-		//check for init success
+		// check for init success
 		if (!pRenderer)
 			return false;
 
@@ -197,9 +206,13 @@ public:
 		ShaderLoadDesc basicShader = {};
 		basicShader.mStages[0] = { "basic.vert", NULL, 0, RD_SHADER_SOURCES };
 		basicShader.mStages[1] = { "basic.frag", NULL, 0, RD_SHADER_SOURCES };
+		ShaderLoadDesc raymarchingShader = {};
+		raymarchingShader.mStages[0] = { "raymarching.vert", NULL, 0, RD_SHADER_SOURCES };
+		raymarchingShader.mStages[1] = { "raymarching.frag", NULL, 0, RD_SHADER_SOURCES };
 
 		addShader(pRenderer, &skyShader, &pSkyBoxDrawShader);
 		addShader(pRenderer, &basicShader, &pSphereShader);
+		//addShader(pRenderer, &raymarchingShader, &pRaymarchingShader);
 
 		SamplerDesc samplerDesc = { FILTER_LINEAR,
 									FILTER_LINEAR,
@@ -209,29 +222,32 @@ public:
 									ADDRESS_MODE_CLAMP_TO_EDGE };
 		addSampler(pRenderer, &samplerDesc, &pSamplerSkyBox);
 
-		Shader*           shaders[] = { pSphereShader, pSkyBoxDrawShader };
+		Shader*           shaders[] = { pSphereShader, pSkyBoxDrawShader/*, pRaymarchingShader*/ };
 		const char*       pStaticSamplers[] = { "uSampler0" };
 		RootSignatureDesc rootDesc = {};
 		rootDesc.mStaticSamplerCount = 1;
 		rootDesc.ppStaticSamplerNames = pStaticSamplers;
 		rootDesc.ppStaticSamplers = &pSamplerSkyBox;
-		rootDesc.mShaderCount = 2;
+		rootDesc.mShaderCount = 2;//3;
 		rootDesc.ppShaders = shaders;
 		addRootSignature(pRenderer, &rootDesc, &pRootSignature);
 
+		// Specify that we want to send the texture data once, and the uniform data once per frame
 		DescriptorSetDesc desc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_NONE, 1 };
 		addDescriptorSet(pRenderer, &desc, &pDescriptorSetTexture);
 		desc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_PER_FRAME, gImageCount * 2 };
 		addDescriptorSet(pRenderer, &desc, &pDescriptorSetUniforms);
 
+		// addRasterizerState() copies the passed in RasterizerStateDesc to a native rasterizer state,
+		// then allocates memory and returns the result to the double pointer
 		RasterizerStateDesc rasterizerStateDesc = {};
 		rasterizerStateDesc.mCullMode = CULL_MODE_NONE;
 		addRasterizerState(pRenderer, &rasterizerStateDesc, &pSkyboxRast);
+		addRasterizerState(pRenderer, &rasterizerStateDesc, &pRaymarchingRast);
+		rasterizerStateDesc.mCullMode = CULL_MODE_FRONT;
+		//addRasterizerState(pRenderer, &rasterizerStateDesc, &pSphereRast);
 
-		RasterizerStateDesc sphereRasterizerStateDesc = {};
-		sphereRasterizerStateDesc.mCullMode = CULL_MODE_FRONT;
-		addRasterizerState(pRenderer, &sphereRasterizerStateDesc, &pSphereRast);
-
+		// Standard lequal depth test. Consider optimizing raymarching with no depth testing and writing
 		DepthStateDesc depthStateDesc = {};
 		depthStateDesc.mDepthTest = true;
 		depthStateDesc.mDepthWrite = true;
@@ -241,6 +257,7 @@ public:
 		// Generate sphere vertex buffer
 		float* pSpherePoints;
 		generateSpherePoints(&pSpherePoints, &gNumberOfSpherePoints, gSphereResolution, gSphereDiameter);
+		//Paste raymarching module screen triangle vertex generation code here
 
 		uint64_t       sphereDataSize = gNumberOfSpherePoints * sizeof(float);
 		BufferLoadDesc sphereVbDesc = {};
@@ -616,6 +633,15 @@ public:
 		pipelineSettings.pShaderProgram = pSkyBoxDrawShader;
 		addPipeline(pRenderer, &desc, &pSkyBoxDrawPipeline);
 
+		/*
+		//We don't need to worry about depth for rays for now, just copy the skybox settings but have no attributes.
+		vertexLayout.mAttribCount = 0;
+		//Not really necessary since the skybox rasterization state is identical, but we didn't know that at the time of creation.
+		pipelineSettings.pRasterizerState = pRaymarchingRast;
+		pipelineSettings.pShaderProgram = pRaymarchingShader;
+		addPipeline(pRenderer, &desc, &pRaymarchingPipeline);
+		//*/
+
 		return true;
 	}
 
@@ -748,7 +774,7 @@ public:
 		cmdBindDescriptorSet(cmd, 0, pDescriptorSetTexture);
     
 		//// draw skybox
-		cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw skybox", true);
+		cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw Skybox", true);
 		cmdBindPipeline(cmd, pSkyBoxDrawPipeline);
 		cmdBindDescriptorSet(cmd, gFrameIndex * 2 + 0, pDescriptorSetUniforms);
 		cmdBindVertexBuffer(cmd, 1, &pSkyBoxVertexBuffer, NULL);
@@ -762,7 +788,19 @@ public:
 		cmdBindVertexBuffer(cmd, 1, &pSphereVertexBuffer, NULL);
 		cmdDrawInstanced(cmd, gNumberOfSpherePoints / 6, 0, gNumPlanets, 0);
 		cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
-
+		
+		/*The draw code from the raymarching module.
+		//cmdBeginDebugMarker(cmd, 0, 0, 1, "Draw");
+		cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw Rays", true);
+		cmdBindPipeline(cmd, pRaymarchingPipeline);
+		//Bind the uniform buffer. Crossing my fingers on this one for "gFrameIndex * 2 + 2".
+		//Okay this thing got fucked.
+		cmdBindDescriptorSet(cmd, gFrameIndex * 2 + 2, pDescriptorSetUniforms);
+		//No vertex buffer to bind because we store the vertices in-shader!
+		cmdDraw(cmd, 3, 0);
+		cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
+		//cmdEndDebugMarker(cmd);
+		*/
 
 	loadActions = {};
 	loadActions.mLoadActionsColor[0] = LOAD_ACTION_LOAD;

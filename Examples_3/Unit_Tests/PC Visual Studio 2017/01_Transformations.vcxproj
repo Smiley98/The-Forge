@@ -276,6 +276,8 @@
       </Message>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='ReleaseDx|x64'">false</LinkObjects>
     </CustomBuild>
+    <None Include="..\src\01_Transformations\Shaders\Vulkan\raymarching.frag" />
+    <None Include="..\src\01_Transformations\Shaders\Vulkan\raymarching.vert" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{5938554B-1112-4A6D-9CA0-EDEA01CB7F3F}</ProjectGuid>

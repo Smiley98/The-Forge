@@ -234,6 +234,7 @@ vec2 map( in vec3 pos )
     return res;
 }
 
+// ro = ray origin, rd = ray direction
 vec2 castRay( in vec3 ro, in vec3 rd )
 {
     float tmin = 1.0;
@@ -308,6 +309,10 @@ float calcAO( in vec3 pos, in vec3 nor )
     return clamp( 1.0 - 3.0*occ, 0.0, 1.0 );    
 }
 
+// map() defines all the geometry
+// castRay() returns an intersection between a ray and geometry
+// once we have intersections, we can render fancy visuals from there with the AO, normal, and shadow functions in addition to phong
+// (1. Define geometry. 2. Compute point of intersection. 3. Colour results).
 vec3 render( in vec3 ro, in vec3 rd )
 { 
     vec3 col = vec3(0.7, 0.9, 1.0) +rd.y*0.8;
