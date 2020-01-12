@@ -69,6 +69,11 @@ struct UniformBlock
 	vec3 mLightColor;
 };
 
+struct RaymarchingUniformBlock {
+	mat4 mProjectView;
+	vec4 mColour = vec4(0.0f, 1.0f, 0.0f, 1.0f);
+};
+
 const uint32_t gImageCount = 3;
 bool           gMicroProfiler = false;
 bool           bPrevToggleMicroProfiler = false;
@@ -122,7 +127,7 @@ Buffer* pRaymarchingUniformBuffer[gImageCount] = { NULL };
 
 UniformBlock     gUniformData;
 UniformBlock     gUniformDataSky;
-UniformBlock	 gUniformDataRaymarching;//Probably need to make an alternate structure.
+RaymarchingUniformBlock gUniformDataRaymarching;
 
 const uint32_t gNumUniformBlocks = 3;
 const uint32_t gNumUniformBuffers = 3 * gNumUniformBlocks;
@@ -316,16 +321,18 @@ public:
 		BufferLoadDesc ubDesc = {};
 		ubDesc.mDesc.mDescriptors = DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		ubDesc.mDesc.mMemoryUsage = RESOURCE_MEMORY_USAGE_CPU_TO_GPU;
-		//I'm gonna need to change this if I'm making my own uniform block structure (assuming differnt size).
-		ubDesc.mDesc.mSize = sizeof(UniformBlock);
 		ubDesc.mDesc.mFlags = BUFFER_CREATION_FLAG_PERSISTENT_MAP_BIT;
 		ubDesc.pData = NULL;
 		for (uint32_t i = 0; i < gImageCount; ++i)
 		{
+			ubDesc.mDesc.mSize = sizeof(UniformBlock);
 			ubDesc.ppBuffer = &pProjViewUniformBuffer[i];
 			addResource(&ubDesc);
+
 			ubDesc.ppBuffer = &pSkyboxUniformBuffer[i];
 			addResource(&ubDesc);
+
+			ubDesc.mDesc.mSize = sizeof(RaymarchingUniformBlock);
 			ubDesc.ppBuffer = &pRaymarchingUniformBuffer[i];
 			addResource(&ubDesc);
 		}
@@ -513,17 +520,19 @@ public:
 
 		for (uint32_t i = 0; i < gImageCount; ++i)
 		{
-			DescriptorData params[1] = {};
-			params[0].pName = "uniformBlock";
+			DescriptorData params = {};
+			params.pName = "uniformBlock";
 
-			params[0].ppBuffers = &pSkyboxUniformBuffer[i];
-			updateDescriptorSet(pRenderer, i * gNumUniformBlocks + 0, pDescriptorSetUniforms, 1, params);
+			params.ppBuffers = &pSkyboxUniformBuffer[i];
+			updateDescriptorSet(pRenderer, i * gNumUniformBlocks + 0, pDescriptorSetUniforms, 1, &params);
 
-			params[0].ppBuffers = &pProjViewUniformBuffer[i];
-			updateDescriptorSet(pRenderer, i * gNumUniformBlocks + 1, pDescriptorSetUniforms, 1, params);
+			params.ppBuffers = &pProjViewUniformBuffer[i];
+			updateDescriptorSet(pRenderer, i * gNumUniformBlocks + 1, pDescriptorSetUniforms, 1, &params);
 
-			params[0].ppBuffers = &pRaymarchingUniformBuffer[i];
-			updateDescriptorSet(pRenderer, i * gNumUniformBlocks + 2, pDescriptorSetUniforms, 1, params);
+			//Not sure why this doesn't work if I name my uniform block "uniformBlockRaymarching" in my shader(s).
+			//params.pName = "uniformBlockRaymarching";
+			params.ppBuffers = &pRaymarchingUniformBuffer[i];
+			updateDescriptorSet(pRenderer, i * gNumUniformBlocks + 2, pDescriptorSetUniforms, 1, &params);
 		}
 
 		return true;
@@ -542,7 +551,7 @@ public:
 		gAppUI.Exit();
 
 		// Exit profile
-    exitProfiler();
+		exitProfiler();
 
 		for (uint32_t i = 0; i < gImageCount; ++i)
 		{
@@ -756,9 +765,10 @@ public:
 		// Update uniform buffers
 		BufferUpdateDesc viewProjCbv = { pProjViewUniformBuffer[gFrameIndex], &gUniformData };
 		updateResource(&viewProjCbv);
-
 		BufferUpdateDesc skyboxViewProjCbv = { pSkyboxUniformBuffer[gFrameIndex], &gUniformDataSky };
 		updateResource(&skyboxViewProjCbv);
+		BufferUpdateDesc raymarchingCbv = { pRaymarchingUniformBuffer[gFrameIndex], &gUniformDataRaymarching };
+		updateResource(&raymarchingCbv);
 
 		// simply record the screen cleaning command
 		LoadActionsDesc loadActions = {};
@@ -805,13 +815,13 @@ public:
 		cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
 		
 		///*
-		//cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw Rays", true);
+		cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw Rays", true);
 		cmdBindPipeline(cmd, pRaymarchingPipeline);
-		//Bind the uniform buffer. gFrameIndex ranges from 0 to 2.
+		//Bind the uniform buffer. gFrameIndex ranges from 0 to 2 as it corresponds to the image buffer index.
 		cmdBindDescriptorSet(cmd, gFrameIndex * gNumUniformBlocks + 2, pDescriptorSetUniforms);
 		//No vertex buffer to bind because we store the vertices in-shader!
 		cmdDraw(cmd, 3, 0);
-		//cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
+		cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
 		//*/
 
 	loadActions = {};
