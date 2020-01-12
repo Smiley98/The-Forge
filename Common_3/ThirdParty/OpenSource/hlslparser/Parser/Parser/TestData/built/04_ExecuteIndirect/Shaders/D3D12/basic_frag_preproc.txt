@@ -1,0 +1,60 @@
+#line 1 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/04_ExecuteIndirect/Shaders/D3D12/basic.frag"
+#line 35 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/04_ExecuteIndirect/Shaders/D3D12/basic.frag"
+struct InstanceData
+{
+    float4x4 mvp;
+    float4x4 normalMat;
+    float4 surfaceColor;
+    float4 deepColor;
+    int textureID;
+	uint _pad0[3];
+};
+
+struct VsIn
+{
+    float4 position : Position;
+    float4 normal : Normal;
+};
+
+struct PsIn
+{
+    float4 position : SV_Position;
+    float3 posModel : PosModel;
+    float3 normal : Normal;
+    float4 albedo : Color;
+};
+
+Texture2DArray<float4> uTex0 : register(t1);
+sampler uSampler0 : register(s2);
+
+static const float3 lightDir = -normalize(float3(2,6,1));
+
+float4 main(PsIn In) : SV_TARGET
+{
+    float wrap_diffuse = saturate(dot(lightDir, normalize(In.normal)));
+    float light = 2.0f * wrap_diffuse + 0.06f;
+
+    float3 uvw = In.posModel * 0.5 + 0.5;
+
+    float3 blendWeights = abs(normalize(In.posModel));
+    blendWeights = saturate((blendWeights - 0.2) * 7);
+    blendWeights /= (blendWeights.x + blendWeights.y + blendWeights.z).xxx;
+
+    float3 coord1 = float3(uvw.yz, In.albedo.w * 3 + 0);
+    float3 coord2 = float3(uvw.zx, In.albedo.w * 3 + 1);
+    float3 coord3 = float3(uvw.xy, In.albedo.w * 3 + 2);
+
+    float3 texColor = float3(0,0,0);
+    texColor += blendWeights.x * uTex0.Sample(uSampler0, coord1).xyz;
+    texColor += blendWeights.y * uTex0.Sample(uSampler0, coord2).xyz;
+    texColor += blendWeights.z * uTex0.Sample(uSampler0, coord3).xyz;
+
+	float coverage = saturate(In.position.z * 4000.0f);
+
+    float3 color = In.albedo.xyz;
+    color *= light;
+    color *= texColor * 2;
+	color *= coverage;
+
+    return float4(color, 1);
+}

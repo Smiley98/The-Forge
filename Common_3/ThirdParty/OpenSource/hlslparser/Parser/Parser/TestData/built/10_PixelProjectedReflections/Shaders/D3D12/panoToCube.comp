@@ -1,0 +1,54 @@
+struct Data
+{
+    uint mip;
+    uint maxSize;
+};
+ConstantBuffer<Data> RootConstant : register(b0);
+Texture2D<float4> srcTexture : register(t1);
+RWTexture2DArray<float4> dstTexture : register(u2, space3);
+SamplerState skyboxSampler : register(s3);
+[numthreads(16, 16, 1)]
+void main(uint3 DTid : SV_DispatchThreadID)
+{
+    float2 invAtan = float2(0.1591, 0.31830000);
+    float3 threadPos = (float3 )(DTid);
+    uint mip = RootConstant.mip;
+    {
+        uint mipSize = (RootConstant.maxSize >> mip);
+        if (threadPos.x >= (float )(mipSize) || (threadPos.y >= (float )(mipSize)))
+        {
+            return;
+        }
+        float2 texcoords = float2((float((threadPos.x + (float )(0.5))) / (float )(mipSize)), (1.0 - (float((threadPos.y + (float )(0.5))) / (float )(mipSize))));
+        float3 sphereDir;
+        if (threadPos.z <= (float )(0))
+        {
+            (sphereDir = normalize(float3(0.5, -(texcoords.y - (float )(0.5)), -(texcoords.x - (float )(0.5)))));
+        }
+        else if ((threadPos.z <= (float )(1)))
+        {
+            (sphereDir = normalize(float3(-0.5, -(texcoords.y - (float )(0.5)), (texcoords.x - (float )(0.5)))));
+        }
+        else if ((threadPos.z <= (float )(2)))
+        {
+            (sphereDir = normalize(float3((texcoords.x - (float )(0.5)), -0.5, -(texcoords.y - (float )(0.5)))));
+        }
+        else if ((threadPos.z <= (float )(3)))
+        {
+            (sphereDir = normalize(float3((texcoords.x - (float )(0.5)), 0.5, (texcoords.y - (float )(0.5)))));
+        }
+        else if ((threadPos.z <= (float )(4)))
+        {
+            (sphereDir = normalize(float3((texcoords.x - (float )(0.5)), -(texcoords.y - (float )(0.5)), 0.5)));
+        }
+        else if ((threadPos.z <= (float )(5)))
+        {
+            (sphereDir = normalize(float3(-(texcoords.x - (float )(0.5)), -(texcoords.y - (float )(0.5)), -0.5)));
+        }
+        float2 panoUVs = float2(atan2(sphereDir.z, sphereDir.x), asin(sphereDir.y));
+        (panoUVs *= invAtan);
+        (panoUVs += (float2 )(0.5));
+        (dstTexture[uint3(threadPos.x, threadPos.y, threadPos.z)] = srcTexture.SampleLevel(skyboxSampler, panoUVs, (const float )(mip)));
+    }
+};
+

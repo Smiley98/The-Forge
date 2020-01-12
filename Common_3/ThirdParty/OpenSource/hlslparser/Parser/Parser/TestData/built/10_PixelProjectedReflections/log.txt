@@ -1,0 +1,249 @@
+
+
+0/11 (comp - D3D12): BRDFIntegration
+
+
+
+
+
+
+0/11 (comp - Vulkan): BRDFIntegration
+
+
+
+
+
+
+0/11 (comp - Metal): BRDFIntegration
+
+
+
+
+
+
+1/11 (comp - D3D12): computeIrradianceMap
+
+
+
+
+
+
+1/11 (comp - Vulkan): computeIrradianceMap
+
+
+
+
+
+
+1/11 (comp - Metal): computeIrradianceMap
+
+
+
+
+
+
+2/11 (comp - D3D12): computeSpecularMap
+
+
+
+
+
+
+2/11 (comp - Vulkan): computeSpecularMap
+
+
+
+
+
+
+2/11 (comp - Metal): computeSpecularMap
+
+
+
+
+3/11 (vert - D3D12): fillGbuffers
+
+3/11 (frag - D3D12): fillGbuffers
+
+
+
+
+
+3/11 (vert - Vulkan): fillGbuffers
+
+3/11 (frag - Vulkan): fillGbuffers
+
+
+
+
+
+3/11 (vert - Metal): fillGbuffers
+
+3/11 (frag - Metal): fillGbuffers
+
+
+
+
+
+
+
+4/11 (comp - D3D12): panoToCube
+
+
+
+
+
+
+4/11 (comp - Vulkan): panoToCube
+
+
+
+
+
+
+4/11 (comp - Metal): panoToCube
+
+
+
+
+5/11 (vert - D3D12): PPR_Holepatching
+
+5/11 (frag - D3D12): PPR_Holepatching
+
+
+
+
+
+5/11 (vert - Vulkan): PPR_Holepatching
+
+5/11 (frag - Vulkan): PPR_Holepatching
+
+
+
+
+
+5/11 (vert - Metal): PPR_Holepatching
+
+5/11 (frag - Metal): PPR_Holepatching
+
+
+
+
+
+
+
+6/11 (comp - D3D12): PPR_Projection
+
+
+
+
+
+
+6/11 (comp - Vulkan): PPR_Projection
+
+
+
+
+
+
+6/11 (comp - Metal): PPR_Projection
+
+
+
+
+7/11 (vert - D3D12): PPR_Reflection
+
+7/11 (frag - D3D12): PPR_Reflection
+
+
+
+
+
+7/11 (vert - Vulkan): PPR_Reflection
+
+7/11 (frag - Vulkan): PPR_Reflection
+
+
+
+
+
+7/11 (vert - Metal): PPR_Reflection
+
+7/11 (frag - Metal): PPR_Reflection
+
+
+
+
+
+8/11 (vert - D3D12): renderSceneBRDF
+
+8/11 (frag - D3D12): renderSceneBRDF
+
+
+
+
+
+8/11 (vert - Vulkan): renderSceneBRDF
+
+8/11 (frag - Vulkan): renderSceneBRDF
+
+
+
+
+
+8/11 (vert - Metal): renderSceneBRDF
+
+8/11 (frag - Metal): renderSceneBRDF
+
+
+
+
+
+9/11 (vert - D3D12): skybox
+
+9/11 (frag - D3D12): skybox
+
+
+
+
+
+9/11 (vert - Vulkan): skybox
+
+9/11 (frag - Vulkan): skybox
+
+
+
+
+
+9/11 (vert - Metal): skybox
+
+9/11 (frag - Metal): skybox
+
+
+
+
+
+10/11 (vert - D3D12): profile
+
+10/11 (frag - D3D12): profile
+
+
+
+
+
+10/11 (vert - Vulkan): profile
+
+10/11 (frag - Vulkan): profile
+
+
+
+
+
+10/11 (vert - Metal): profile
+
+10/11 (frag - Metal): profile
+
+
+
+
+

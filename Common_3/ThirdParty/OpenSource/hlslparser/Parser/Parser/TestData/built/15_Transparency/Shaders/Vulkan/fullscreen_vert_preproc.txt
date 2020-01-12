@@ -1,0 +1,18 @@
+#line 1 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/15_Transparency/Shaders/D3D12/fullscreen.vert"
+#line 25 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/15_Transparency/Shaders/D3D12/fullscreen.vert"
+struct VSOutput
+{
+	float4 Position : SV_POSITION;
+	float4 UV : TEXCOORD0;
+};
+
+
+VSOutput main(uint VertexID : SV_VertexID)
+{
+	VSOutput output;
+
+	output.UV = float4((VertexID << 1) & 2, VertexID & 2, 0, 0);
+	output.Position = float4(output.UV.xy * float2(2, -2) + float2(-1, 1), 0, 1);
+
+	return output;
+}

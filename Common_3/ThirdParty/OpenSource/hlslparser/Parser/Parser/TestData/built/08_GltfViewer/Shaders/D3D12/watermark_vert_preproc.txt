@@ -1,0 +1,20 @@
+#line 1 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/08_GltfViewer/Shaders/D3D12/watermark.vert"
+#line 25 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/08_GltfViewer/Shaders/D3D12/watermark.vert"
+struct VSInput
+{
+   float3 Position : POSITION;
+   float2 TexCoord : TEXCOORD;
+};
+
+struct VSOutput {
+	float4 Position : SV_POSITION;
+    float2 TexCoord : TEXCOORD;
+};
+
+VSOutput main(VSInput input)
+{
+	VSOutput Out;
+	Out.Position = float4(input.Position, 1.0);
+	Out.TexCoord = input.TexCoord;
+	return Out;
+}

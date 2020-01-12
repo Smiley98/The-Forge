@@ -1,0 +1,15 @@
+#line 1 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/02_Compute/Shaders/D3D12/display.frag"
+#line 26 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/02_Compute/Shaders/D3D12/display.frag"
+struct PsIn
+{
+	float4 position: SV_Position;
+	float2 texCoord: TEXCOORD;
+};
+
+Texture2D uTex0 : register(t0);
+SamplerState uSampler0 : register(s1);
+
+float4 main(PsIn In) : SV_Target
+{
+    return uTex0.Sample(uSampler0, In.texCoord);
+}

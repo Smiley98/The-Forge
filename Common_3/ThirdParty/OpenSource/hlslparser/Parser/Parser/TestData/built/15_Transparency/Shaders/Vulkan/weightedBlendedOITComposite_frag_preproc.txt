@@ -1,0 +1,30 @@
+#line 1 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/15_Transparency/Shaders/D3D12/weightedBlendedOITComposite.frag"
+#line 25 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/15_Transparency/Shaders/D3D12/weightedBlendedOITComposite.frag"
+struct VSOutput
+{
+	float4 Position : SV_POSITION;
+	float4 UV : Texcoord0;
+};
+
+SamplerState PointSampler : register(s0);
+Texture2D AccumulationTexture : register(t0);
+Texture2D RevealageTexture : register(t1);
+
+float MaxComponent(float4 v)
+{
+	return max(max(max(v.x, v.y), v.z), v.w);
+}
+
+float4 main(VSOutput input) : SV_Target
+{
+	float revealage = RevealageTexture.Sample(PointSampler, input.UV.xy).r;
+	clip(1.0f - revealage - 0.00001f);
+
+	float4 accumulation = AccumulationTexture.Sample(PointSampler, input.UV.xy);
+	if(isinf(MaxComponent(abs(accumulation))))
+		accumulation.rgb = accumulation.a;
+
+	float3 averageColor = accumulation.rgb / max(accumulation.a, 0.00001f);
+
+	return float4(averageColor, 1.0f - revealage);
+}

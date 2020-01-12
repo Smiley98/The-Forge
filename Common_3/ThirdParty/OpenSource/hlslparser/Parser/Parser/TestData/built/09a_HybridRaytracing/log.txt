@@ -1,0 +1,156 @@
+
+
+0/7 (comp - D3D12): compositePass
+
+
+
+
+
+
+0/7 (comp - Vulkan): compositePass
+
+
+
+
+
+
+0/7 (comp - Metal): compositePass
+
+
+
+
+1/7 (vert - D3D12): display
+
+1/7 (frag - D3D12): display
+
+
+
+
+
+1/7 (vert - Vulkan): display
+
+1/7 (frag - Vulkan): display
+
+
+
+
+
+1/7 (vert - Metal): display
+
+1/7 (frag - Metal): display
+
+
+
+
+
+2/7 (vert - D3D12): gbufferPass
+
+2/7 (frag - D3D12): gbufferPass
+
+
+
+
+
+2/7 (vert - Vulkan): gbufferPass
+
+2/7 (frag - Vulkan): gbufferPass
+
+
+
+
+
+2/7 (vert - Metal): gbufferPass
+
+2/7 (frag - Metal): gbufferPass
+
+
+
+
+
+
+
+3/7 (comp - D3D12): lightingPass
+
+
+
+
+
+
+3/7 (comp - Vulkan): lightingPass
+
+
+
+
+
+
+3/7 (comp - Metal): lightingPass
+
+
+
+
+
+
+4/7 (comp - D3D12): raytracedShadowsPass
+
+
+
+
+
+
+4/7 (comp - Vulkan): raytracedShadowsPass
+
+
+
+
+
+
+4/7 (comp - Metal): raytracedShadowsPass
+
+
+
+
+
+
+5/7 (comp - D3D12): raytracedShadowsUpscalePass
+
+
+
+
+
+
+5/7 (comp - Vulkan): raytracedShadowsUpscalePass
+
+
+
+
+
+
+5/7 (comp - Metal): raytracedShadowsUpscalePass
+
+
+
+
+6/7 (vert - D3D12): profile
+
+6/7 (frag - D3D12): profile
+
+
+
+
+
+6/7 (vert - Vulkan): profile
+
+6/7 (frag - Vulkan): profile
+
+
+
+
+
+6/7 (vert - Metal): profile
+
+6/7 (frag - Metal): profile
+
+
+
+
+

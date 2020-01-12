@@ -1,0 +1,177 @@
+0/8 (vert - D3D12): floor
+
+0/8 (frag - D3D12): floor
+
+
+
+
+
+0/8 (vert - Vulkan): floor
+
+0/8 (frag - Vulkan): floor
+
+
+
+
+
+0/8 (vert - Metal): floor
+
+0/8 (frag - Metal): floor
+
+
+
+
+
+
+1/8 (frag - D3D12): FXAA
+
+
+
+
+
+
+1/8 (frag - Vulkan): FXAA
+
+
+
+
+
+
+1/8 (frag - Metal): FXAA
+
+
+
+
+
+2/8 (vert - D3D12): Triangular
+
+
+
+
+
+
+2/8 (vert - Vulkan): Triangular
+
+
+
+
+
+
+2/8 (vert - Metal): Triangular
+
+
+
+
+
+
+
+3/8 (frag - D3D12): vignette
+
+
+
+
+
+
+3/8 (frag - Vulkan): vignette
+
+
+
+
+
+
+3/8 (frag - Metal): vignette
+
+
+
+
+
+4/8 (vert - D3D12): watermark
+
+4/8 (frag - D3D12): watermark
+
+
+
+
+
+4/8 (vert - Vulkan): watermark
+
+4/8 (frag - Vulkan): watermark
+
+
+
+
+
+4/8 (vert - Metal): watermark
+
+4/8 (frag - Metal): watermark
+
+
+
+
+
+5/8 (vert - D3D12): zPass
+
+
+
+
+
+
+5/8 (vert - Vulkan): zPass
+
+
+
+
+
+
+5/8 (vert - Metal): zPass
+
+
+
+
+
+
+6/8 (vert - D3D12): zPassFloor
+
+
+
+
+
+
+6/8 (vert - Vulkan): zPassFloor
+
+
+
+
+
+
+6/8 (vert - Metal): zPassFloor
+
+
+
+
+
+
+7/8 (vert - D3D12): profile
+
+7/8 (frag - D3D12): profile
+
+
+
+
+
+7/8 (vert - Vulkan): profile
+
+7/8 (frag - Vulkan): profile
+
+
+
+
+
+7/8 (vert - Metal): profile
+
+7/8 (frag - Metal): profile
+
+
+
+
+

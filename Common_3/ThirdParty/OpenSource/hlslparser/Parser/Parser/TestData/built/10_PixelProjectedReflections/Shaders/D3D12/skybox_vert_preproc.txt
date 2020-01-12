@@ -1,0 +1,29 @@
+#line 1 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/10_PixelProjectedReflections/Shaders/D3D12/skybox.vert"
+#line 27 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/10_PixelProjectedReflections/Shaders/D3D12/skybox.vert"
+cbuffer uniformBlock : register(b0,  space1 )
+{
+	float4x4 projView;
+	float3 camPos;
+}
+
+struct VSInput
+{
+	float4 Position : POSITION;
+};
+
+struct VSOutput
+{
+	float4 Position : SV_POSITION;
+	float3 pos : POSITION;
+};
+
+VSOutput main(VSInput input)
+{
+    VSOutput result;
+    result.Position = mul(projView, input.Position);
+	result.Position = result.Position.xyww;
+
+	result.pos = input.Position;
+
+    return result;
+}

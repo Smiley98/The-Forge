@@ -1,0 +1,12 @@
+#line 1 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/16a_SphereTracing/Shaders/D3D12/profile.frag"
+#line 26 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/16a_SphereTracing/Shaders/D3D12/profile.frag"
+struct VSOutput
+{
+	float4 Position : SV_POSITION;
+	float4 Color : COLOR;
+};
+
+float4 main(VSOutput In) : SV_Target
+{
+    return In.Color;
+}

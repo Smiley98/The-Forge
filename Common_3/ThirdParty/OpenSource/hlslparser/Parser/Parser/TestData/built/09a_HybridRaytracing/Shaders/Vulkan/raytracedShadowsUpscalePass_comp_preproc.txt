@@ -1,0 +1,110 @@
+#line 1 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/09a_HybridRaytracing/Shaders/D3D12/raytracedShadowsUpscalePass.comp"
+#line 26 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/09a_HybridRaytracing/Shaders/D3D12/raytracedShadowsUpscalePass.comp"
+#line 1 "raytracingCommon.h"
+
+
+
+
+
+
+bool RayIntersectsBox(float3 origin, float3 rayDirInv, float3 BboxMin, float3 BboxMax)
+{
+	const float3 t0 = (BboxMin - origin) * rayDirInv;
+	const float3 t1 = (BboxMax - origin) * rayDirInv;
+
+	const float3 tmax = max(t0, t1);
+	const float3 tmin = min(t0, t1);
+
+	const float a1 = min(tmax.x, min(tmax.y, tmax.z));
+	const float a0 = max( max(tmin.x,tmin.y), max(tmin.z, 0.0f) );
+
+	return a1 >= a0;
+}
+
+
+bool RayTriangleIntersect(
+	const float3 orig,
+	const float3 dir,
+	float3 v0,
+	float3 e0,
+	float3 e1,
+	inout float t,
+	inout float2 bCoord)
+{
+	const float3 s1 = cross(dir.xyz, e1);
+	const float invd = 1.0 / (dot(s1, e0));
+	const float3 d = orig.xyz - v0;
+	bCoord.x = dot(d, s1) * invd;
+	const float3 s2 = cross(d, e0);
+	bCoord.y = dot(dir.xyz, s2) * invd;
+	t = dot(e1, s2) * invd;
+
+	if (
+#line 43 "raytracingCommon.h"
+		bCoord.x < 0.0 || bCoord.x > 1.0 || bCoord.y < 0.0 || (bCoord.x + bCoord.y) > 1.0 || t < 0.0 || t > 1e9)
+	{
+		return false;
+	}
+	else
+	{
+		return true;
+	}
+}
+
+bool RayTriangleIntersect(
+	const float3 orig,
+	const float3 dir,
+	float3 v0,
+	float3 e0,
+	float3 e1)
+{
+	float t = 0;
+	float2 bCoord = 0;
+	return RayTriangleIntersect(orig, dir, v0, e0, e1, t, bCoord);
+}
+#line 27 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/09a_HybridRaytracing/Shaders/D3D12/raytracedShadowsUpscalePass.comp"
+
+cbuffer cbPerPass : register(b0)
+{
+	float4 rtSize;
+	int sampleIndex;
+	float3 pad;
+}
+
+Texture2D<float> shadowsRT : register(t1);
+RWTexture2D<float> outputRT : register(u2);
+
+
+
+float3 ClipAABB(float3 aabbMin, float3 aabbMax, float3 prevSample, float3 avg)
+{
+
+
+	float3 p_clip = 0.5 * (aabbMax + aabbMin);
+	float3 e_clip = 0.5 * (aabbMax - aabbMin);
+
+	float3 v_clip = prevSample - p_clip;
+	float3 v_unit = v_clip.xyz / e_clip;
+	float3 a_unit = abs(v_unit);
+	float ma_unit = max(a_unit.x, max(a_unit.y, a_unit.z));
+
+	if (ma_unit > 1.0)
+		return p_clip + v_clip / ma_unit;
+	else
+		return prevSample;
+#line 79 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/09a_HybridRaytracing/Shaders/D3D12/raytracedShadowsUpscalePass.comp"
+}
+
+
+
+
+
+[numthreads( 8 ,  8 , 1)]
+void main(uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID, uint3 GTid : SV_GroupThreadID, uint GI : SV_GroupIndex)
+{
+	float shadowFactor = shadowsRT[DTid.xy].x;
+#line 137 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/09a_HybridRaytracing/Shaders/D3D12/raytracedShadowsUpscalePass.comp"
+	outputRT[DTid.xy] = shadowFactor;
+
+
+}

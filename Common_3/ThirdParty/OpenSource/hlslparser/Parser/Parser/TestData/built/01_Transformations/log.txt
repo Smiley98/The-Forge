@@ -1,0 +1,72 @@
+0/3 (vert - D3D12): basic
+
+0/3 (frag - D3D12): basic
+
+
+
+
+
+0/3 (vert - Vulkan): basic
+
+0/3 (frag - Vulkan): basic
+
+
+
+
+
+0/3 (vert - Metal): basic
+
+0/3 (frag - Metal): basic
+
+
+
+
+
+1/3 (vert - D3D12): skybox
+
+1/3 (frag - D3D12): skybox
+
+
+
+
+
+1/3 (vert - Vulkan): skybox
+
+1/3 (frag - Vulkan): skybox
+
+
+
+
+
+1/3 (vert - Metal): skybox
+
+1/3 (frag - Metal): skybox
+
+
+
+
+
+2/3 (vert - D3D12): profile
+
+2/3 (frag - D3D12): profile
+
+
+
+
+
+2/3 (vert - Vulkan): profile
+
+2/3 (frag - Vulkan): profile
+
+
+
+
+
+2/3 (vert - Metal): profile
+
+2/3 (frag - Metal): profile
+
+
+
+
+

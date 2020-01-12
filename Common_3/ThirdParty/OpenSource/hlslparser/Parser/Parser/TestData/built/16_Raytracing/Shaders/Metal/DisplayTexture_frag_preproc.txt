@@ -1,0 +1,14 @@
+#line 1 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/16_Raytracing/Shaders/D3D12/DisplayTexture.frag"
+#line 26 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/16_Raytracing/Shaders/D3D12/DisplayTexture.frag"
+struct PsIn {
+	float4 position: SV_Position;
+	float2 texCoord: TEXCOORD;
+};
+
+Texture2D uTex0 : register(t0, space1);
+SamplerState uSampler0 : register(s1);
+
+float4 main(PsIn In) : SV_Target
+{
+    return uTex0.Sample(uSampler0, In.texCoord);
+}

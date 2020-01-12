@@ -1,0 +1,29 @@
+#line 1 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/27_MultiThread/Shaders/D3D12/plane.frag"
+#line 27 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/27_MultiThread/Shaders/D3D12/plane.frag"
+struct VSOutput {
+	  float4 Position : SV_POSITION;
+    float2 TexCoord : TEXCOORD;
+};
+
+float4 main(VSOutput input) : SV_TARGET
+{
+  float tol = 0.0025f;
+  float res = 0.05f;
+
+  float4 backgroundColor = float4(0.49f, 0.64f, 0.68f, 1.0f);
+  float4 lineColor = float4(0.39f, 0.41f, 0.37f, 1.0f);
+  float4 originColor = float4(0.0f, 0.0f, 0.0f, 1.0f);
+
+  if ((abs(input.TexCoord.x - 0.5f) <= tol) && (abs(input.TexCoord.y - 0.5f) <= tol))
+  {
+   return originColor;
+  }
+  else if ((fmod(input.TexCoord.x, res) >= (res - tol)) || (fmod(input.TexCoord.x, res) < tol) || (fmod(input.TexCoord.y, res) >= (res - tol)) || (fmod(input.TexCoord.y, res) < tol))
+  {
+    return lineColor;
+  }
+  else
+  {
+    return backgroundColor;
+  }
+}

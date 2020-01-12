@@ -1,0 +1,96 @@
+0/4 (vert - D3D12): basic
+
+0/4 (frag - D3D12): basic
+
+
+
+
+
+0/4 (vert - Vulkan): basic
+
+0/4 (frag - Vulkan): basic
+
+
+
+
+
+0/4 (vert - Metal): basic
+
+0/4 (frag - Metal): basic
+
+
+
+
+
+1/4 (vert - D3D12): plane
+
+1/4 (frag - D3D12): plane
+
+
+
+
+
+1/4 (vert - Vulkan): plane
+
+1/4 (frag - Vulkan): plane
+
+
+
+
+
+1/4 (vert - Metal): plane
+
+1/4 (frag - Metal): plane
+
+
+
+
+
+2/4 (vert - D3D12): skinning
+
+2/4 (frag - D3D12): skinning
+
+
+
+
+
+2/4 (vert - Vulkan): skinning
+
+2/4 (frag - Vulkan): skinning
+
+
+
+
+
+2/4 (vert - Metal): skinning
+
+2/4 (frag - Metal): skinning
+
+
+
+
+
+3/4 (vert - D3D12): profile
+
+3/4 (frag - D3D12): profile
+
+
+
+
+
+3/4 (vert - Vulkan): profile
+
+3/4 (frag - Vulkan): profile
+
+
+
+
+
+3/4 (vert - Metal): profile
+
+3/4 (frag - Metal): profile
+
+
+
+
+

@@ -1,0 +1,73 @@
+#line 1 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/03_MultiThread/Shaders/D3D12/Skybox.frag"
+#line 25 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/03_MultiThread/Shaders/D3D12/Skybox.frag"
+struct VSOutput
+{
+	float4 Position : SV_POSITION;
+    float4 TexCoord : TEXCOORD;
+};
+
+SamplerState uSkyboxSampler : register(s10);
+Texture2D RightText : register(t4);
+Texture2D LeftText : register(t5);
+Texture2D TopText : register(t6);
+Texture2D BotText : register(t7);
+Texture2D FrontText : register(t8);
+Texture2D BackText : register(t9);
+
+float4 main(VSOutput input) : SV_TARGET
+{
+
+
+    float2 newtextcoord;
+    float side = round(input.TexCoord.w);
+
+	if(side==1.0f)
+    {
+        newtextcoord = (input.TexCoord.zy) / 20 + 0.5;
+        newtextcoord = float2(1 - newtextcoord.x, 1 - newtextcoord.y);
+        return RightText.Sample(uSkyboxSampler, newtextcoord);
+
+
+    }
+    else if (side == 2.0f)
+    {
+
+        newtextcoord = (input.TexCoord.zy) / 20 + 0.5;
+        newtextcoord = float2(newtextcoord.x, 1 - newtextcoord.y);
+        return LeftText.Sample(uSkyboxSampler, newtextcoord);
+
+    }
+    else if (side == 4.0f)
+    {
+
+        newtextcoord = (input.TexCoord.xz) / 20 +0.5;
+        newtextcoord = float2(newtextcoord.x, 1 - newtextcoord.y);
+        return BotText.Sample(uSkyboxSampler, newtextcoord);
+
+    }
+    else if (side == 5.0f)
+    {
+
+        newtextcoord = (input.TexCoord.xy) / 20 + 0.5;
+        newtextcoord = float2(newtextcoord.x, 1 - newtextcoord.y);
+        return FrontText.Sample(uSkyboxSampler, newtextcoord);
+
+    }
+    else if (side == 6.0f)
+    {
+
+        newtextcoord = (input.TexCoord.xy) / 20 + 0.5;
+        newtextcoord = float2(1-newtextcoord.x, 1 - newtextcoord.y);
+        return BackText.Sample(uSkyboxSampler, newtextcoord);
+
+    }
+
+	else
+    {
+        newtextcoord = (input.TexCoord.xz) / 20 + 0.5;
+        newtextcoord = float2(newtextcoord.x, newtextcoord.y);
+        return TopText.Sample(uSkyboxSampler, newtextcoord);
+    }
+
+
+}

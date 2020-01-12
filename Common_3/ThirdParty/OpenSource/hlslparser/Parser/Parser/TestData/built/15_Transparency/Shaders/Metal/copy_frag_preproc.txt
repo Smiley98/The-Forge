@@ -1,0 +1,15 @@
+#line 1 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/15_Transparency/Shaders/D3D12/copy.frag"
+#line 26 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/15_Transparency/Shaders/D3D12/copy.frag"
+struct VSOutput
+{
+	float4 Position : SV_POSITION;
+	float4 UV : TEXCOORD0;
+};
+
+Texture2D Source : register(t0);
+SamplerState PointSampler : register(s0);
+
+float4 main(VSOutput input) : SV_Target
+{
+	return Source.Sample(PointSampler, input.UV.xy);
+}

@@ -1,0 +1,69 @@
+
+
+0/3 (comp - D3D12): compute
+
+
+
+
+
+
+0/3 (comp - Vulkan): compute
+
+
+
+
+
+
+0/3 (comp - Metal): compute
+
+
+
+
+1/3 (vert - D3D12): display
+
+1/3 (frag - D3D12): display
+
+
+
+
+
+1/3 (vert - Vulkan): display
+
+1/3 (frag - Vulkan): display
+
+
+
+
+
+1/3 (vert - Metal): display
+
+1/3 (frag - Metal): display
+
+
+
+
+
+2/3 (vert - D3D12): profile
+
+2/3 (frag - D3D12): profile
+
+
+
+
+
+2/3 (vert - Vulkan): profile
+
+2/3 (frag - Vulkan): profile
+
+
+
+
+
+2/3 (vert - Metal): profile
+
+2/3 (frag - Metal): profile
+
+
+
+
+

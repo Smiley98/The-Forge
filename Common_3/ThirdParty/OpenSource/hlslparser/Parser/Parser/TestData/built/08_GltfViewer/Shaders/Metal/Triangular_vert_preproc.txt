@@ -1,0 +1,26 @@
+#line 1 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/08_GltfViewer/Shaders/D3D12/Triangular.vert"
+#line 25 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/08_GltfViewer/Shaders/D3D12/Triangular.vert"
+struct VSInput
+{
+   uint VertexID : SV_VertexID;
+};
+
+struct VSOutput {
+	float4 Position : SV_POSITION;
+    float2 TexCoord : TEXCOORD;
+};
+
+VSOutput main(VSInput input)
+{
+	VSOutput Out;
+
+
+	float4 position;
+	position.x = (input.VertexID == 1) ? 3.0 : -1.0;
+	position.y = (input.VertexID == 0) ? -3.0 : 1.0;
+	position.zw = 1.0;
+
+	Out.Position = position;
+	Out.TexCoord = position.xy * float2(0.5, -0.5) + 0.5;
+	return Out;
+}

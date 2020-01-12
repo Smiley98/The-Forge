@@ -1,0 +1,48 @@
+0/2 (vert - D3D12): basic
+
+0/2 (frag - D3D12): basic
+
+
+
+
+
+0/2 (vert - Vulkan): basic
+
+0/2 (frag - Vulkan): basic
+
+
+
+
+
+0/2 (vert - Metal): basic
+
+0/2 (frag - Metal): basic
+
+
+
+
+
+1/2 (vert - D3D12): profile
+
+1/2 (frag - D3D12): profile
+
+
+
+
+
+1/2 (vert - Vulkan): profile
+
+1/2 (frag - Vulkan): profile
+
+
+
+
+
+1/2 (vert - Metal): profile
+
+1/2 (frag - Metal): profile
+
+
+
+
+

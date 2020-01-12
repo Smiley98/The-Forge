@@ -1,0 +1,411 @@
+
+0/19 (frag - D3D12): AdaptiveOIT
+
+
+
+
+
+
+0/19 (frag - Vulkan): AdaptiveOIT
+
+
+
+
+
+
+0/19 (frag - Metal): AdaptiveOIT
+
+
+
+
+
+
+1/19 (frag - D3D12): AdaptiveOITClear
+
+
+
+
+
+
+1/19 (frag - Vulkan): AdaptiveOITClear
+
+
+
+
+
+
+1/19 (frag - Metal): AdaptiveOITClear
+
+
+
+
+
+
+2/19 (frag - D3D12): AdaptiveOITComposite
+
+
+
+
+
+
+2/19 (frag - Vulkan): AdaptiveOITComposite
+
+
+
+
+
+
+2/19 (frag - Metal): AdaptiveOITComposite
+
+
+
+
+
+
+3/19 (frag - D3D12): copy
+
+
+
+
+
+
+3/19 (frag - Vulkan): copy
+
+
+
+
+
+
+3/19 (frag - Metal): copy
+
+
+
+
+
+
+4/19 (frag - D3D12): downsample
+
+
+
+
+
+
+4/19 (frag - Vulkan): downsample
+
+
+
+
+
+
+4/19 (frag - Metal): downsample
+
+
+
+
+
+5/19 (vert - D3D12): forward
+
+5/19 (frag - D3D12): forward
+
+
+
+
+
+5/19 (vert - Vulkan): forward
+
+5/19 (frag - Vulkan): forward
+
+
+
+
+
+5/19 (vert - Metal): forward
+
+5/19 (frag - Metal): forward
+
+
+
+
+
+6/19 (vert - D3D12): fullscreen
+
+
+
+
+
+
+6/19 (vert - Vulkan): fullscreen
+
+
+
+
+
+
+6/19 (vert - Metal): fullscreen
+
+
+
+
+
+
+
+7/19 (frag - D3D12): gaussianBlur
+
+
+
+
+
+
+7/19 (frag - Vulkan): gaussianBlur
+
+
+
+
+
+
+7/19 (frag - Metal): gaussianBlur
+
+
+
+
+
+
+
+8/19 (comp - D3D12): generateMips
+
+
+
+
+
+
+8/19 (comp - Vulkan): generateMips
+
+
+
+
+
+
+8/19 (comp - Metal): generateMips
+
+
+
+
+
+9/19 (frag - D3D12): phenomenologicalTransparency
+
+
+
+
+
+
+9/19 (frag - Vulkan): phenomenologicalTransparency
+
+
+
+
+
+
+9/19 (frag - Metal): phenomenologicalTransparency
+
+
+
+
+
+
+10/19 (frag - D3D12): phenomenologicalTransparencyComposite
+
+
+
+
+
+
+10/19 (frag - Vulkan): phenomenologicalTransparencyComposite
+
+
+
+
+
+
+10/19 (frag - Metal): phenomenologicalTransparencyComposite
+
+
+
+
+
+11/19 (vert - D3D12): shadow
+
+11/19 (frag - D3D12): shadow
+
+
+
+
+
+11/19 (vert - Vulkan): shadow
+
+11/19 (frag - Vulkan): shadow
+
+
+
+
+
+11/19 (vert - Metal): shadow
+
+11/19 (frag - Metal): shadow
+
+
+
+
+
+12/19 (vert - D3D12): skybox
+
+12/19 (frag - D3D12): skybox
+
+
+
+
+
+12/19 (vert - Vulkan): skybox
+
+12/19 (frag - Vulkan): skybox
+
+
+
+
+
+12/19 (vert - Metal): skybox
+
+12/19 (frag - Metal): skybox
+
+
+
+
+
+
+13/19 (frag - D3D12): stochasticShadow
+
+
+
+
+
+
+13/19 (frag - Vulkan): stochasticShadow
+
+
+
+
+
+
+13/19 (frag - Metal): stochasticShadow
+
+
+
+
+
+
+14/19 (frag - D3D12): weightedBlendedOIT
+
+
+
+
+
+
+14/19 (frag - Vulkan): weightedBlendedOIT
+
+
+
+
+
+
+14/19 (frag - Metal): weightedBlendedOIT
+
+
+
+
+
+
+15/19 (frag - D3D12): weightedBlendedOITComposite
+
+
+
+
+
+
+15/19 (frag - Vulkan): weightedBlendedOITComposite
+
+
+
+
+
+
+15/19 (frag - Metal): weightedBlendedOITComposite
+
+
+
+
+
+
+16/19 (frag - D3D12): weightedBlendedOITVolition
+
+
+
+
+
+
+16/19 (frag - Vulkan): weightedBlendedOITVolition
+
+
+
+
+
+
+16/19 (frag - Metal): weightedBlendedOITVolition
+
+
+
+
+
+
+17/19 (frag - D3D12): weightedBlendedOITVolitionComposite
+
+
+
+
+
+
+17/19 (frag - Vulkan): weightedBlendedOITVolitionComposite
+
+
+
+
+
+
+17/19 (frag - Metal): weightedBlendedOITVolitionComposite
+
+
+
+
+
+18/19 (vert - D3D12): profile
+
+18/19 (frag - D3D12): profile
+
+
+
+
+
+18/19 (vert - Vulkan): profile
+
+18/19 (frag - Vulkan): profile
+
+
+
+
+
+18/19 (vert - Metal): profile
+
+18/19 (frag - Metal): profile
+
+
+
+
+

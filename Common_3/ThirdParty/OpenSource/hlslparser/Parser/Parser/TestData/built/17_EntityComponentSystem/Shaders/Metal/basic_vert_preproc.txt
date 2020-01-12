@@ -1,0 +1,34 @@
+#line 1 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/17_EntityComponentSystem/Shaders/D3D12/basic.vert"
+#line 25 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/17_EntityComponentSystem/Shaders/D3D12/basic.vert"
+cbuffer RootConstant : register(b0)
+{
+	float aspect;
+};
+
+struct InstanceData {
+    float4 posScale;
+    float4 colorIndex;
+};
+
+StructuredBuffer<InstanceData> instanceBuffer : register(t0,  space1 );
+
+struct VSOutput
+{
+    float4 pos : SV_Position;
+    float3 color : COLOR0;
+    float2 uv : TEXCOORD0;
+};
+
+VSOutput main(in uint vertexId : SV_VertexID, in uint instanceId : SV_InstanceID)
+{
+    VSOutput result;
+    float x = vertexId / 2;
+    float y = vertexId & 1;
+    result.pos.x = instanceBuffer[instanceId].posScale.x + (x-0.5f) * instanceBuffer[instanceId].posScale.z;
+    result.pos.y = instanceBuffer[instanceId].posScale.y + (y-0.5f) * instanceBuffer[instanceId].posScale.z * aspect;
+    result.pos.z = 0.0f;
+    result.pos.w = 1.0f;
+    result.uv = float2((x + instanceBuffer[instanceId].colorIndex.w)/8,1-y);
+    result.color = instanceBuffer[instanceId].colorIndex.rgb;
+    return result;
+};

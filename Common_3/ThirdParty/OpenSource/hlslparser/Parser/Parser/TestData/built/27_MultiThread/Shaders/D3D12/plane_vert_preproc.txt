@@ -1,0 +1,29 @@
+#line 1 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/27_MultiThread/Shaders/D3D12/plane.vert"
+#line 27 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/27_MultiThread/Shaders/D3D12/plane.vert"
+cbuffer uniformBlock : register(b0,  space3 )
+{
+    float4x4 mvp;
+    float4x4 toWorld;
+};
+
+struct VSInput
+{
+  float4 Position : POSITION;
+  float2 TexCoord : TEXCOORD0;
+};
+
+struct VSOutput {
+	float4 Position : SV_POSITION;
+  float2 TexCoord : TEXCOORD;
+};
+
+VSOutput main(VSInput input)
+{
+	  VSOutput result;
+    float4x4 tempMat = mul(mvp, toWorld);
+    result.Position = mul(tempMat, input.Position);
+
+    result.TexCoord = input.TexCoord;
+
+  	return result;
+}

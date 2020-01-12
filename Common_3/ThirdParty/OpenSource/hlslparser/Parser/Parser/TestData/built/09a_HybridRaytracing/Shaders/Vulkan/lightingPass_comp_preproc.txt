@@ -1,0 +1,34 @@
+#line 1 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/09a_HybridRaytracing/Shaders/D3D12/lightingPass.comp"
+#line 26 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/09a_HybridRaytracing/Shaders/D3D12/lightingPass.comp"
+cbuffer cbPerPass : register(b0,  space1 )
+{
+	float4x4 projView;
+	float4x4 invProjView;
+	float4 rtSize;
+	float4 lightDir;
+	float4 cameraPos;
+}
+
+Texture2D<float4> normalbuffer : register(t1);
+Texture2D<float> shadowbuffer : register(t2);
+RWTexture2D<float4> outputRT : register(u3);
+
+[numthreads(16, 16, 1)]
+void main(uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID, uint3 GTid : SV_GroupThreadID, uint GI : SV_GroupIndex)
+{
+	const float lightIntensity = 5;
+	const float3 lightColour = float3(1, 1, 0.5);
+
+	float3 normal = normalbuffer[DTid.xy].xyz;
+
+	float NdotL = saturate(dot(normal, lightDir.xyz));
+
+	float shadowFactor = shadowbuffer[DTid.xy].x;
+
+
+	float ambient = lerp(0.5, 0.2, normal.y * 0.5 + 0.5);
+
+	float3 diffuse = (lightIntensity * shadowFactor * NdotL) * lightColour + ambient;
+
+	outputRT[DTid.xy] = float4(diffuse, 1);
+}

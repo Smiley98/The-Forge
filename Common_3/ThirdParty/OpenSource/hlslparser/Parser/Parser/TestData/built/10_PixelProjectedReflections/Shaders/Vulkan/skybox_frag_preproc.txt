@@ -1,0 +1,23 @@
+#line 1 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/10_PixelProjectedReflections/Shaders/D3D12/skybox.frag"
+#line 26 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/10_PixelProjectedReflections/Shaders/D3D12/skybox.frag"
+TextureCube<float4> skyboxTex : register(t1);
+SamplerState skyboxSampler : register(s2);
+
+struct VSinput
+{
+	float4 Position : POSITION;
+};
+
+struct VSOutput
+{
+	float4 Position : SV_POSITION;
+	float3 pos : POSITION;
+};
+
+float4 main(VSOutput input) : SV_TARGET
+{
+	float4 outColor = skyboxTex.Sample(skyboxSampler, input.pos);
+
+	float inverseArg = 1 / 2.2;
+    return float4(pow(outColor.r, inverseArg), pow(outColor.g, inverseArg), pow(outColor.b, inverseArg), 1.0f);
+}

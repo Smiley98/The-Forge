@@ -1,0 +1,44 @@
+#line 1 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/15_Transparency/Shaders/D3D12/weightedBlendedOITVolitionComposite.frag"
+#line 25 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/15_Transparency/Shaders/D3D12/weightedBlendedOITVolitionComposite.frag"
+struct VSOutput
+{
+	float4 Position : SV_POSITION;
+	float4 UV : Texcoord0;
+};
+
+SamplerState PointSampler : register(s0);
+Texture2D AccumulationTexture : register(t0);
+Texture2D RevealageTexture : register(t1);
+
+float4 main(VSOutput input) : SV_Target
+{
+	float revealage = 1.0;
+	float additiveness = 0.0;
+	float4 accum = float4(0.0,0.0,0.0,0.0);
+
+
+	float4 temp = RevealageTexture.Sample(PointSampler, input.UV.xy);
+	revealage = temp.r;
+	additiveness = temp.w;
+	accum = AccumulationTexture.Sample(PointSampler, input.UV.xy);
+
+
+	float3 average_color = accum.rgb / max(accum.a, 0.00001);
+
+
+
+	float emissive_amplifier = (additiveness*8.0f);
+	emissive_amplifier = lerp(emissive_amplifier*0.25, emissive_amplifier, revealage);
+
+
+	emissive_amplifier += saturate((1.0-revealage)*2.0);
+
+	average_color *= max(emissive_amplifier,1.0);
+
+
+	if (any(isinf(accum.rgb))) {
+		average_color = 100.0f;
+	}
+
+	return float4(average_color, 1.0 - revealage);
+}

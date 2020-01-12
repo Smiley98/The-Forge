@@ -1,0 +1,24 @@
+#line 1 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/15_Transparency/Shaders/D3D12/skybox.vert"
+#line 25 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/15_Transparency/Shaders/D3D12/skybox.vert"
+cbuffer SkyboxUniformBlock : register(b0,  space1 )
+{
+    float4x4 vp;
+};
+
+struct VSOutput
+{
+    float4 Position : SV_POSITION;
+    float4 TexCoord : TEXCOORD;
+};
+
+VSOutput main(float4 Position : POSITION)
+{
+    VSOutput result;
+
+    float4 p = float4(Position.xyz, 1.0);
+    float4x4 m = vp;
+    p = mul(m, p);
+    result.Position = p.xyww;
+    result.TexCoord = Position;
+    return result;
+}

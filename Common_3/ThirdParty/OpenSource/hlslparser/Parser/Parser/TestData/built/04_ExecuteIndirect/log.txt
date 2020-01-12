@@ -1,0 +1,117 @@
+0/5 (vert - D3D12): basic
+
+0/5 (frag - D3D12): basic
+
+
+
+
+
+0/5 (vert - Vulkan): basic
+
+0/5 (frag - Vulkan): basic
+
+
+
+
+
+0/5 (vert - Metal): basic
+
+0/5 (frag - Metal): basic
+
+
+
+
+
+1/5 (vert - D3D12): skybox
+
+1/5 (frag - D3D12): skybox
+
+
+
+
+
+1/5 (vert - Vulkan): skybox
+
+1/5 (frag - Vulkan): skybox
+
+
+
+
+
+1/5 (vert - Metal): skybox
+
+1/5 (frag - Metal): skybox
+
+
+
+
+
+2/5 (vert - D3D12): ExecuteIndirect
+
+2/5 (frag - D3D12): ExecuteIndirect
+
+
+
+
+
+2/5 (vert - Vulkan): ExecuteIndirect
+
+2/5 (frag - Vulkan): ExecuteIndirect
+
+
+
+
+
+2/5 (vert - Metal): ExecuteIndirect
+
+2/5 (frag - Metal): ExecuteIndirect
+
+
+
+
+
+
+
+3/5 (comp - D3D12): ComputeUpdate
+
+
+
+
+
+
+3/5 (comp - Vulkan): ComputeUpdate
+
+
+
+
+
+
+3/5 (comp - Metal): ComputeUpdate
+
+
+
+
+4/5 (vert - D3D12): profile
+
+4/5 (frag - D3D12): profile
+
+
+
+
+
+4/5 (vert - Vulkan): profile
+
+4/5 (frag - Vulkan): profile
+
+
+
+
+
+4/5 (vert - Metal): profile
+
+4/5 (frag - Metal): profile
+
+
+
+
+

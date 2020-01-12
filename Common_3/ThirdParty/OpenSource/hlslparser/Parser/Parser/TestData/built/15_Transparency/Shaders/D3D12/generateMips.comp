@@ -1,0 +1,26 @@
+RWTexture2D<float3> Source : register(u0, space3);
+RWTexture2D<float3> Destination : register(u1, space3);
+cbuffer RootConstant : register(b0)
+{
+    uint2 MipSize;
+};
+
+[numthreads(16, 16, 1)]
+void main(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x < MipSize.x && (id.y < MipSize.y))
+    {
+        float3 color = (float3 )(0.0);
+        [unroll]
+        for (int x = 0; (x < 2); ++x)
+        {
+            [unroll]
+            for (int y = 0; (y < 2); ++y)
+            {
+                (color += Source[((id.xy * (uint2 )(2)) + uint2(x, y))]);
+            }
+        }
+        (Destination[id.xy] = (color * (float3 )(0.25)));
+    }
+};
+

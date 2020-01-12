@@ -1,0 +1,37 @@
+#line 1 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/15_Transparency/Shaders/D3D12/gaussianBlur.frag"
+#line 25 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/15_Transparency/Shaders/D3D12/gaussianBlur.frag"
+struct VSOutput
+{
+	float4 Position : SV_POSITION;
+	float4 UV : TEXCOORD0;
+};
+
+cbuffer RootConstant
+{
+	float axis;
+};
+
+Texture2D Source : register(t0);
+SamplerState LinearSampler : register(s0);
+
+float4 main(VSOutput input) : SV_Target
+{
+	const int StepCount = 2;
+	const float Weights[StepCount] = { 0.44908f, 0.05092f };
+	const float Offsets[StepCount] = { 0.53805f, 2.06278f };
+
+	uint2 dim;
+	Source.GetDimensions(dim[0], dim[1]);
+	float2 stepSize = float2((1.0f - axis) / dim[0], axis / dim[1]);
+
+	float4 output = 0.0f;
+
+	[unroll] for (int i = 0; i < StepCount; ++i)
+	{
+		float2 offset = Offsets[i] * stepSize;
+		output += Source.Sample(LinearSampler, input.UV.xy + offset) * Weights[i];
+		output += Source.Sample(LinearSampler, input.UV.xy - offset) * Weights[i];
+	}
+
+	return output;
+}

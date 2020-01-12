@@ -1,0 +1,33 @@
+#line 1 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/09a_HybridRaytracing/Shaders/D3D12/display.frag"
+#line 26 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/09a_HybridRaytracing/Shaders/D3D12/display.frag"
+struct PsIn {
+	float2 texCoord: TEXCOORD;
+	float4 position : SV_Position;
+};
+
+Texture2D inputRT : register(t0);
+
+
+float3 ACESFilm(float3 x)
+{
+	float a = 2.51f;
+	float b = 0.03f;
+	float c = 2.43f;
+	float d = 0.59f;
+	float e = 0.14f;
+	return saturate((x*(a*x + b)) / (x*(c*x + d) + e));
+}
+
+float3 main(PsIn In) : SV_Target
+{
+	float3 colour = inputRT[In.position.xy].xyz;
+
+	float exposure = 0.7;
+
+	colour *= exposure;
+	colour = ACESFilm(colour);
+
+	colour = pow(abs(colour), 1 / 2.2);
+
+    return colour;
+}

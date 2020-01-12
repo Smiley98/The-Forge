@@ -1,0 +1,36 @@
+#line 1 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/08_GltfViewer/Shaders/D3D12/vignette.frag"
+#line 25 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/08_GltfViewer/Shaders/D3D12/vignette.frag"
+Texture2D sceneTexture : register(t6);
+SamplerState clampMiplessLinearSampler : register(s7);
+
+cbuffer cbPerFrame : register(b3,  space1 )
+{
+	float4x4 worldMat;
+	float4x4 projViewMat;
+	float4 screenSize;
+}
+
+struct VSOutput
+{
+	float4 Position : SV_POSITION;
+    float2 TexCoord : TEXCOORD;
+};
+
+float4 main(VSOutput input) : SV_TARGET
+{
+	float4 src = sceneTexture.Sample(clampMiplessLinearSampler, input.TexCoord);
+
+	if(screenSize.a > 0.5)
+	{
+		float2 uv = input.TexCoord;
+		float2 coord = (uv - 0.5) * (screenSize.x/screenSize.y) * 2.0;
+		float rf = sqrt(dot(coord, coord)) * 0.2;
+		float rf2_1 = rf * rf + 1.0;
+		float e = 1.0 / (rf2_1 * rf2_1);
+
+
+		return float4(src.rgb* e, 1.0f);
+	}
+	else
+		return float4(src.rgb, 1.0f);
+}

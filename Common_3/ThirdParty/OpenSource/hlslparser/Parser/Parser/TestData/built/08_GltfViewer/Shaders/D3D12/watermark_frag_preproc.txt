@@ -1,0 +1,16 @@
+#line 1 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/08_GltfViewer/Shaders/D3D12/watermark.frag"
+#line 25 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/08_GltfViewer/Shaders/D3D12/watermark.frag"
+Texture2D sceneTexture : register(t6);
+
+SamplerState clampMiplessLinearSampler : register(s7);
+
+struct VSOutput
+{
+	float4 Position : SV_POSITION;
+    float2 TexCoord : TEXCOORD;
+};
+
+float4 main(VSOutput input) : SV_TARGET
+{
+	return sceneTexture.Sample(clampMiplessLinearSampler, input.TexCoord);
+}

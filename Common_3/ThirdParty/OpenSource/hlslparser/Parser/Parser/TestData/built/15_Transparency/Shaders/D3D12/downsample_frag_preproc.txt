@@ -1,0 +1,22 @@
+#line 1 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/15_Transparency/Shaders/D3D12/downsample.frag"
+#line 26 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/15_Transparency/Shaders/D3D12/downsample.frag"
+struct VSOutput
+{
+	float4 Position : SV_POSITION;
+	float4 UV : TEXCOORD0;
+};
+
+Texture2D Source : register(t0);
+SamplerState PointSampler : register(s0);
+
+float4 main(VSOutput input) : SV_Target
+{
+	float4 total = 0.0f;
+	[unroll] for (int x = 0; x < 4; ++x)
+	{
+		[unroll] for(int y = 0; y < 4; ++y)
+			total += Source.Load(uint3(input.Position.xy * 4 + uint2(x, y), 0));
+	}
+
+	return total / 16.0f;
+}

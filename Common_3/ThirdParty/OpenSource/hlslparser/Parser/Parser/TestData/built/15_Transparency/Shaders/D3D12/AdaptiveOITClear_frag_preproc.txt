@@ -1,0 +1,318 @@
+#line 1 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/15_Transparency/Shaders/D3D12/AdaptiveOITClear.frag"
+#line 26 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/15_Transparency/Shaders/D3D12/AdaptiveOITClear.frag"
+#line 1 "AOIT.h"
+#line 48 "AOIT.h"
+struct AOITNode
+{
+	float depth;
+	float trans;
+	uint color;
+};
+
+struct AOITControlSurface
+{
+	bool clear;
+	bool opaque;
+	float depth;
+};
+
+struct AOITData
+{
+	float4 depth[ ( (4) / 4) ];
+	uint4 color[ ( (4) / 4) ];
+};
+
+struct AOITDepthData
+{
+	float4 depth[ ( (4) / 4) ];
+};
+
+struct AOITColorData
+{
+	uint4 color[ ( (4) / 4) ];
+};
+#line 90 "AOIT.h"
+RasterizerOrderedTexture2D<uint> AOITClearMaskUAV :  register(u0, space0 ) ;
+RWStructuredBuffer<AOITDepthData> AOITDepthDataUAV :  register(u1, space0 ) ;
+RWStructuredBuffer<AOITColorData> AOITColorDataUAV :  register(u2, space0 ) ;
+#line 103 "AOIT.h"
+uint PackRGB(float3 color)
+{
+	uint3 u = (uint3)(saturate(color) * 255 + 0.5);
+	uint packedOutput = (u.z << 16UL) | (u.y << 8UL) | u.x;
+	return packedOutput;
+}
+
+float3 UnpackRGB(uint packedInput)
+{
+	float3 unpackedOutput;
+	uint3 p = uint3((packedInput & 0xFFUL),
+		(packedInput >> 8UL) & 0xFFUL,
+		(packedInput >> 16UL) & 0xFFUL);
+
+	unpackedOutput = ((float3)p) / 255;
+	return unpackedOutput;
+}
+
+uint PackRGBA(float4 color)
+{
+	uint4 u = (uint4)(saturate(color) * 255 + 0.5);
+	uint packedOutput = (u.w << 24UL) | (u.z << 16UL) | (u.y << 8UL) | u.x;
+	return packedOutput;
+}
+
+float4 UnpackRGBA(uint packedInput)
+{
+	float4 unpackedOutput;
+	uint4 p = uint4((packedInput & 0xFFUL),
+		(packedInput >> 8UL) & 0xFFUL,
+		(packedInput >> 16UL) & 0xFFUL,
+		(packedInput >> 24UL));
+
+	unpackedOutput = ((float4)p) / 255;
+	return unpackedOutput;
+}
+
+float UnpackUnnormAlpha(uint packedInput)
+{
+	return (float)(packedInput >> 24UL);
+}
+
+uint AOITAddrGen(uint2 addr2D, uint width)
+{
+
+	width = width >> 1U;
+	uint2 tileAddr2D = addr2D >> 1U;
+	uint tileAddr1D = (tileAddr2D[0] + width * tileAddr2D[1]) << 2U;
+	uint2 pixelAddr2D = addr2D & 0x1U;
+	uint pixelAddr1D = (pixelAddr2D[1] << 1U) + pixelAddr2D[0];
+	return tileAddr1D | pixelAddr1D;
+#line 157 "AOIT.h"
+}
+
+
+uint AOITAddrGenUAV(uint2 addr2D)
+{
+	uint2 dim;
+	AOITClearMaskUAV.GetDimensions(dim[0], dim[1]);
+	return AOITAddrGen(addr2D, dim[0]);
+}
+#line 177 "AOIT.h"
+void AOITLoadControlSurface(in uint data, inout AOITControlSurface surface)
+{
+	surface.clear = data & 0x1 ? true : false;
+	surface.opaque = data & 0x2 ? true : false;
+	surface.depth = asfloat((data & 0xFFFFFFFCUL) | 0x3UL);
+}
+
+
+
+
+
+void AOITLoadControlSurfaceUAV(in uint2 pixelAddr, inout AOITControlSurface surface)
+{
+	uint data = AOITClearMaskUAV[pixelAddr];
+	AOITLoadControlSurface(data, surface);
+}
+
+void AOITStoreControlSurfaceUAV(uint2 pixelAddr, in AOITControlSurface surface)
+{
+	uint data;
+	data = asuint(surface.depth) & 0xFFFFFFFCUL;
+	data |= surface.opaque ? 0x2 : 0x0;
+	data |= surface.clear ? 0x1 : 0x0;
+	AOITClearMaskUAV[pixelAddr] = data;
+}
+
+void AOITLoadDataUAV(in uint2 pixelAddr, out AOITNode nodeArray[ (4) ])
+{
+	AOITData data;
+	uint addr = AOITAddrGenUAV(pixelAddr);
+	data.color = AOITColorDataUAV[addr];
+
+
+
+
+
+
+
+
+	data.depth = AOITDepthDataUAV[addr];
+	[unroll] for (uint i = 0; i <  ( (4) / 4) ; ++i)
+	{
+		[unroll] for (uint j = 0; j < 4; ++j)
+		{
+			AOITNode node = { data.depth[i][j],
+								UnpackUnnormAlpha(data.color[i][j]),
+								data.color[i][j] & 0xFFFFFFUL };
+			nodeArray[4 * i + j] = node;
+		}
+	}
+
+}
+
+void AOITStoreDataUAV(in uint2 pixelAddr, AOITNode nodeArray[ (4) ])
+{
+	AOITData data;
+	uint addr = AOITAddrGenUAV(pixelAddr);
+
+
+
+
+
+
+
+
+	[unroll] for (uint i = 0; i <  ( (4) / 4) ; ++i)
+	{
+		[unroll] for (uint j = 0; j < 4; ++j)
+		{
+			data.depth[i][j] = nodeArray[4 * i + j].depth;
+			data.color[i][j] = (nodeArray[4 * i + j].color & 0xFFFFFFUL) | (((uint)(nodeArray[4 * i + j].trans)) << 24UL);
+		}
+	}
+	AOITDepthDataUAV[addr] = data.depth;
+
+	AOITColorDataUAV[addr] = data.color;
+}
+#line 293 "AOIT.h"
+void AOITClearData(inout AOITData data, float depth, float4 color)
+{
+	uint packedColor = PackRGBA(float4(0, 0, 0, 1.0f - color.w));
+
+
+
+
+
+
+
+
+	[unroll] for (uint i = 0; i <  ( (4) / 4) ; ++i)
+	{
+		data.depth[i] =  (3.40282E38) ;
+		data.color[i] = packedColor;
+	}
+	data.depth[0][0] = depth;
+	data.color[0][0] = PackRGBA(float4(color.www * color.xyz, 1.0f - color.w));
+
+}
+
+void AOITInsertFragment(in float fragmentDepth, in float fragmentTrans, in float3 fragmentColor, inout AOITNode nodeArray[ (4) ])
+{
+	int i;
+
+	float depth[ (4)  + 1];
+	float trans[ (4)  + 1];
+	uint color[ (4)  + 1];
+
+
+	[unroll] for (i = 0; i <  (4) ; ++i)
+	{
+		depth[i] = nodeArray[i].depth;
+		trans[i] = nodeArray[i].trans;
+		color[i] = nodeArray[i].color;
+	}
+
+
+	int index = 0;
+	float prevTrans = 255;
+	[unroll] for (i = 0; i <  (4) ; ++i)
+	{
+		if (fragmentDepth > depth[i])
+		{
+			++index;
+			prevTrans = trans[i];
+		}
+	}
+
+
+	[unroll] for (i =  (4)  - 1; i >= 0; --i)
+	{
+		[flatten] if (index <= i)
+		{
+			depth[i + 1] = depth[i];
+			trans[i + 1] = trans[i] * fragmentTrans;
+			color[i + 1] = color[i];
+		}
+	}
+
+
+	const float newFragTrans = fragmentTrans * prevTrans;
+	const uint newFragColor = PackRGB(fragmentColor * (1.0f - fragmentTrans));
+
+	depth[index] = fragmentDepth;
+	trans[index] = newFragTrans;
+	color[index] = newFragColor;
+
+	float EMPTY_NODE = asfloat(asuint(float( (3.40282E38) )) & (uint) (0xFFFFFFFF - (uint) ((1 << (8) ) - 1) ) );
+
+	[flatten] if (asfloat(asuint(float(depth[ (4) ])) & (uint) (0xFFFFFFFF - (uint) ((1 << (8) ) - 1) ) ) != EMPTY_NODE)
+	{
+		float3 toBeRemovedColor = UnpackRGB(color[ (4) ]);
+		float3 toBeAccumulatedColor = UnpackRGB(color[ (4)  - 1]);
+		color[ (4)  - 1] = PackRGB(toBeAccumulatedColor + toBeRemovedColor * trans[ (4)  - 1] * rcp(trans[ (4)  - 2]));
+		trans[ (4)  - 1] = trans[ (4) ];
+	}
+
+
+	[unroll] for (i = 0; i <  (4) ; ++i)
+	{
+		nodeArray[i].depth = depth[i];
+		nodeArray[i].trans = trans[i];
+		nodeArray[i].color = color[i];
+	}
+}
+
+
+void WriteNewPixelToAOIT(float2 position, float depth, float4 color)
+{
+
+	AOITNode nodeArray[ (4) ];
+	uint2 pixelAddr = uint2(position);
+
+
+	AOITControlSurface ctrlSurface = (AOITControlSurface)0;
+	AOITLoadControlSurfaceUAV(pixelAddr, ctrlSurface);
+
+
+	if (ctrlSurface.clear)
+	{
+
+		AOITData data;
+		AOITClearData(data, depth, color);
+
+
+		uint addr = AOITAddrGenUAV(pixelAddr);
+
+		AOITDepthDataUAV[addr] = data.depth;
+
+		AOITColorDataUAV[addr] = data.color;
+
+		AOITClearMaskUAV[pixelAddr] = 0;
+	}
+	else
+	{
+
+		AOITLoadDataUAV(pixelAddr, nodeArray);
+
+
+		AOITInsertFragment(depth, 1.0f - color.w, color.xyz, nodeArray);
+
+
+		AOITStoreDataUAV(pixelAddr, nodeArray);
+	}
+}
+#line 27 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/15_Transparency/Shaders/D3D12/AdaptiveOITClear.frag"
+
+struct VSOutput
+{
+	float4 Position : SV_POSITION;
+	float4 UV : Texcoord0;
+};
+
+void main(VSOutput input)
+{
+	uint2 pixelAddr = uint2(input.Position.xy);
+	uint data = 0x1;
+	AOITClearMaskUAV[pixelAddr] = data;
+}

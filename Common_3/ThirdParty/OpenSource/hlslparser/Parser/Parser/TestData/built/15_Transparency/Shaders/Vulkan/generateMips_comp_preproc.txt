@@ -1,0 +1,24 @@
+#line 1 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/15_Transparency/Shaders/D3D12/generateMips.comp"
+#line 25 "C:/Users/conno/Desktop/The-Forge/Examples_3/Unit_Tests/src/15_Transparency/Shaders/D3D12/generateMips.comp"
+RWTexture2D<float3> Source : register(u0,  space3 );
+RWTexture2D<float3> Destination : register(u1,  space3 );
+
+cbuffer RootConstant : register(b0)
+{
+	uint2 MipSize;
+};
+
+[numthreads(16, 16, 1)]
+void main(uint3 id : SV_DispatchThreadID)
+{
+	if (id.x < MipSize.x && id.y < MipSize.y)
+	{
+		float3 color = 0.0f;
+		[unroll] for (int x = 0; x < 2; ++x)
+		{
+			[unroll] for (int y = 0; y < 2; ++y)
+				color += Source[id.xy * 2 + uint2(x, y)];
+		}
+		Destination[id.xy] = color * 0.25f;
+	}
+}

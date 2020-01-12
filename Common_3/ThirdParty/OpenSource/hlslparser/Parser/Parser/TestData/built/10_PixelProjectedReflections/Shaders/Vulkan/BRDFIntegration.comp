@@ -1,0 +1,1073 @@
+#version 450 core
+
+precision highp float;
+precision highp int; 
+#extension GL_EXT_samplerless_texture_functions : enable
+
+void GetDimensions(texture1D texName, uint mipLevel, out int width, out uint numberOfLevels)
+{
+    width = int(textureSize(texName,int(mipLevel)));
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(texture1D texName, out int width)
+{
+    width = int(textureSize(texName,0));
+}
+
+void GetDimensions(texture1D texName, uint mipLevel, out uint width, out uint numberOfLevels)
+{
+    width = uint(textureSize(texName,int(mipLevel)));
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(texture1D texName, out uint width)
+{
+    width = uint(textureSize(texName,0));
+}
+
+void GetDimensions(texture1D texName, uint mipLevel, out float width, out uint numberOfLevels)
+{
+    width = float(textureSize(texName,int(mipLevel)));
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(texture1D texName, out float width)
+{
+    width = float(textureSize(texName,0));
+}
+
+void GetDimensions(texture1DArray texName, uint mipLevel, out int width, out int elements, out uint numberOfLevels)
+{
+    width = int(textureSize(texName,int(mipLevel)).x);
+    elements = int(textureSize(texName,int(mipLevel)).y);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(texture1DArray texName, out int width, out int elements)
+{
+    width = int(textureSize(texName,0).x);
+    elements = int(textureSize(texName,0).y);
+}
+
+void GetDimensions(texture1DArray texName, uint mipLevel, out uint width, out uint elements, out uint numberOfLevels)
+{
+    width = uint(textureSize(texName,int(mipLevel)).x);
+    elements = uint(textureSize(texName,int(mipLevel)).y);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(texture1DArray texName, out uint width, out uint elements)
+{
+    width = uint(textureSize(texName,0).x);
+    elements = uint(textureSize(texName,0).y);
+}
+
+void GetDimensions(texture1DArray texName, uint mipLevel, out float width, out float elements, out uint numberOfLevels)
+{
+    width = float(textureSize(texName,int(mipLevel)).x);
+    elements = float(textureSize(texName,int(mipLevel)).y);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(texture1DArray texName, out float width, out float elements)
+{
+    width = float(textureSize(texName,0).x);
+    elements = float(textureSize(texName,0).y);
+}
+
+void GetDimensions(texture2D texName, uint mipLevel, out int width, out int height, out uint numberOfLevels)
+{
+    width = int(textureSize(texName,int(mipLevel)).x);
+    height = int(textureSize(texName,int(mipLevel)).y);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(texture2D texName, out int width, out int height)
+{
+    width = int(textureSize(texName,0).x);
+    height = int(textureSize(texName,0).y);
+}
+
+void GetDimensions(texture2D texName, uint mipLevel, out uint width, out uint height, out uint numberOfLevels)
+{
+    width = uint(textureSize(texName,int(mipLevel)).x);
+    height = uint(textureSize(texName,int(mipLevel)).y);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(texture2D texName, out uint width, out uint height)
+{
+    width = uint(textureSize(texName,0).x);
+    height = uint(textureSize(texName,0).y);
+}
+
+void GetDimensions(texture2D texName, uint mipLevel, out float width, out float height, out uint numberOfLevels)
+{
+    width = float(textureSize(texName,int(mipLevel)).x);
+    height = float(textureSize(texName,int(mipLevel)).y);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(texture2D texName, out float width, out float height)
+{
+    width = float(textureSize(texName,0).x);
+    height = float(textureSize(texName,0).y);
+}
+
+void GetDimensions(texture2DArray texName, uint mipLevel, out int width, out int height, out int elements, out uint numberOfLevels)
+{
+    width = int(textureSize(texName,int(mipLevel)).x);
+    height = int(textureSize(texName,int(mipLevel)).y);
+    elements = int(textureSize(texName,int(mipLevel)).z);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(texture2DArray texName, out int width, out int height, out int elements)
+{
+    width = int(textureSize(texName,0).x);
+    height = int(textureSize(texName,0).y);
+    elements = int(textureSize(texName,0).z);
+}
+
+void GetDimensions(texture2DArray texName, uint mipLevel, out uint width, out uint height, out uint elements, out uint numberOfLevels)
+{
+    width = uint(textureSize(texName,int(mipLevel)).x);
+    height = uint(textureSize(texName,int(mipLevel)).y);
+    elements = uint(textureSize(texName,int(mipLevel)).z);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(texture2DArray texName, out uint width, out uint height, out uint elements)
+{
+    width = uint(textureSize(texName,0).x);
+    height = uint(textureSize(texName,0).y);
+    elements = uint(textureSize(texName,0).z);
+}
+
+void GetDimensions(texture2DArray texName, uint mipLevel, out float width, out float height, out float elements, out uint numberOfLevels)
+{
+    width = float(textureSize(texName,int(mipLevel)).x);
+    height = float(textureSize(texName,int(mipLevel)).y);
+    elements = float(textureSize(texName,int(mipLevel)).z);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(texture2DArray texName, out float width, out float height, out float elements)
+{
+    width = float(textureSize(texName,0).x);
+    height = float(textureSize(texName,0).y);
+    elements = float(textureSize(texName,0).z);
+}
+
+void GetDimensions(utexture1D texName, uint mipLevel, out int width, out uint numberOfLevels)
+{
+    width = int(textureSize(texName,int(mipLevel)));
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(utexture1D texName, out int width)
+{
+    width = int(textureSize(texName,0));
+}
+
+void GetDimensions(utexture1D texName, uint mipLevel, out uint width, out uint numberOfLevels)
+{
+    width = uint(textureSize(texName,int(mipLevel)));
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(utexture1D texName, out uint width)
+{
+    width = uint(textureSize(texName,0));
+}
+
+void GetDimensions(utexture1D texName, uint mipLevel, out float width, out uint numberOfLevels)
+{
+    width = float(textureSize(texName,int(mipLevel)));
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(utexture1D texName, out float width)
+{
+    width = float(textureSize(texName,0));
+}
+
+void GetDimensions(utexture1DArray texName, uint mipLevel, out int width, out int elements, out uint numberOfLevels)
+{
+    width = int(textureSize(texName,int(mipLevel)).x);
+    elements = int(textureSize(texName,int(mipLevel)).y);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(utexture1DArray texName, out int width, out int elements)
+{
+    width = int(textureSize(texName,0).x);
+    elements = int(textureSize(texName,0).y);
+}
+
+void GetDimensions(utexture1DArray texName, uint mipLevel, out uint width, out uint elements, out uint numberOfLevels)
+{
+    width = uint(textureSize(texName,int(mipLevel)).x);
+    elements = uint(textureSize(texName,int(mipLevel)).y);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(utexture1DArray texName, out uint width, out uint elements)
+{
+    width = uint(textureSize(texName,0).x);
+    elements = uint(textureSize(texName,0).y);
+}
+
+void GetDimensions(utexture1DArray texName, uint mipLevel, out float width, out float elements, out uint numberOfLevels)
+{
+    width = float(textureSize(texName,int(mipLevel)).x);
+    elements = float(textureSize(texName,int(mipLevel)).y);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(utexture1DArray texName, out float width, out float elements)
+{
+    width = float(textureSize(texName,0).x);
+    elements = float(textureSize(texName,0).y);
+}
+
+void GetDimensions(utexture2D texName, uint mipLevel, out int width, out int height, out uint numberOfLevels)
+{
+    width = int(textureSize(texName,int(mipLevel)).x);
+    height = int(textureSize(texName,int(mipLevel)).y);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(utexture2D texName, out int width, out int height)
+{
+    width = int(textureSize(texName,0).x);
+    height = int(textureSize(texName,0).y);
+}
+
+void GetDimensions(utexture2D texName, uint mipLevel, out uint width, out uint height, out uint numberOfLevels)
+{
+    width = uint(textureSize(texName,int(mipLevel)).x);
+    height = uint(textureSize(texName,int(mipLevel)).y);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(utexture2D texName, out uint width, out uint height)
+{
+    width = uint(textureSize(texName,0).x);
+    height = uint(textureSize(texName,0).y);
+}
+
+void GetDimensions(utexture2D texName, uint mipLevel, out float width, out float height, out uint numberOfLevels)
+{
+    width = float(textureSize(texName,int(mipLevel)).x);
+    height = float(textureSize(texName,int(mipLevel)).y);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(utexture2D texName, out float width, out float height)
+{
+    width = float(textureSize(texName,0).x);
+    height = float(textureSize(texName,0).y);
+}
+
+void GetDimensions(utexture2DArray texName, uint mipLevel, out int width, out int height, out int elements, out uint numberOfLevels)
+{
+    width = int(textureSize(texName,int(mipLevel)).x);
+    height = int(textureSize(texName,int(mipLevel)).y);
+    elements = int(textureSize(texName,int(mipLevel)).z);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(utexture2DArray texName, out int width, out int height, out int elements)
+{
+    width = int(textureSize(texName,0).x);
+    height = int(textureSize(texName,0).y);
+    elements = int(textureSize(texName,0).z);
+}
+
+void GetDimensions(utexture2DArray texName, uint mipLevel, out uint width, out uint height, out uint elements, out uint numberOfLevels)
+{
+    width = uint(textureSize(texName,int(mipLevel)).x);
+    height = uint(textureSize(texName,int(mipLevel)).y);
+    elements = uint(textureSize(texName,int(mipLevel)).z);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(utexture2DArray texName, out uint width, out uint height, out uint elements)
+{
+    width = uint(textureSize(texName,0).x);
+    height = uint(textureSize(texName,0).y);
+    elements = uint(textureSize(texName,0).z);
+}
+
+void GetDimensions(utexture2DArray texName, uint mipLevel, out float width, out float height, out float elements, out uint numberOfLevels)
+{
+    width = float(textureSize(texName,int(mipLevel)).x);
+    height = float(textureSize(texName,int(mipLevel)).y);
+    elements = float(textureSize(texName,int(mipLevel)).z);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(utexture2DArray texName, out float width, out float height, out float elements)
+{
+    width = float(textureSize(texName,0).x);
+    height = float(textureSize(texName,0).y);
+    elements = float(textureSize(texName,0).z);
+}
+
+void GetDimensions(itexture1D texName, uint mipLevel, out int width, out uint numberOfLevels)
+{
+    width = int(textureSize(texName,int(mipLevel)));
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(itexture1D texName, out int width)
+{
+    width = int(textureSize(texName,0));
+}
+
+void GetDimensions(itexture1D texName, uint mipLevel, out uint width, out uint numberOfLevels)
+{
+    width = uint(textureSize(texName,int(mipLevel)));
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(itexture1D texName, out uint width)
+{
+    width = uint(textureSize(texName,0));
+}
+
+void GetDimensions(itexture1D texName, uint mipLevel, out float width, out uint numberOfLevels)
+{
+    width = float(textureSize(texName,int(mipLevel)));
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(itexture1D texName, out float width)
+{
+    width = float(textureSize(texName,0));
+}
+
+void GetDimensions(itexture1DArray texName, uint mipLevel, out int width, out int elements, out uint numberOfLevels)
+{
+    width = int(textureSize(texName,int(mipLevel)).x);
+    elements = int(textureSize(texName,int(mipLevel)).y);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(itexture1DArray texName, out int width, out int elements)
+{
+    width = int(textureSize(texName,0).x);
+    elements = int(textureSize(texName,0).y);
+}
+
+void GetDimensions(itexture1DArray texName, uint mipLevel, out uint width, out uint elements, out uint numberOfLevels)
+{
+    width = uint(textureSize(texName,int(mipLevel)).x);
+    elements = uint(textureSize(texName,int(mipLevel)).y);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(itexture1DArray texName, out uint width, out uint elements)
+{
+    width = uint(textureSize(texName,0).x);
+    elements = uint(textureSize(texName,0).y);
+}
+
+void GetDimensions(itexture1DArray texName, uint mipLevel, out float width, out float elements, out uint numberOfLevels)
+{
+    width = float(textureSize(texName,int(mipLevel)).x);
+    elements = float(textureSize(texName,int(mipLevel)).y);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(itexture1DArray texName, out float width, out float elements)
+{
+    width = float(textureSize(texName,0).x);
+    elements = float(textureSize(texName,0).y);
+}
+
+void GetDimensions(itexture2D texName, uint mipLevel, out int width, out int height, out uint numberOfLevels)
+{
+    width = int(textureSize(texName,int(mipLevel)).x);
+    height = int(textureSize(texName,int(mipLevel)).y);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(itexture2D texName, out int width, out int height)
+{
+    width = int(textureSize(texName,0).x);
+    height = int(textureSize(texName,0).y);
+}
+
+void GetDimensions(itexture2D texName, uint mipLevel, out uint width, out uint height, out uint numberOfLevels)
+{
+    width = uint(textureSize(texName,int(mipLevel)).x);
+    height = uint(textureSize(texName,int(mipLevel)).y);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(itexture2D texName, out uint width, out uint height)
+{
+    width = uint(textureSize(texName,0).x);
+    height = uint(textureSize(texName,0).y);
+}
+
+void GetDimensions(itexture2D texName, uint mipLevel, out float width, out float height, out uint numberOfLevels)
+{
+    width = float(textureSize(texName,int(mipLevel)).x);
+    height = float(textureSize(texName,int(mipLevel)).y);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(itexture2D texName, out float width, out float height)
+{
+    width = float(textureSize(texName,0).x);
+    height = float(textureSize(texName,0).y);
+}
+
+void GetDimensions(itexture2DArray texName, uint mipLevel, out int width, out int height, out int elements, out uint numberOfLevels)
+{
+    width = int(textureSize(texName,int(mipLevel)).x);
+    height = int(textureSize(texName,int(mipLevel)).y);
+    elements = int(textureSize(texName,int(mipLevel)).z);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(itexture2DArray texName, out int width, out int height, out int elements)
+{
+    width = int(textureSize(texName,0).x);
+    height = int(textureSize(texName,0).y);
+    elements = int(textureSize(texName,0).z);
+}
+
+void GetDimensions(itexture2DArray texName, uint mipLevel, out uint width, out uint height, out uint elements, out uint numberOfLevels)
+{
+    width = uint(textureSize(texName,int(mipLevel)).x);
+    height = uint(textureSize(texName,int(mipLevel)).y);
+    elements = uint(textureSize(texName,int(mipLevel)).z);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(itexture2DArray texName, out uint width, out uint height, out uint elements)
+{
+    width = uint(textureSize(texName,0).x);
+    height = uint(textureSize(texName,0).y);
+    elements = uint(textureSize(texName,0).z);
+}
+
+void GetDimensions(itexture2DArray texName, uint mipLevel, out float width, out float height, out float elements, out uint numberOfLevels)
+{
+    width = float(textureSize(texName,int(mipLevel)).x);
+    height = float(textureSize(texName,int(mipLevel)).y);
+    elements = float(textureSize(texName,int(mipLevel)).z);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(itexture2DArray texName, out float width, out float height, out float elements)
+{
+    width = float(textureSize(texName,0).x);
+    height = float(textureSize(texName,0).y);
+    elements = float(textureSize(texName,0).z);
+}
+
+void GetDimensions(texture3D texName, uint mipLevel, out int width, out int height, out int depth, out uint numberOfLevels)
+{
+    width = int(textureSize(texName,int(mipLevel)).x);
+    height = int(textureSize(texName,int(mipLevel)).y);
+    depth = int(textureSize(texName,int(mipLevel)).z);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(texture3D texName, out int width, out int height, out int depth)
+{
+    width = int(textureSize(texName,0).x);
+    height = int(textureSize(texName,0).y);
+    depth = int(textureSize(texName,0).z);
+}
+
+void GetDimensions(texture3D texName, uint mipLevel, out uint width, out uint height, out uint depth, out uint numberOfLevels)
+{
+    width = uint(textureSize(texName,int(mipLevel)).x);
+    height = uint(textureSize(texName,int(mipLevel)).y);
+    depth = uint(textureSize(texName,int(mipLevel)).z);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(texture3D texName, out uint width, out uint height, out uint depth)
+{
+    width = uint(textureSize(texName,0).x);
+    height = uint(textureSize(texName,0).y);
+    depth = uint(textureSize(texName,0).z);
+}
+
+void GetDimensions(texture3D texName, uint mipLevel, out float width, out float height, out float depth, out uint numberOfLevels)
+{
+    width = float(textureSize(texName,int(mipLevel)).x);
+    height = float(textureSize(texName,int(mipLevel)).y);
+    depth = float(textureSize(texName,int(mipLevel)).z);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(texture3D texName, out float width, out float height, out float depth)
+{
+    width = float(textureSize(texName,0).x);
+    height = float(textureSize(texName,0).y);
+    depth = float(textureSize(texName,0).z);
+}
+
+void GetDimensions(utexture3D texName, uint mipLevel, out int width, out int height, out int depth, out uint numberOfLevels)
+{
+    width = int(textureSize(texName,int(mipLevel)).x);
+    height = int(textureSize(texName,int(mipLevel)).y);
+    depth = int(textureSize(texName,int(mipLevel)).z);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(utexture3D texName, out int width, out int height, out int depth)
+{
+    width = int(textureSize(texName,0).x);
+    height = int(textureSize(texName,0).y);
+    depth = int(textureSize(texName,0).z);
+}
+
+void GetDimensions(utexture3D texName, uint mipLevel, out uint width, out uint height, out uint depth, out uint numberOfLevels)
+{
+    width = uint(textureSize(texName,int(mipLevel)).x);
+    height = uint(textureSize(texName,int(mipLevel)).y);
+    depth = uint(textureSize(texName,int(mipLevel)).z);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(utexture3D texName, out uint width, out uint height, out uint depth)
+{
+    width = uint(textureSize(texName,0).x);
+    height = uint(textureSize(texName,0).y);
+    depth = uint(textureSize(texName,0).z);
+}
+
+void GetDimensions(utexture3D texName, uint mipLevel, out float width, out float height, out float depth, out uint numberOfLevels)
+{
+    width = float(textureSize(texName,int(mipLevel)).x);
+    height = float(textureSize(texName,int(mipLevel)).y);
+    depth = float(textureSize(texName,int(mipLevel)).z);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(utexture3D texName, out float width, out float height, out float depth)
+{
+    width = float(textureSize(texName,0).x);
+    height = float(textureSize(texName,0).y);
+    depth = float(textureSize(texName,0).z);
+}
+
+void GetDimensions(itexture3D texName, uint mipLevel, out int width, out int height, out int depth, out uint numberOfLevels)
+{
+    width = int(textureSize(texName,int(mipLevel)).x);
+    height = int(textureSize(texName,int(mipLevel)).y);
+    depth = int(textureSize(texName,int(mipLevel)).z);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(itexture3D texName, out int width, out int height, out int depth)
+{
+    width = int(textureSize(texName,0).x);
+    height = int(textureSize(texName,0).y);
+    depth = int(textureSize(texName,0).z);
+}
+
+void GetDimensions(itexture3D texName, uint mipLevel, out uint width, out uint height, out uint depth, out uint numberOfLevels)
+{
+    width = uint(textureSize(texName,int(mipLevel)).x);
+    height = uint(textureSize(texName,int(mipLevel)).y);
+    depth = uint(textureSize(texName,int(mipLevel)).z);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(itexture3D texName, out uint width, out uint height, out uint depth)
+{
+    width = uint(textureSize(texName,0).x);
+    height = uint(textureSize(texName,0).y);
+    depth = uint(textureSize(texName,0).z);
+}
+
+void GetDimensions(itexture3D texName, uint mipLevel, out float width, out float height, out float depth, out uint numberOfLevels)
+{
+    width = float(textureSize(texName,int(mipLevel)).x);
+    height = float(textureSize(texName,int(mipLevel)).y);
+    depth = float(textureSize(texName,int(mipLevel)).z);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(itexture3D texName, out float width, out float height, out float depth)
+{
+    width = float(textureSize(texName,0).x);
+    height = float(textureSize(texName,0).y);
+    depth = float(textureSize(texName,0).z);
+}
+
+void GetDimensions(textureCube texName, uint mipLevel, out int width, out int height, out uint numberOfLevels)
+{
+    width = int(textureSize(texName,int(mipLevel)).x);
+    height = int(textureSize(texName,int(mipLevel)).y);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(textureCube texName, out int width, out int height)
+{
+    width = int(textureSize(texName,0).x);
+    height = int(textureSize(texName,0).y);
+}
+
+void GetDimensions(textureCube texName, uint mipLevel, out uint width, out uint height, out uint numberOfLevels)
+{
+    width = uint(textureSize(texName,int(mipLevel)).x);
+    height = uint(textureSize(texName,int(mipLevel)).y);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(textureCube texName, out uint width, out uint height)
+{
+    width = uint(textureSize(texName,0).x);
+    height = uint(textureSize(texName,0).y);
+}
+
+void GetDimensions(textureCube texName, uint mipLevel, out float width, out float height, out uint numberOfLevels)
+{
+    width = float(textureSize(texName,int(mipLevel)).x);
+    height = float(textureSize(texName,int(mipLevel)).y);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(textureCube texName, out float width, out float height)
+{
+    width = float(textureSize(texName,0).x);
+    height = float(textureSize(texName,0).y);
+}
+
+void GetDimensions(textureCubeArray texName, uint mipLevel, out int width, out int height, out int elements, out uint numberOfLevels)
+{
+    width = int(textureSize(texName,int(mipLevel)).x);
+    height = int(textureSize(texName,int(mipLevel)).y);
+    elements = int(textureSize(texName,int(mipLevel)).z);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(textureCubeArray texName, out int width, out int height, out int elements)
+{
+    width = int(textureSize(texName,0).x);
+    height = int(textureSize(texName,0).y);
+    elements = int(textureSize(texName,0).z);
+}
+
+void GetDimensions(textureCubeArray texName, uint mipLevel, out uint width, out uint height, out uint elements, out uint numberOfLevels)
+{
+    width = uint(textureSize(texName,int(mipLevel)).x);
+    height = uint(textureSize(texName,int(mipLevel)).y);
+    elements = uint(textureSize(texName,int(mipLevel)).z);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(textureCubeArray texName, out uint width, out uint height, out uint elements)
+{
+    width = uint(textureSize(texName,0).x);
+    height = uint(textureSize(texName,0).y);
+    elements = uint(textureSize(texName,0).z);
+}
+
+void GetDimensions(textureCubeArray texName, uint mipLevel, out float width, out float height, out float elements, out uint numberOfLevels)
+{
+    width = float(textureSize(texName,int(mipLevel)).x);
+    height = float(textureSize(texName,int(mipLevel)).y);
+    elements = float(textureSize(texName,int(mipLevel)).z);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(textureCubeArray texName, out float width, out float height, out float elements)
+{
+    width = float(textureSize(texName,0).x);
+    height = float(textureSize(texName,0).y);
+    elements = float(textureSize(texName,0).z);
+}
+
+void GetDimensions(utextureCube texName, uint mipLevel, out int width, out int height, out uint numberOfLevels)
+{
+    width = int(textureSize(texName,int(mipLevel)).x);
+    height = int(textureSize(texName,int(mipLevel)).y);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(utextureCube texName, out int width, out int height)
+{
+    width = int(textureSize(texName,0).x);
+    height = int(textureSize(texName,0).y);
+}
+
+void GetDimensions(utextureCube texName, uint mipLevel, out uint width, out uint height, out uint numberOfLevels)
+{
+    width = uint(textureSize(texName,int(mipLevel)).x);
+    height = uint(textureSize(texName,int(mipLevel)).y);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(utextureCube texName, out uint width, out uint height)
+{
+    width = uint(textureSize(texName,0).x);
+    height = uint(textureSize(texName,0).y);
+}
+
+void GetDimensions(utextureCube texName, uint mipLevel, out float width, out float height, out uint numberOfLevels)
+{
+    width = float(textureSize(texName,int(mipLevel)).x);
+    height = float(textureSize(texName,int(mipLevel)).y);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(utextureCube texName, out float width, out float height)
+{
+    width = float(textureSize(texName,0).x);
+    height = float(textureSize(texName,0).y);
+}
+
+void GetDimensions(utextureCubeArray texName, uint mipLevel, out int width, out int height, out int elements, out uint numberOfLevels)
+{
+    width = int(textureSize(texName,int(mipLevel)).x);
+    height = int(textureSize(texName,int(mipLevel)).y);
+    elements = int(textureSize(texName,int(mipLevel)).z);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(utextureCubeArray texName, out int width, out int height, out int elements)
+{
+    width = int(textureSize(texName,0).x);
+    height = int(textureSize(texName,0).y);
+    elements = int(textureSize(texName,0).z);
+}
+
+void GetDimensions(utextureCubeArray texName, uint mipLevel, out uint width, out uint height, out uint elements, out uint numberOfLevels)
+{
+    width = uint(textureSize(texName,int(mipLevel)).x);
+    height = uint(textureSize(texName,int(mipLevel)).y);
+    elements = uint(textureSize(texName,int(mipLevel)).z);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(utextureCubeArray texName, out uint width, out uint height, out uint elements)
+{
+    width = uint(textureSize(texName,0).x);
+    height = uint(textureSize(texName,0).y);
+    elements = uint(textureSize(texName,0).z);
+}
+
+void GetDimensions(utextureCubeArray texName, uint mipLevel, out float width, out float height, out float elements, out uint numberOfLevels)
+{
+    width = float(textureSize(texName,int(mipLevel)).x);
+    height = float(textureSize(texName,int(mipLevel)).y);
+    elements = float(textureSize(texName,int(mipLevel)).z);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(utextureCubeArray texName, out float width, out float height, out float elements)
+{
+    width = float(textureSize(texName,0).x);
+    height = float(textureSize(texName,0).y);
+    elements = float(textureSize(texName,0).z);
+}
+
+void GetDimensions(itextureCube texName, uint mipLevel, out int width, out int height, out uint numberOfLevels)
+{
+    width = int(textureSize(texName,int(mipLevel)).x);
+    height = int(textureSize(texName,int(mipLevel)).y);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(itextureCube texName, out int width, out int height)
+{
+    width = int(textureSize(texName,0).x);
+    height = int(textureSize(texName,0).y);
+}
+
+void GetDimensions(itextureCube texName, uint mipLevel, out uint width, out uint height, out uint numberOfLevels)
+{
+    width = uint(textureSize(texName,int(mipLevel)).x);
+    height = uint(textureSize(texName,int(mipLevel)).y);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(itextureCube texName, out uint width, out uint height)
+{
+    width = uint(textureSize(texName,0).x);
+    height = uint(textureSize(texName,0).y);
+}
+
+void GetDimensions(itextureCube texName, uint mipLevel, out float width, out float height, out uint numberOfLevels)
+{
+    width = float(textureSize(texName,int(mipLevel)).x);
+    height = float(textureSize(texName,int(mipLevel)).y);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(itextureCube texName, out float width, out float height)
+{
+    width = float(textureSize(texName,0).x);
+    height = float(textureSize(texName,0).y);
+}
+
+void GetDimensions(itextureCubeArray texName, uint mipLevel, out int width, out int height, out int elements, out uint numberOfLevels)
+{
+    width = int(textureSize(texName,int(mipLevel)).x);
+    height = int(textureSize(texName,int(mipLevel)).y);
+    elements = int(textureSize(texName,int(mipLevel)).z);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(itextureCubeArray texName, out int width, out int height, out int elements)
+{
+    width = int(textureSize(texName,0).x);
+    height = int(textureSize(texName,0).y);
+    elements = int(textureSize(texName,0).z);
+}
+
+void GetDimensions(itextureCubeArray texName, uint mipLevel, out uint width, out uint height, out uint elements, out uint numberOfLevels)
+{
+    width = uint(textureSize(texName,int(mipLevel)).x);
+    height = uint(textureSize(texName,int(mipLevel)).y);
+    elements = uint(textureSize(texName,int(mipLevel)).z);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(itextureCubeArray texName, out uint width, out uint height, out uint elements)
+{
+    width = uint(textureSize(texName,0).x);
+    height = uint(textureSize(texName,0).y);
+    elements = uint(textureSize(texName,0).z);
+}
+
+void GetDimensions(itextureCubeArray texName, uint mipLevel, out float width, out float height, out float elements, out uint numberOfLevels)
+{
+    width = float(textureSize(texName,int(mipLevel)).x);
+    height = float(textureSize(texName,int(mipLevel)).y);
+    elements = float(textureSize(texName,int(mipLevel)).z);
+    numberOfLevels = uint(textureQueryLevels(texName));
+}
+
+void GetDimensions(itextureCubeArray texName, out float width, out float height, out float elements)
+{
+    width = float(textureSize(texName,0).x);
+    height = float(textureSize(texName,0).y);
+    elements = float(textureSize(texName,0).z);
+}
+
+void GetDimensions(texture2DMS texName, out int width, out int height)
+{
+    width = int(textureSize(texName).x);
+    height = int(textureSize(texName).y);
+}
+
+void GetDimensions(texture2DMS texName, out uint width, out uint height)
+{
+    width = uint(textureSize(texName).x);
+    height = uint(textureSize(texName).y);
+}
+
+void GetDimensions(texture2DMS texName, out float width, out float height)
+{
+    width = float(textureSize(texName).x);
+    height = float(textureSize(texName).y);
+}
+
+void GetDimensions(texture2DMSArray texName, out int width, out int height, out int elements)
+{
+    width = int(textureSize(texName).x);
+    height = int(textureSize(texName).y);
+    elements = int(textureSize(texName).z);
+}
+
+void GetDimensions(texture2DMSArray texName, out uint width, out uint height, out uint elements)
+{
+    width = uint(textureSize(texName).x);
+    height = uint(textureSize(texName).y);
+    elements = uint(textureSize(texName).z);
+}
+
+void GetDimensions(texture2DMSArray texName, out float width, out float height, out float elements)
+{
+    width = float(textureSize(texName).x);
+    height = float(textureSize(texName).y);
+    elements = float(textureSize(texName).z);
+}
+
+void GetDimensions(utexture2DMS texName, out int width, out int height)
+{
+    width = int(textureSize(texName).x);
+    height = int(textureSize(texName).y);
+}
+
+void GetDimensions(utexture2DMS texName, out uint width, out uint height)
+{
+    width = uint(textureSize(texName).x);
+    height = uint(textureSize(texName).y);
+}
+
+void GetDimensions(utexture2DMS texName, out float width, out float height)
+{
+    width = float(textureSize(texName).x);
+    height = float(textureSize(texName).y);
+}
+
+void GetDimensions(utexture2DMSArray texName, out int width, out int height, out int elements)
+{
+    width = int(textureSize(texName).x);
+    height = int(textureSize(texName).y);
+    elements = int(textureSize(texName).z);
+}
+
+void GetDimensions(utexture2DMSArray texName, out uint width, out uint height, out uint elements)
+{
+    width = uint(textureSize(texName).x);
+    height = uint(textureSize(texName).y);
+    elements = uint(textureSize(texName).z);
+}
+
+void GetDimensions(utexture2DMSArray texName, out float width, out float height, out float elements)
+{
+    width = float(textureSize(texName).x);
+    height = float(textureSize(texName).y);
+    elements = float(textureSize(texName).z);
+}
+
+void GetDimensions(itexture2DMS texName, out int width, out int height)
+{
+    width = int(textureSize(texName).x);
+    height = int(textureSize(texName).y);
+}
+
+void GetDimensions(itexture2DMS texName, out uint width, out uint height)
+{
+    width = uint(textureSize(texName).x);
+    height = uint(textureSize(texName).y);
+}
+
+void GetDimensions(itexture2DMS texName, out float width, out float height)
+{
+    width = float(textureSize(texName).x);
+    height = float(textureSize(texName).y);
+}
+
+void GetDimensions(itexture2DMSArray texName, out int width, out int height, out int elements)
+{
+    width = int(textureSize(texName).x);
+    height = int(textureSize(texName).y);
+    elements = int(textureSize(texName).z);
+}
+
+void GetDimensions(itexture2DMSArray texName, out uint width, out uint height, out uint elements)
+{
+    width = uint(textureSize(texName).x);
+    height = uint(textureSize(texName).y);
+    elements = uint(textureSize(texName).z);
+}
+
+void GetDimensions(itexture2DMSArray texName, out float width, out float height, out float elements)
+{
+    width = float(textureSize(texName).x);
+    height = float(textureSize(texName).y);
+    elements = float(textureSize(texName).z);
+}
+
+
+
+float Pi = float(3.14159274);
+float SampleCount = float(128);
+float RadicalInverse_VdC(uint bits)
+{
+    (bits = ((bits << uint(16)) | (bits >> uint(16))));
+    (bits = (((bits & 1431655765u) << uint(1)) | ((bits & 2863311530u) >> uint(1))));
+    (bits = (((bits & 858993459u) << uint(2)) | ((bits & 3435973836u) >> uint(2))));
+    (bits = (((bits & 252645135u) << uint(4)) | ((bits & 4042322160u) >> uint(4))));
+    (bits = (((bits & 16711935u) << uint(8)) | ((bits & 4278255360u) >> uint(8))));
+    return (float(bits) * 2.328306e-10);
+}
+vec2 Hammersley(uint i, uint N)
+{
+    return vec2((float(i) / float(N)), RadicalInverse_VdC(i));
+}
+vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness)
+{
+    float a = (roughness * roughness);
+    float phi = ((float(2.0) * Pi) * (Xi).x);
+    float cosTheta = sqrt(((float(1.0) - (Xi).y) / (float(1.0) + (((a * a) - float(1.0)) * (Xi).y))));
+    float sinTheta = sqrt((float(1.0) - (cosTheta * cosTheta)));
+    vec3 H;
+    ((H).x = (cos(phi) * sinTheta));
+    ((H).y = (sin(phi) * sinTheta));
+    ((H).z = cosTheta);
+    vec3 up = (((abs((N).z) < float(0.9990000)))?(vec3(0.0, 0.0, 1.0)):(vec3(1.0, 0.0, 0.0)));
+    vec3 tangent = normalize(cross(up, N));
+    vec3 bitangent = cross(N, tangent);
+    vec3 sampleVec = (((tangent * vec3((H).x)) + (bitangent * vec3((H).y))) + (N * vec3((H).z)));
+    return normalize(sampleVec);
+}
+float GeometrySchlickGGX(float NdotV, float roughness)
+{
+    float a = roughness;
+    float k = ((a * a) / float(2.0));
+    float nom = NdotV;
+    float denom = ((NdotV * (float(1.0) - k)) + k);
+    return (nom / denom);
+}
+float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
+{
+    float NdotV = max(dot(N, V), float(0.0));
+    float NdotL = max(dot(N, L), float(0.0));
+    float ggx2 = GeometrySchlickGGX(NdotV, roughness);
+    float ggx1 = GeometrySchlickGGX(NdotL, roughness);
+    return (ggx1 * ggx2);
+}
+vec2 IntegrateBRDF(float NdotV, float roughness)
+{
+    vec3 V;
+    ((V).x = sqrt((float(1.0) - (NdotV * NdotV))));
+    ((V).y = float(0.0));
+    ((V).z = NdotV);
+    float A = float(0.0);
+    float B = float(0.0);
+    vec3 N = vec3(0.0, 0.0, 1.0);
+    for (int i = 0; (float(i) < SampleCount); (++i))
+    {
+        vec2 Xi = Hammersley(uint(i), uint(SampleCount));
+        vec3 H = ImportanceSampleGGX(Xi, N, roughness);
+        vec3 L = normalize(((vec3((float(2.0) * dot(V, H))) * H) - V));
+        float NdotL = max((L).z, float(0.0));
+        float NdotH = max((H).z, float(0.0));
+        float VdotH = max(dot(V, H), float(0.0));
+        if((NdotL > float(0.0)))
+        {
+            float G = GeometrySmith(N, V, L, roughness);
+            float G_Vis = ((G * VdotH) / (NdotH * NdotV));
+            float Fc = pow((float(1.0) - VdotH),float(float(5.0)));
+            (A += ((float(1.0) - Fc) * G_Vis));
+            (B += (Fc * G_Vis));
+        }
+    }
+    (A /= float(SampleCount));
+    (B /= float(SampleCount));
+    return vec2(A, B);
+}
+const float PI = float(3.14159274);
+layout(set = 0, binding = 0, rg32f) uniform image2D dstTexture;
+
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+void HLSLmain(uvec3 DTid)
+{
+    vec2 texcoords = vec2((float((float((DTid).x) + 0.5)) / 512.0), (float(1.0) - (float((float((DTid).y) + 0.5)) / 512.0)));
+    vec4 output1 = vec4(IntegrateBRDF((texcoords).x, (texcoords).y), 0.0, 0.0);
+    imageStore(dstTexture, ivec2((DTid).xy), vec4(vec2(output1), 0.0, 0.0));
+}
+void main()
+{
+    uvec3 DTid;
+    DTid = gl_GlobalInvocationID;
+    HLSLmain(DTid);
+}
