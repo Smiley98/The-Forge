@@ -212,7 +212,7 @@ public:
 
 		addShader(pRenderer, &skyShader, &pSkyBoxDrawShader);
 		addShader(pRenderer, &basicShader, &pSphereShader);
-		//addShader(pRenderer, &raymarchingShader, &pRaymarchingShader);
+		addShader(pRenderer, &raymarchingShader, &pRaymarchingShader);
 
 		SamplerDesc samplerDesc = { FILTER_LINEAR,
 									FILTER_LINEAR,
@@ -243,9 +243,9 @@ public:
 		RasterizerStateDesc rasterizerStateDesc = {};
 		rasterizerStateDesc.mCullMode = CULL_MODE_NONE;
 		addRasterizerState(pRenderer, &rasterizerStateDesc, &pSkyboxRast);
-		//addRasterizerState(pRenderer, &rasterizerStateDesc, &pRaymarchingRast);
+		addRasterizerState(pRenderer, &rasterizerStateDesc, &pRaymarchingRast);
 		rasterizerStateDesc.mCullMode = CULL_MODE_FRONT;
-		//addRasterizerState(pRenderer, &rasterizerStateDesc, &pSphereRast);
+		addRasterizerState(pRenderer, &rasterizerStateDesc, &pSphereRast);
 
 		// Standard lequal depth test. Consider optimizing raymarching with no depth testing and writing
 		DepthStateDesc depthStateDesc = {};
@@ -257,7 +257,6 @@ public:
 		// Generate sphere vertex buffer
 		float* pSpherePoints;
 		generateSpherePoints(&pSpherePoints, &gNumberOfSpherePoints, gSphereResolution, gSphereDiameter);
-		//Paste raymarching module screen triangle vertex generation code here
 
 		uint64_t       sphereDataSize = gNumberOfSpherePoints * sizeof(float);
 		BufferLoadDesc sphereVbDesc = {};
@@ -551,9 +550,11 @@ public:
 		removeSampler(pRenderer, pSamplerSkyBox);
 		removeShader(pRenderer, pSphereShader);
 		removeShader(pRenderer, pSkyBoxDrawShader);
+		removeShader(pRenderer, pRaymarchingShader);
 		removeRootSignature(pRenderer, pRootSignature);
 
 		removeDepthState(pDepth);
+		removeRasterizerState(pRaymarchingRast);
 		removeRasterizerState(pSphereRast);
 		removeRasterizerState(pSkyboxRast);
 
@@ -633,7 +634,7 @@ public:
 		pipelineSettings.pShaderProgram = pSkyBoxDrawShader;
 		addPipeline(pRenderer, &desc, &pSkyBoxDrawPipeline);
 
-		/*
+		///*
 		//We don't need to worry about depth for rays for now, just copy the skybox settings but have no attributes.
 		vertexLayout.mAttribCount = 0;
 		//Not really necessary since the skybox rasterization state is identical, but we didn't know that at the time of creation.
@@ -654,6 +655,7 @@ public:
 
 		gVirtualJoystick.Unload();
 
+		removePipeline(pRenderer, pRaymarchingPipeline);
 		removePipeline(pRenderer, pSkyBoxDrawPipeline);
 		removePipeline(pRenderer, pSpherePipeline);
 
