@@ -70,8 +70,9 @@ struct UniformBlock
 };
 
 struct RaymarchingUniformBlock {
-	vec4 res;
+	mat4 inverseWorldMatrices[MAX_PLANETS];
 	mat4 invView;
+	vec4 res;
 };
 
 const uint32_t gImageCount = 3;
@@ -459,7 +460,7 @@ public:
 
 		//Raymarching motion parameters:
 		CameraMotionParameters cmp{ 1.6f, 6.0f, 2.0f };
-		vec3                   camPos{ 3.5, 10.0, 0.5 };
+		vec3                   camPos{ 3.5, /*10.0*/1.0, 0.5 };
 		vec3                   lookAt{ -0.5f, -0.4f, 0.5f };
 
 		pCameraController = createFpsCameraController(camPos, lookAt);
@@ -734,8 +735,13 @@ public:
 			gPlanetInfoData[i].mSharedMat = parentMat * rotOrbitY * trans;
 			gUniformData.mToWorldMat[i] = parentMat * rotOrbitY * rotOrbitZ * trans * rotSelf * scale;
 			gUniformData.mColor[i] = gPlanetInfoData[i].mColor;
+			gUniformDataRaymarching.inverseWorldMatrices[i] = inverse(gUniformData.mToWorldMat[i]);
 		}
-		
+
+		mat4 transformationMatrix = mat4::identity();
+		transformationMatrix.setTranslation(vec3(0.0f, 0.25f, 0.0f));
+		gUniformDataRaymarching.inverseWorldMatrices[0] = inverse(transformationMatrix);
+
 		viewMat.setTranslation(vec3(0));
 		gUniformDataSky = gUniformData;
 		gUniformDataSky.mProjectView = projMat * viewMat;
@@ -804,31 +810,33 @@ public:
 		cmdSetScissor(cmd, 0, 0, pRenderTarget->mDesc.mWidth, pRenderTarget->mDesc.mHeight);
 
 		cmdBindDescriptorSet(cmd, 0, pDescriptorSetTexture);
-    
-		//// draw skybox
-		cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw Skybox", true);
-		cmdBindPipeline(cmd, pSkyBoxDrawPipeline);
-		cmdBindDescriptorSet(cmd, gFrameIndex * gNumUniformBlocks + 0, pDescriptorSetUniforms);
-		cmdBindVertexBuffer(cmd, 1, &pSkyBoxVertexBuffer, NULL);
-		cmdDraw(cmd, 36, 0);
-		cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
+		if (GetAsyncKeyState(VK_SPACE))
+		{
+			//// draw skybox
+			cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw Skybox", true);
+			cmdBindPipeline(cmd, pSkyBoxDrawPipeline);
+			cmdBindDescriptorSet(cmd, gFrameIndex * gNumUniformBlocks + 0, pDescriptorSetUniforms);
+			cmdBindVertexBuffer(cmd, 1, &pSkyBoxVertexBuffer, NULL);
+			cmdDraw(cmd, 36, 0);
+			cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
 
-		//// draw planets
-		cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw Planets", true);
-		cmdBindPipeline(cmd, pSpherePipeline);
-		cmdBindDescriptorSet(cmd, gFrameIndex * gNumUniformBlocks + 1, pDescriptorSetUniforms);
-		cmdBindVertexBuffer(cmd, 1, &pSphereVertexBuffer, NULL);
-		cmdDrawInstanced(cmd, gNumberOfSpherePoints / 6, 0, gNumPlanets, 0);
-		cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
-
+			//// draw planets
+			cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw Planets", true);
+			cmdBindPipeline(cmd, pSpherePipeline);
+			cmdBindDescriptorSet(cmd, gFrameIndex * gNumUniformBlocks + 1, pDescriptorSetUniforms);
+			cmdBindVertexBuffer(cmd, 1, &pSphereVertexBuffer, NULL);
+			cmdDrawInstanced(cmd, gNumberOfSpherePoints / 6, 0, gNumPlanets, 0);
+			cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
+		}
+		
 		//// draw rays
-		if (GetAsyncKeyState(VK_SPACE)) {
+		//if (GetAsyncKeyState(VK_SPACE)) {
 			cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw Rays", true);
 			cmdBindPipeline(cmd, pRaymarchingPipeline);
 			cmdBindDescriptorSet(cmd, gFrameIndex * gNumUniformBlocks + 2, pDescriptorSetUniforms);
 			cmdDraw(cmd, 3, 0);
 			cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
-		}
+		//}
 
 	loadActions = {};
 	loadActions.mLoadActionsColor[0] = LOAD_ACTION_LOAD;
