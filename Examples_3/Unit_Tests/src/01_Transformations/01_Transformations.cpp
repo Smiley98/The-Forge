@@ -74,6 +74,37 @@ struct RaymarchingUniformBlock {
 	mat4 invView;
 	vec4 res;
 	float scalings[MAX_PLANETS];
+
+	//mat4 invView;
+	//
+	////Inverse transformation matrices.
+	//mat4 invSun;
+	//mat4 invMerc;
+	//mat4 invVenus;
+	//mat4 invEarth;
+	//mat4 invMars;
+	//mat4 invJup;
+	//mat4 invSat;
+	//mat4 invUr;
+	//mat4 invNept;
+	//mat4 invPlu;
+	//mat4 invMoon;
+	//
+	////Uniform scaling floats.
+	//float sSun;
+	//float sMerc;
+	//float sVenus;
+	//float sEarth;
+	//float sMars;
+	//float sJup;
+	//float sSat;
+	//float sUr;
+	//float sNept;
+	//float sPlu;
+	//float sMoon;
+	//
+	////Screen resolution.
+	//vec2 resolution;
 };
 
 const uint32_t gImageCount = 3;
@@ -347,11 +378,12 @@ public:
 		gPlanetInfoData[0].mYOrbitSpeed = 0;    // Earth years for one orbit
 		gPlanetInfoData[0].mZOrbitSpeed = 0;
 		gPlanetInfoData[0].mRotationSpeed = 24.0f;    // Earth days for one rotation
-		gPlanetInfoData[0].mTranslationMat = mat4::identity();
+		gPlanetInfoData[0].mTranslationMat = mat4::translation(vec3(0.0f, 0.5f, 0.0f));
 		gPlanetInfoData[0].mScaleMat = mat4::scale(vec3(10.0f));
 		gPlanetInfoData[0].mColor = vec4(0.9f, 0.6f, 0.1f, 0.0f);
 		//gUniformDataRaymarching.scalings[0] = 10.0f;
 		gUniformDataRaymarching.scalings[0] = 1.0f;
+		//gUniformDataRaymarching.sSun = 1.0f;
 
 		// Mercury
 		gPlanetInfoData[1].mParentIndex = 0;
@@ -359,11 +391,12 @@ public:
 		gPlanetInfoData[1].mZOrbitSpeed = 0.0f;
 		gPlanetInfoData[1].mRotationSpeed = 58.7f;
 		//gPlanetInfoData[1].mTranslationMat = mat4::translation(vec3(10.0f, 0, 0));
-		gPlanetInfoData[1].mTranslationMat = mat4::translation(vec3(1.0f, 0, 0));
+		gPlanetInfoData[1].mTranslationMat = mat4::translation(vec3(1.0f, 0.5f, 0.0f));
 		gPlanetInfoData[1].mScaleMat = mat4::scale(vec3(1.0f));
 		gPlanetInfoData[1].mColor = vec4(0.7f, 0.3f, 0.1f, 1.0f);
 		//gUniformDataRaymarching.scalings[1] = 1.0f;
 		gUniformDataRaymarching.scalings[1] = 0.1f;
+		//gUniformDataRaymarching.sMerc = 0.1f;
 
 		// Venus
 		gPlanetInfoData[2].mParentIndex = 0;
@@ -371,11 +404,12 @@ public:
 		gPlanetInfoData[2].mZOrbitSpeed = 0.0f;
 		gPlanetInfoData[2].mRotationSpeed = 243.0f;
 		//gPlanetInfoData[2].mTranslationMat = mat4::translation(vec3(20.0f, 0, 5));
-		gPlanetInfoData[2].mTranslationMat = mat4::translation(vec3(2.0f, 0, 5));
+		gPlanetInfoData[2].mTranslationMat = mat4::translation(vec3(2.0f, 0.5, 0.0f));
 		gPlanetInfoData[2].mScaleMat = mat4::scale(vec3(2));
 		gPlanetInfoData[2].mColor = vec4(0.8f, 0.6f, 0.1f, 1.0f);
 		//gUniformDataRaymarching.scalings[2] = 2.0f;
 		gUniformDataRaymarching.scalings[2] = 0.2f;
+		//gUniformDataRaymarching.sVenus = 0.2f;
 
 		// Earth
 		gPlanetInfoData[3].mParentIndex = 0;
@@ -383,11 +417,12 @@ public:
 		gPlanetInfoData[3].mZOrbitSpeed = 0.0f;
 		gPlanetInfoData[3].mRotationSpeed = 1.0f;
 		//gPlanetInfoData[3].mTranslationMat = mat4::translation(vec3(30.0f, 0, 0));
-		gPlanetInfoData[3].mTranslationMat = mat4::translation(vec3(3.0f, 0, 0));
+		gPlanetInfoData[3].mTranslationMat = mat4::translation(vec3(3.0f, 0.5f, 0.0f));
 		gPlanetInfoData[3].mScaleMat = mat4::scale(vec3(4));
 		gPlanetInfoData[3].mColor = vec4(0.3f, 0.2f, 0.8f, 1.0f);
 		//gUniformDataRaymarching.scalings[3] = 4.0f;
 		gUniformDataRaymarching.scalings[3] = 0.4f;
+		//gUniformDataRaymarching.sEarth = 0.4f;
 
 		// Mars
 		gPlanetInfoData[4].mParentIndex = 0;
@@ -395,11 +430,12 @@ public:
 		gPlanetInfoData[4].mZOrbitSpeed = 0.0f;
 		gPlanetInfoData[4].mRotationSpeed = 1.1f;
 		//gPlanetInfoData[4].mTranslationMat = mat4::translation(vec3(40.0f, 0, 0));
-		gPlanetInfoData[4].mTranslationMat = mat4::translation(vec3(4.0f, 0, 0));
+		gPlanetInfoData[4].mTranslationMat = mat4::translation(vec3(4.0f, 0.5f, 0.0f));
 		gPlanetInfoData[4].mScaleMat = mat4::scale(vec3(3));
 		gPlanetInfoData[4].mColor = vec4(0.9f, 0.3f, 0.1f, 1.0f);
 		//gUniformDataRaymarching.scalings[4] = 3.0f;
 		gUniformDataRaymarching.scalings[4] = 0.3f;
+		//gUniformDataRaymarching.sMars = 0.3f;
 
 		// Jupiter
 		gPlanetInfoData[5].mParentIndex = 0;
@@ -407,11 +443,12 @@ public:
 		gPlanetInfoData[5].mZOrbitSpeed = 0.0f;
 		gPlanetInfoData[5].mRotationSpeed = 0.4f;
 		//gPlanetInfoData[5].mTranslationMat = mat4::translation(vec3(50.0f, 0, 0));
-		gPlanetInfoData[5].mTranslationMat = mat4::translation(vec3(5.0f, 0, 0));
+		gPlanetInfoData[5].mTranslationMat = mat4::translation(vec3(5.0f, 0.5f, 0.0f));
 		gPlanetInfoData[5].mScaleMat = mat4::scale(vec3(8));
 		gPlanetInfoData[5].mColor = vec4(0.6f, 0.4f, 0.4f, 1.0f);
 		//gUniformDataRaymarching.scalings[5] = 8.0f;
 		gUniformDataRaymarching.scalings[5] = 0.8f;
+		//gUniformDataRaymarching.sJup = 0.8f;
 
 		// Saturn
 		gPlanetInfoData[6].mParentIndex = 0;
@@ -419,11 +456,12 @@ public:
 		gPlanetInfoData[6].mZOrbitSpeed = 0.0f;
 		gPlanetInfoData[6].mRotationSpeed = 0.5f;
 		//gPlanetInfoData[6].mTranslationMat = mat4::translation(vec3(60.0f, 0, 0));
-		gPlanetInfoData[6].mTranslationMat = mat4::translation(vec3(6.0f, 0, 0));
+		gPlanetInfoData[6].mTranslationMat = mat4::translation(vec3(6.0f, 0.5f, 0.0f));
 		gPlanetInfoData[6].mScaleMat = mat4::scale(vec3(6));
 		gPlanetInfoData[6].mColor = vec4(0.7f, 0.7f, 0.5f, 1.0f);
 		//gUniformDataRaymarching.scalings[6] = 6.0f;
 		gUniformDataRaymarching.scalings[6] = 0.6f;
+		//gUniformDataRaymarching.sSat = 0.6f;
 
 		// Uranus
 		gPlanetInfoData[7].mParentIndex = 0;
@@ -431,11 +469,12 @@ public:
 		gPlanetInfoData[7].mZOrbitSpeed = 0.0f;
 		gPlanetInfoData[7].mRotationSpeed = 0.8f;
 		//gPlanetInfoData[7].mTranslationMat = mat4::translation(vec3(70.0f, 0, 0));
-		gPlanetInfoData[7].mTranslationMat = mat4::translation(vec3(7.0f, 0, 0));
+		gPlanetInfoData[7].mTranslationMat = mat4::translation(vec3(7.0f, 0.5f, 0.0f));
 		gPlanetInfoData[7].mScaleMat = mat4::scale(vec3(7));
 		gPlanetInfoData[7].mColor = vec4(0.4f, 0.4f, 0.6f, 1.0f);
 		//gUniformDataRaymarching.scalings[7] = 7.0f;
 		gUniformDataRaymarching.scalings[7] = 0.7f;
+		//gUniformDataRaymarching.sUr = 0.7f;
 
 		// Neptune
 		gPlanetInfoData[8].mParentIndex = 0;
@@ -443,11 +482,12 @@ public:
 		gPlanetInfoData[8].mZOrbitSpeed = 0.0f;
 		gPlanetInfoData[8].mRotationSpeed = 0.9f;
 		//gPlanetInfoData[8].mTranslationMat = mat4::translation(vec3(80.0f, 0, 0));
-		gPlanetInfoData[8].mTranslationMat = mat4::translation(vec3(8.0f, 0, 0));
+		gPlanetInfoData[8].mTranslationMat = mat4::translation(vec3(8.0f, 0.5f, 0.0f));
 		gPlanetInfoData[8].mScaleMat = mat4::scale(vec3(8));
 		gPlanetInfoData[8].mColor = vec4(0.5f, 0.2f, 0.9f, 1.0f);
 		//gUniformDataRaymarching.scalings[8] = 8.0f;
 		gUniformDataRaymarching.scalings[8] = 0.8f;
+		//gUniformDataRaymarching.sNept = 0.8f;
 
 		// Pluto - Not a planet XDD
 		gPlanetInfoData[9].mParentIndex = 0;
@@ -455,11 +495,12 @@ public:
 		gPlanetInfoData[9].mZOrbitSpeed = 1.0f;
 		gPlanetInfoData[9].mRotationSpeed = 7.0f;
 		//gPlanetInfoData[9].mTranslationMat = mat4::translation(vec3(90.0f, 0, 0));
-		gPlanetInfoData[9].mTranslationMat = mat4::translation(vec3(9.0f, 0, 0));
+		gPlanetInfoData[9].mTranslationMat = mat4::translation(vec3(9.0f, 0.5f, 0.0f));
 		gPlanetInfoData[9].mScaleMat = mat4::scale(vec3(1.0f));
 		gPlanetInfoData[9].mColor = vec4(0.7f, 0.5f, 0.5f, 1.0f);
 		//gUniformDataRaymarching.scalings[9] = 1.0f;
 		gUniformDataRaymarching.scalings[9] = 0.1f;
+		//gUniformDataRaymarching.sPlu = 0.1f;
 
 		// Moon
 		gPlanetInfoData[10].mParentIndex = 3;
@@ -467,11 +508,12 @@ public:
 		gPlanetInfoData[10].mZOrbitSpeed = 200.0f;
 		gPlanetInfoData[10].mRotationSpeed = 27.0f;
 		//gPlanetInfoData[10].mTranslationMat = mat4::translation(vec3(5.0f, 0, 0));
-		gPlanetInfoData[10].mTranslationMat = mat4::translation(vec3(0.5f, 0, 0));
+		gPlanetInfoData[10].mTranslationMat = mat4::translation(vec3(0.5f, 0.5f, 0.0f));
 		gPlanetInfoData[10].mScaleMat = mat4::scale(vec3(1));
 		gPlanetInfoData[10].mColor = vec4(0.3f, 0.3f, 0.4f, 1.0f);
 		//gUniformDataRaymarching.scalings[10] = 1.0f;
 		gUniformDataRaymarching.scalings[10] = 0.1f;
+		//gUniformDataRaymarching.sMoon = 0.1f;
 
 		if (!gAppUI.Init(pRenderer))
 			return false;
@@ -730,6 +772,7 @@ public:
 		pCameraController->update(deltaTime);
 
 		gUniformDataRaymarching.res = vec4((float)mSettings.mWidth, (float)mSettings.mHeight, 0.0f, 0.0f);
+		//gUniformDataRaymarching.resolution = vec2((float)mSettings.mWidth, (float)mSettings.mHeight);
 		mat4 viewMat = pCameraController->getViewMatrix();
 		gUniformDataRaymarching.invView = inverse(viewMat);
 
@@ -771,15 +814,57 @@ public:
 			gUniformData.mColor[i] = gPlanetInfoData[i].mColor;
 
 			//This doesn't seem to be affecting the rays. Sadly I don't have time to debug this.
-			//trans[3] /= 10.0f;
+			trans[3] /= 10.0f;
 			//Can't scale with matrices when raymarching because scaling isn't a rigid body transformation (distorts euclidean space).
 			gUniformDataRaymarching.inverseWorldMatrices[i] = inverse(parentMat * rotOrbitY * rotOrbitZ * trans * rotSelf);
 			//(We send up the scales separately).
-		}
 
-		mat4 transformationMatrix = mat4::identity();
-		transformationMatrix.setTranslation(vec3(0.0f, 0.25f, 0.0f));
-		gUniformDataRaymarching.inverseWorldMatrices[0] = inverse(transformationMatrix);
+
+			//This didn't work either :'(
+			//Sooooooo I guess I can't count / don't understand memory layout std140 cause there seems to be memory damage.
+			//Gonna go back to high school programming and just not use arrays ;)
+			//trans[3] /= 10.0f;
+			//mat4 planetInv = inverse(parentMat * rotOrbitY * rotOrbitZ * trans * rotSelf);
+			//
+			////RIP programming practices:
+			//switch (i) {
+			//case 0:
+			//	gUniformDataRaymarching.invSun = planetInv;
+			//	break;
+			//case 1:
+			//	gUniformDataRaymarching.invMerc = planetInv;
+			//	break;
+			//case 2:
+			//	gUniformDataRaymarching.invVenus = planetInv;
+			//	break;
+			//case 3:
+			//	gUniformDataRaymarching.invEarth = planetInv;
+			//	break;
+			//case 4:
+			//	gUniformDataRaymarching.invMars = planetInv;
+			//	break;
+			//case 5:
+			//	gUniformDataRaymarching.invJup = planetInv;
+			//	break;
+			//case 6:
+			//	gUniformDataRaymarching.invSat = planetInv;
+			//	break;
+			//case 7:
+			//	gUniformDataRaymarching.invUr = planetInv;
+			//	break;
+			//case 8:
+			//	gUniformDataRaymarching.invNept = planetInv;
+			//	break;
+			//case 9:
+			//	gUniformDataRaymarching.invPlu = planetInv;
+			//	break;
+			//case 10:
+			//	gUniformDataRaymarching.invMoon = planetInv;
+			//	break;
+			//default:
+			//	break;
+			//}
+		}
 
 		viewMat.setTranslation(vec3(0));
 		gUniformDataSky = gUniformData;
@@ -849,7 +934,7 @@ public:
 		cmdSetScissor(cmd, 0, 0, pRenderTarget->mDesc.mWidth, pRenderTarget->mDesc.mHeight);
 
 		cmdBindDescriptorSet(cmd, 0, pDescriptorSetTexture);
-		if (GetAsyncKeyState(VK_SPACE))
+		if (GetAsyncKeyState(0xA0))
 		{
 			//// draw skybox
 			cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw Skybox", true);

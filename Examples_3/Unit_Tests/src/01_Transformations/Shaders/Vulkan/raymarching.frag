@@ -6,8 +6,39 @@ layout(location = 0) out vec4 outColor;
 layout (std140, UPDATE_FREQ_PER_FRAME, binding=0) uniform uniformBlock {
     mat4 inverseWorldMatrices[MAX_PLANETS];
     mat4 invView;
-    vec2 resolution;
+    vec4 resolution;
     float scalings[MAX_PLANETS];
+
+    //mat4 invView;
+    //
+    ////Inverse transformation matrices.
+    //mat4 invSun;
+    //mat4 invMerc;
+    //mat4 invVenus;
+    //mat4 invEarth;
+    //mat4 invMars;
+    //mat4 invJup;
+    //mat4 invSat;
+    //mat4 invUr;
+    //mat4 invNept;
+    //mat4 invPlu;
+    //mat4 invMoon;
+    //
+    ////Uniform scaling floats.
+    //float sSun;
+    //float sMerc;
+    //float sVenus;
+    //float sEarth;
+    //float sMars;
+    //float sJup;
+    //float sSat;
+    //float sUr;
+    //float sNept;
+    //float sPlu;
+    //float sMoon;
+    //
+    ////Screen resolution.
+    //vec2 resolution;
 } u_input;
 
 #define AA 1   // make this 1 is your machine is too slow
@@ -208,41 +239,83 @@ vec2 map( in vec3 pos )
     //res = opU( res, vec2( sdConeSection( pos-vec3( 0.0,0.35,-2.0), 0.15, 0.2, 0.1 ), 13.67 ) );
     //res = opU( res, vec2( sdEllipsoid( pos-vec3( 1.0,0.35,-2.0), vec3(0.15, 0.2, 0.05) ), 43.17 ) );
 
-    vec2 res;
-    vec4 pos4 = vec4(pos, 1.0);
-
-    float distPlane = sdPlane(pos);
-    vec2 plane = vec2( distPlane, 1.0 );
-    res = plane;
+    //vec2 sun = marchPlanet(pos4, u_input.invSun, u_input.sSun, 46.9);
+    //res = opU(res, sun);
+    
+    //vec2 mercury = marchPlanet(pos4, u_input.invMerc, u_input.sMerc, 46.9);
+    //res = opU(res, mercury);
+    
+    //vec2 venus = marchPlanet(pos4, u_input.invVenus, u_input.sVenus, 46.9);
+    //res = opU(res, venus);
+    
+    //vec2 earth = marchPlanet(pos4, u_input.invEarth, u_input.sEarth, 46.9);
+    //res = opU(res, earth);
+    //
+    //vec2 mars = marchPlanet(pos4, u_input.invMars, u_input.sMars, 46.9);
+    //res = opU(res, mars);
+    //
+    //vec2 jupiter = marchPlanet(pos4, u_input.invJup, u_input.sJup, 46.9);
+    //res = opU(res, jupiter);
+    //
+    //vec2 saturn = marchPlanet(pos4, u_input.invSat, u_input.sSat, 46.9);
+    //res = opU(res, saturn);
+    //
+    //vec2 uranus = marchPlanet(pos4, u_input.invUr, sUr, 46.9);
+    //res = opU(res, uranus);
+    //
+    //vec2 neptune = marchPlanet(pos4, u_input.invNept, u_input.sNept, 46.9);
+    //res = opU(res, neptune);
+    //
+    //vec2 pluto = marchPlanet(pos4, u_input.invPlu, u_input.sPlu, 46.9);
+    //res = opU(res, pluto);
+    //
+    //vec2 moon = marchPlanet(pos4, u_input.invMoon, u_input.sMoon, 46.9);
+    //res = opU(res, moon);
    
     //Not sure why this isn't working.
     //for (int i = 0; i <  MAX_PLANETS; i++) {
     //    res = opU(res, marchPlanet(pos4, u_input.inverseWorldMatrices[i], u_input.scalings[i], 46.9));
     //}
 
+    vec2 res;
+    vec4 pos4 = vec4(pos, 1.0);
+
+    float distPlane = sdPlane(pos);
+    vec2 plane = vec2( distPlane, 1.0 );
+    res = plane;
+
     vec2 sun = marchPlanet(pos4, u_input.inverseWorldMatrices[0], u_input.scalings[0], 46.9);
     res = opU(res, sun);
+    
     vec2 mercury = marchPlanet(pos4, u_input.inverseWorldMatrices[1], u_input.scalings[1], 46.9);
     res = opU(res, mercury);
+    
     vec2 venus = marchPlanet(pos4, u_input.inverseWorldMatrices[2], u_input.scalings[2], 46.9);
     res = opU(res, venus);
+    
+    vec2 earth = marchPlanet(pos4, u_input.inverseWorldMatrices[3], u_input.scalings[3], 46.9);
+    res = opU(res, earth);
 
-    //vec2 earth = marchPlanet(pos4, u_input.inverseWorldMatrices[3], u_input.scalings[3], 46.9);
-    //res = opU(res, earth);
-    //vec2 mars = marchPlanet(pos4, u_input.inverseWorldMatrices[4], u_input.scalings[4], 46.9);
-    //res = opU(res, mars);
-    //vec2 jupiter = marchPlanet(pos4, u_input.inverseWorldMatrices[5], u_input.scalings[5], 46.9);
-    //res = opU(res, jupiter);
-    //vec2 saturn = marchPlanet(pos4, u_input.inverseWorldMatrices[6], u_input.scalings[6], 46.9);
-    //res = opU(res, saturn);
-    //vec2 uranus = marchPlanet(pos4, u_input.inverseWorldMatrices[7], u_input.scalings[7], 46.9);
-    //res = opU(res, uranus);
-    //vec2 neptune = marchPlanet(pos4, u_input.inverseWorldMatrices[8], u_input.scalings[8], 46.9);
-    //res = opU(res, neptune);
-    //vec2 pluto = marchPlanet(pos4, u_input.inverseWorldMatrices[9], u_input.scalings[9], 46.9);
-    //res = opU(res, pluto);
-    //vec2 moon = marchPlanet(pos4, u_input.inverseWorldMatrices[10], u_input.scalings[10], 46.9);
-    //res = opU(res, moon);
+    vec2 mars = marchPlanet(pos4, u_input.inverseWorldMatrices[4], u_input.scalings[4], 46.9);
+    res = opU(res, mars);
+
+    vec2 jupiter = marchPlanet(pos4, u_input.inverseWorldMatrices[5], u_input.scalings[5], 46.9);
+    res = opU(res, jupiter);
+
+    vec2 saturn = marchPlanet(pos4, u_input.inverseWorldMatrices[6], u_input.scalings[6], 46.9);
+    res = opU(res, saturn);
+
+    vec2 uranus = marchPlanet(pos4, u_input.inverseWorldMatrices[7], u_input.scalings[7], 46.9);
+    res = opU(res, uranus);
+
+    vec2 neptune = marchPlanet(pos4, u_input.inverseWorldMatrices[8], u_input.scalings[8], 46.9);
+    res = opU(res, neptune);
+
+    vec2 pluto = marchPlanet(pos4, u_input.inverseWorldMatrices[9], u_input.scalings[9], 46.9);
+    res = opU(res, pluto);
+
+    vec2 moon = marchPlanet(pos4, u_input.inverseWorldMatrices[10], u_input.scalings[10], 46.9);
+    res = opU(res, moon);
 
     return res;
 }
@@ -395,19 +468,22 @@ vec3 render( in vec3 ro, in vec3 rd )
 void main( )
 {
     vec3 tot = vec3(0.0);
+    vec2 res = u_input.resolution.xy;
 #if AA>1
     for( int m=0; m<AA; m++ )
     for( int n=0; n<AA; n++ )
     {
         // pixel coordinates
         vec2 o = vec2(float(m),float(n)) / float(AA) - 0.5;
-        vec2 p = (-u_input.resolution + 2.0*(gl_FragCoord.xy+o))/u_input.resolution.y;
+        //vec2 p = (-u_input.resolution + 2.0*(gl_FragCoord.xy+o))/u_input.resolution.y;
+        vec2 p = (-res + 2.0*(gl_FragCoord.xy+o))/res.y;
 #else    
         //xMin = -1920 / 1080, xMax = 1920 / 1080
         //yMin = -1080 / 1080, yMax = 1080 / 1080
         //xMin = -1.7778, xMax = 1.7778, yMin = -1, yMax = 1
         //This makes sense because we'll want to evaluate 1.7778 horizontal pixels for each vertical pixel.
-        vec2 p = (-u_input.resolution + 2.0*gl_FragCoord.xy)/u_input.resolution.y;
+        //vec2 p = (-u_input.resolution + 2.0*gl_FragCoord.xy)/u_input.resolution.y;
+        vec2 p = (-res + 2.0*gl_FragCoord.xy)/res.y;
 #endif
         //gl_FragCoord assumes window origin at lower left. On windows the origin is the upper left, which is why we invert y.
         p.y = -p.y;
