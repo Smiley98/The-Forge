@@ -208,6 +208,8 @@ vec3 opTwist( vec3 p )
 
 vec2 map( in vec3 pos )
 {
+    //What this is essentially doing is using lequal as our depth function.
+    //We find the geometry that intersects first with the ray, and keep storing the minimum till we've finished iterating.
     vec2 res = opU( vec2( sdPlane(     pos), 1.0 ),
 	                vec2( sdSphere(    pos-vec3( 0.0,0.25, 0.0), 0.25 ), 46.9 ) );
     res = opU( res, vec2( sdBox(       pos-vec3( 1.0,0.25, 0.0), vec3(0.25) ), 3.0 ) );
@@ -237,14 +239,23 @@ vec2 map( in vec3 pos )
 // ro = ray origin, rd = ray direction
 vec2 castRay( in vec3 ro, in vec3 rd )
 {
+    //t is the interpolation parameter like in a parametric equation (can exceed 1 lines are infinite [unless we bound them like below]).
+    //ie origin of 5, direction of 0.75, t of 7 so result point = 5 + 0.75 * 7.
     float tmin = 1.0;
     float tmax = 20.0;
    
 #if 1
-    // bounding volume
-    float tp1 = (0.0-ro.y)/rd.y; if( tp1>0.0 ) tmax = min( tmax, tp1 );
-    float tp2 = (1.6-ro.y)/rd.y; if( tp2>0.0 ) { if( ro.y>1.6 ) tmin = max( tmin, tp2 );
-                                                 else           tmax = min( tmax, tp2 ); }
+    // bounding volume (view frustum). Too late for me to explore where 1.6 comes from, maybe a brutal approximation of 16:9?
+    float tp1 = (0.0-ro.y)/rd.y;
+    if( tp1>0.0 )
+        tmax = min( tmax, tp1 );
+    float tp2 = (1.6-ro.y)/rd.y;
+    if( tp2>0.0 ) {
+        if( ro.y>1.6 )
+            tmin = max( tmin, tp2 );
+        else
+            tmax = min( tmax, tp2 );
+    }
 #endif
     
     float t = tmin;
@@ -253,7 +264,9 @@ vec2 castRay( in vec3 ro, in vec3 rd )
     {
 	    float precis = 0.0005*t;
 	    vec2 res = map( ro+rd*t );
+        //If precis is epsilon. We want to break if we've travelled less than a really small number, or we've exceeded our draw distance
         if( res.x<precis || t>tmax ) break;
+        //I don't understand why t is incremented by x only, and I don't know what m is...
         t += res.x;
 	    m = res.y;
     }
@@ -319,6 +332,7 @@ vec3 render( in vec3 ro, in vec3 rd )
     vec2 res = castRay(ro,rd);
     float t = res.x;
 	float m = res.y;
+    //Idk how this y threshold affects the ceiling, but it sure does!
     if( m>-0.5 )
     {
         vec3 pos = ro + t*rd;
@@ -327,6 +341,7 @@ vec3 render( in vec3 ro, in vec3 rd )
         
         // material        
 		col = 0.45 + 0.35*sin( vec3(0.05,0.08,0.10)*(m-1.0) );
+        //This renders the floor.
         if( m<1.5 )
         {
             
@@ -373,12 +388,18 @@ void main( )
         vec2 o = vec2(float(m),float(n)) / float(AA) - 0.5;
         vec2 p = (-u_input.resolution + 2.0*(gl_FragCoord.xy+o))/u_input.resolution.y;
 #else    
+        //xMin = -1920 / 1080, xMax = 1920 / 1080
+        //yMin = -1080 / 1080, yMax = 1080 / 1080
+        //xMin = -1.7778, xMax = 1.7778, yMin = -1, yMax = 1
+        //This makes sense because we'll want to evaluate 1.7778 horizontal pixels for each vertical pixel.
         vec2 p = (-u_input.resolution + 2.0*gl_FragCoord.xy)/u_input.resolution.y;
 #endif
+        //gl_FragCoord assumes window origin at lower left. On windows the origin is the upper left, which is why we invert y.
         p.y = -p.y;
 
-        // camera
+        // Send rays in the direction of the camera frustum.
         vec3 rd = (u_input.invView * normalize( vec4(p.xy, 2.0, 0.0) )).xyz;
+        // Ray origin is the camera translation.
         vec3 ro = u_input.invView[3].xyz;
 
         // render
