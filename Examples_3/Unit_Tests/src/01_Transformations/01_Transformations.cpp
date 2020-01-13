@@ -762,13 +762,16 @@ public:
 			if (gPlanetInfoData[i].mParentIndex > 0)
 				parentMat = gPlanetInfoData[gPlanetInfoData[i].mParentIndex].mSharedMat;
 		
-			trans = gPlanetInfoData[i].mTranslationMat;
 			scale = gPlanetInfoData[i].mScaleMat;
+			trans = gPlanetInfoData[i].mTranslationMat;
+			trans[3] *= 10.0f;//Ray scene is 10x smaller and I don't have time to program matching cameras.
 		
 			gPlanetInfoData[i].mSharedMat = parentMat * rotOrbitY * trans;
 			gUniformData.mToWorldMat[i] = parentMat * rotOrbitY * rotOrbitZ * trans * rotSelf * scale;
 			gUniformData.mColor[i] = gPlanetInfoData[i].mColor;
 
+			//This doesn't seem to be affecting the rays. Sadly I don't have time to debug this.
+			//trans[3] /= 10.0f;
 			//Can't scale with matrices when raymarching because scaling isn't a rigid body transformation (distorts euclidean space).
 			gUniformDataRaymarching.inverseWorldMatrices[i] = inverse(parentMat * rotOrbitY * rotOrbitZ * trans * rotSelf);
 			//(We send up the scales separately).
@@ -864,15 +867,14 @@ public:
 			cmdDrawInstanced(cmd, gNumberOfSpherePoints / 6, 0, gNumPlanets, 0);
 			cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
 		}
-		
-		//// draw rays
-		//if (GetAsyncKeyState(VK_SPACE)) {
+		else
+		{
 			cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw Rays", true);
 			cmdBindPipeline(cmd, pRaymarchingPipeline);
 			cmdBindDescriptorSet(cmd, gFrameIndex * gNumUniformBlocks + 2, pDescriptorSetUniforms);
 			cmdDraw(cmd, 3, 0);
 			cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
-		//}
+		}
 
 	loadActions = {};
 	loadActions.mLoadActionsColor[0] = LOAD_ACTION_LOAD;

@@ -215,22 +215,34 @@ vec2 map( in vec3 pos )
     vec2 plane = vec2( distPlane, 1.0 );
     res = plane;
    
-    /*for (int i = 0; i <  MAX_PLANETS; i++) {
-        vec3 transformedSphere = vec4(u_input.inverseWorldMatrices[i] * pos4).xyz;
-        //The sphere SDF allows us to set the radius so the scaling should suffice. Otherwise we'd have to do sdf(p/s)*s.
-        float distSphere = sdSphere(transformedSphere, u_input.scalings[i]);
-        vec2 sphere = vec2(distSphere, 46.9);
-        res = opU(res, sphere);
-    }*/
-
-    //vec3 transformedSphere1 = vec4(u_input.inverseWorldMatrices[0] * pos4).xyz;
-    //float distSphere1 = sdSphere(transformedSphere1, u_input.scalings[0]);
-    //vec2 sphere1 = vec2(distSphere1, 46.9);
+    //Not sure why this isn't working.
+    //for (int i = 0; i <  MAX_PLANETS; i++) {
+    //    res = opU(res, marchPlanet(pos4, u_input.inverseWorldMatrices[i], u_input.scalings[i], 46.9));
+    //}
 
     vec2 sun = marchPlanet(pos4, u_input.inverseWorldMatrices[0], u_input.scalings[0], 46.9);
     res = opU(res, sun);
     vec2 mercury = marchPlanet(pos4, u_input.inverseWorldMatrices[1], u_input.scalings[1], 46.9);
     res = opU(res, mercury);
+    vec2 venus = marchPlanet(pos4, u_input.inverseWorldMatrices[2], u_input.scalings[2], 46.9);
+    res = opU(res, venus);
+
+    //vec2 earth = marchPlanet(pos4, u_input.inverseWorldMatrices[3], u_input.scalings[3], 46.9);
+    //res = opU(res, earth);
+    //vec2 mars = marchPlanet(pos4, u_input.inverseWorldMatrices[4], u_input.scalings[4], 46.9);
+    //res = opU(res, mars);
+    //vec2 jupiter = marchPlanet(pos4, u_input.inverseWorldMatrices[5], u_input.scalings[5], 46.9);
+    //res = opU(res, jupiter);
+    //vec2 saturn = marchPlanet(pos4, u_input.inverseWorldMatrices[6], u_input.scalings[6], 46.9);
+    //res = opU(res, saturn);
+    //vec2 uranus = marchPlanet(pos4, u_input.inverseWorldMatrices[7], u_input.scalings[7], 46.9);
+    //res = opU(res, uranus);
+    //vec2 neptune = marchPlanet(pos4, u_input.inverseWorldMatrices[8], u_input.scalings[8], 46.9);
+    //res = opU(res, neptune);
+    //vec2 pluto = marchPlanet(pos4, u_input.inverseWorldMatrices[9], u_input.scalings[9], 46.9);
+    //res = opU(res, pluto);
+    //vec2 moon = marchPlanet(pos4, u_input.inverseWorldMatrices[10], u_input.scalings[10], 46.9);
+    //res = opU(res, moon);
 
     return res;
 }
