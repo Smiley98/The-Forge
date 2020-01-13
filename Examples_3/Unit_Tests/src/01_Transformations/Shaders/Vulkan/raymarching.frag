@@ -7,6 +7,7 @@ layout (std140, UPDATE_FREQ_PER_FRAME, binding=0) uniform uniformBlock {
     mat4 inverseWorldMatrices[MAX_PLANETS];
     mat4 invView;
     vec2 resolution;
+    float scalings[MAX_PLANETS];
 } u_input;
 
 #define AA 1   // make this 1 is your machine is too slow
