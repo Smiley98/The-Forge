@@ -459,7 +459,7 @@ public:
 
 		//Raymarching motion parameters:
 		CameraMotionParameters cmp{ 1.6f, 6.0f, 2.0f };
-		vec3                   camPos{ 3.5, 1.0, 0.5 };
+		vec3                   camPos{ 3.5, 10.0, 0.5 };
 		vec3                   lookAt{ -0.5f, -0.4f, 0.5f };
 
 		pCameraController = createFpsCameraController(camPos, lookAt);
@@ -693,63 +693,53 @@ public:
 	void Update(float deltaTime)
 	{
 		updateInputSystem(mSettings.mWidth, mSettings.mHeight);
-
 		pCameraController->update(deltaTime);
-		/************************************************************************/
-		// Scene Update
-		/************************************************************************/
+
 		gUniformDataRaymarching.res = vec4((float)mSettings.mWidth, (float)mSettings.mHeight, 0.0f, 0.0f);
 		mat4 viewMat = pCameraController->getViewMatrix();
 		gUniformDataRaymarching.invView = inverse(viewMat);
-		//updateInputSystem(mSettings.mWidth, mSettings.mHeight);
-		//
-		//pCameraController->update(deltaTime);
-		///************************************************************************/
-		//// Scene Update
-		///************************************************************************/
-		//static float currentTime = 0.0f;
-		//currentTime += deltaTime * 1000.0f;
-		//
-		//// update camera with time
-		//mat4 viewMat = pCameraController->getViewMatrix();
-		//
-		//const float aspectInverse = (float)mSettings.mHeight / (float)mSettings.mWidth;
-		//const float horizontal_fov = PI / 2.0f;
-		//mat4        projMat = mat4::perspective(horizontal_fov, aspectInverse, 0.1f, 1000.0f);
-		//gUniformData.mProjectView = projMat * viewMat;
-		//
-		//// point light parameters
-		//gUniformData.mLightPosition = vec3(0, 0, 0);
-		//gUniformData.mLightColor = vec3(0.9f, 0.9f, 0.7f);    // Pale Yellow
-		//
-		//// update planet transformations
-		//for (unsigned int i = 0; i < gNumPlanets; i++)
-		//{
-		//	mat4 rotSelf, rotOrbitY, rotOrbitZ, trans, scale, parentMat;
-		//	rotSelf = rotOrbitY = rotOrbitZ = trans = scale = parentMat = mat4::identity();
-		//	if (gPlanetInfoData[i].mRotationSpeed > 0.0f)
-		//		rotSelf = mat4::rotationY(gRotSelfScale * (currentTime + gTimeOffset) / gPlanetInfoData[i].mRotationSpeed);
-		//	if (gPlanetInfoData[i].mYOrbitSpeed > 0.0f)
-		//		rotOrbitY = mat4::rotationY(gRotOrbitYScale * (currentTime + gTimeOffset) / gPlanetInfoData[i].mYOrbitSpeed);
-		//	if (gPlanetInfoData[i].mZOrbitSpeed > 0.0f)
-		//		rotOrbitZ = mat4::rotationZ(gRotOrbitZScale * (currentTime + gTimeOffset) / gPlanetInfoData[i].mZOrbitSpeed);
-		//	if (gPlanetInfoData[i].mParentIndex > 0)
-		//		parentMat = gPlanetInfoData[gPlanetInfoData[i].mParentIndex].mSharedMat;
-		//
-		//	trans = gPlanetInfoData[i].mTranslationMat;
-		//	scale = gPlanetInfoData[i].mScaleMat;
-		//
-		//	gPlanetInfoData[i].mSharedMat = parentMat * rotOrbitY * trans;
-		//	gUniformData.mToWorldMat[i] = parentMat * rotOrbitY * rotOrbitZ * trans * rotSelf * scale;
-		//	gUniformData.mColor[i] = gPlanetInfoData[i].mColor;
-		//}
-		//
-		//viewMat.setTranslation(vec3(0));
-		//gUniformDataSky = gUniformData;
-		//gUniformDataSky.mProjectView = projMat * viewMat;
-		//
-		//gUniformDataRaymarching.res = vec4((float)mSettings.mWidth, (float)mSettings.mHeight, 0.0f, 0.0f);
-		//gUniformDataRaymarching.invView = inverse(viewMat);
+
+		/************************************************************************/
+		// Scene Update
+		/************************************************************************/
+		static float currentTime = 0.0f;
+		currentTime += deltaTime * 1000.0f;
+		
+		const float aspectInverse = (float)mSettings.mHeight / (float)mSettings.mWidth;
+		const float horizontal_fov = PI / 2.0f;
+		mat4        projMat = mat4::perspective(horizontal_fov, aspectInverse, 0.1f, 1000.0f);
+		gUniformData.mProjectView = projMat * viewMat;
+		
+		// point light parameters
+		gUniformData.mLightPosition = vec3(0, 0, 0);
+		gUniformData.mLightColor = vec3(0.9f, 0.9f, 0.7f);    // Pale Yellow
+		
+		// update planet transformations
+		for (unsigned int i = 0; i < gNumPlanets; i++)
+		{
+			mat4 rotSelf, rotOrbitY, rotOrbitZ, trans, scale, parentMat;
+			rotSelf = rotOrbitY = rotOrbitZ = trans = scale = parentMat = mat4::identity();
+			if (gPlanetInfoData[i].mRotationSpeed > 0.0f)
+				rotSelf = mat4::rotationY(gRotSelfScale * (currentTime + gTimeOffset) / gPlanetInfoData[i].mRotationSpeed);
+			if (gPlanetInfoData[i].mYOrbitSpeed > 0.0f)
+				rotOrbitY = mat4::rotationY(gRotOrbitYScale * (currentTime + gTimeOffset) / gPlanetInfoData[i].mYOrbitSpeed);
+			if (gPlanetInfoData[i].mZOrbitSpeed > 0.0f)
+				rotOrbitZ = mat4::rotationZ(gRotOrbitZScale * (currentTime + gTimeOffset) / gPlanetInfoData[i].mZOrbitSpeed);
+			if (gPlanetInfoData[i].mParentIndex > 0)
+				parentMat = gPlanetInfoData[gPlanetInfoData[i].mParentIndex].mSharedMat;
+		
+			trans = gPlanetInfoData[i].mTranslationMat;
+			scale = gPlanetInfoData[i].mScaleMat;
+		
+			gPlanetInfoData[i].mSharedMat = parentMat * rotOrbitY * trans;
+			gUniformData.mToWorldMat[i] = parentMat * rotOrbitY * rotOrbitZ * trans * rotSelf * scale;
+			gUniformData.mColor[i] = gPlanetInfoData[i].mColor;
+		}
+		
+		viewMat.setTranslation(vec3(0));
+		gUniformDataSky = gUniformData;
+		gUniformDataSky.mProjectView = projMat * viewMat;
+		
 		/************************************************************************/
 		/************************************************************************/
 
@@ -816,30 +806,29 @@ public:
 		cmdBindDescriptorSet(cmd, 0, pDescriptorSetTexture);
     
 		//// draw skybox
-		//cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw Skybox", true);
-		//cmdBindPipeline(cmd, pSkyBoxDrawPipeline);
-		//cmdBindDescriptorSet(cmd, gFrameIndex * gNumUniformBlocks + 0, pDescriptorSetUniforms);
-		//cmdBindVertexBuffer(cmd, 1, &pSkyBoxVertexBuffer, NULL);
-		//cmdDraw(cmd, 36, 0);
-		//cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
-
-		////// draw planets
-		//cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw Planets", true);
-		//cmdBindPipeline(cmd, pSpherePipeline);
-		//cmdBindDescriptorSet(cmd, gFrameIndex * gNumUniformBlocks + 1, pDescriptorSetUniforms);
-		//cmdBindVertexBuffer(cmd, 1, &pSphereVertexBuffer, NULL);
-		//cmdDrawInstanced(cmd, gNumberOfSpherePoints / 6, 0, gNumPlanets, 0);
-		//cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
-		
-		///*
-		cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw Rays", true);
-		cmdBindPipeline(cmd, pRaymarchingPipeline);
-		//Bind the uniform buffer. gFrameIndex ranges from 0 to 2 as it corresponds to the image buffer index.
-		cmdBindDescriptorSet(cmd, gFrameIndex * gNumUniformBlocks + 2, pDescriptorSetUniforms);
-		//No vertex buffer to bind because we store the vertices in-shader!
-		cmdDraw(cmd, 3, 0);
+		cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw Skybox", true);
+		cmdBindPipeline(cmd, pSkyBoxDrawPipeline);
+		cmdBindDescriptorSet(cmd, gFrameIndex * gNumUniformBlocks + 0, pDescriptorSetUniforms);
+		cmdBindVertexBuffer(cmd, 1, &pSkyBoxVertexBuffer, NULL);
+		cmdDraw(cmd, 36, 0);
 		cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
-		//*/
+
+		//// draw planets
+		cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw Planets", true);
+		cmdBindPipeline(cmd, pSpherePipeline);
+		cmdBindDescriptorSet(cmd, gFrameIndex * gNumUniformBlocks + 1, pDescriptorSetUniforms);
+		cmdBindVertexBuffer(cmd, 1, &pSphereVertexBuffer, NULL);
+		cmdDrawInstanced(cmd, gNumberOfSpherePoints / 6, 0, gNumPlanets, 0);
+		cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
+
+		//// draw rays
+		if (GetAsyncKeyState(VK_SPACE)) {
+			cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw Rays", true);
+			cmdBindPipeline(cmd, pRaymarchingPipeline);
+			cmdBindDescriptorSet(cmd, gFrameIndex * gNumUniformBlocks + 2, pDescriptorSetUniforms);
+			cmdDraw(cmd, 3, 0);
+			cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
+		}
 
 	loadActions = {};
 	loadActions.mLoadActionsColor[0] = LOAD_ACTION_LOAD;
