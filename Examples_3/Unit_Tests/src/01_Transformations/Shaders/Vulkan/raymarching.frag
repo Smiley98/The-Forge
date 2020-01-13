@@ -174,6 +174,13 @@ vec3 opTwist( vec3 p )
 
 //------------------------------------------------------------------
 
+vec2 marchPlanet(vec4 pos, mat4 transform, float scale, float colour) {
+    vec3 planet = vec4(transform * pos).xyz;
+    float distPlanet = sdSphere(planet, scale);
+    vec2 planetColoured = vec2(distPlanet, colour);
+    return planetColoured;
+}
+
 vec2 map( in vec3 pos )
 {
     //What this is essentially doing is using lequal as our depth function.
@@ -204,23 +211,26 @@ vec2 map( in vec3 pos )
     vec2 res;
     vec4 pos4 = vec4(pos, 1.0);
 
-    //float distSpheres[MAX_PLANETS];
-
     float distPlane = sdPlane(pos);
-    //float distSphere = sdSphere(pos - vec3(0.0, 0.25, 0.0), 0.25 );
-
-    vec3 transformedSphere = vec4(u_input.inverseWorldMatrices[0] * pos4).xyz;
-    //vec3 transformedSphere = pos - vec3(0.0, 0.25, 0.0);
-    //vec3 transformedSphere = pos;//Identity should work.
-    
-    float distSphere = sdSphere(transformedSphere, 0.25);
-
     vec2 plane = vec2( distPlane, 1.0 );
-    vec2 sphere = vec2( distSphere, 46.9);//This number corresponds to colour. Not sure how.
-    //for (int i = 0; i <  MAX_PLANETS; i++) {
-    //    
-    //}
-    res = opU(plane, sphere);
+    res = plane;
+   
+    /*for (int i = 0; i <  MAX_PLANETS; i++) {
+        vec3 transformedSphere = vec4(u_input.inverseWorldMatrices[i] * pos4).xyz;
+        //The sphere SDF allows us to set the radius so the scaling should suffice. Otherwise we'd have to do sdf(p/s)*s.
+        float distSphere = sdSphere(transformedSphere, u_input.scalings[i]);
+        vec2 sphere = vec2(distSphere, 46.9);
+        res = opU(res, sphere);
+    }*/
+
+    //vec3 transformedSphere1 = vec4(u_input.inverseWorldMatrices[0] * pos4).xyz;
+    //float distSphere1 = sdSphere(transformedSphere1, u_input.scalings[0]);
+    //vec2 sphere1 = vec2(distSphere1, 46.9);
+
+    vec2 sun = marchPlanet(pos4, u_input.inverseWorldMatrices[0], u_input.scalings[0], 46.9);
+    res = opU(res, sun);
+    vec2 mercury = marchPlanet(pos4, u_input.inverseWorldMatrices[1], u_input.scalings[1], 46.9);
+    res = opU(res, mercury);
 
     return res;
 }
