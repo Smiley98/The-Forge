@@ -395,7 +395,7 @@ public:
 		gPlanetInfoData[1].mScaleMat = mat4::scale(vec3(1.0f));
 		gPlanetInfoData[1].mColor = vec4(0.7f, 0.3f, 0.1f, 1.0f);
 		//gUniformDataRaymarching.scalings[1] = 1.0f;
-		gUniformDataRaymarching.scalings[1] = 0.1f;
+		gUniformDataRaymarching.scalings[1] = 1.0f;
 		//gUniformDataRaymarching.sMerc = 0.1f;
 
 		// Venus
@@ -760,7 +760,7 @@ public:
 
 		removePipeline(pRenderer, pRaymarchingPipeline);
 		removePipeline(pRenderer, pSkyBoxDrawPipeline);
-		removePipeline(pRenderer, pSpherePipeline);
+		//removePipeline(pRenderer, pSpherePipeline);
 
 		removeSwapChain(pRenderer, pSwapChain);
 		removeRenderTarget(pRenderer, pDepthBuffer);
