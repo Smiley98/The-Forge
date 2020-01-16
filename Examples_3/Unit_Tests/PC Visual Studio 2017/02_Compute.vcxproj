@@ -26,6 +26,21 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\02_Compute\02_Compute.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\src\02_Compute\Shaders\D3D12\compute.comp" />
+    <None Include="..\src\02_Compute\Shaders\D3D12\display.frag" />
+    <None Include="..\src\02_Compute\Shaders\D3D12\display.vert" />
+    <None Include="..\src\02_Compute\Shaders\D3D12\profile.frag" />
+    <None Include="..\src\02_Compute\Shaders\D3D12\profile.vert" />
+    <None Include="..\src\02_Compute\Shaders\Vulkan\compute.comp" />
+    <None Include="..\src\02_Compute\Shaders\Vulkan\display.frag" />
+    <None Include="..\src\02_Compute\Shaders\Vulkan\display.vert" />
+    <None Include="..\src\02_Compute\Shaders\Vulkan\profile.frag" />
+    <None Include="..\src\02_Compute\Shaders\Vulkan\profile.vert" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{E696ABA2-EFC0-490E-9A52-0A610F0D5F4B}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>

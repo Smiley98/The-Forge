@@ -15,6 +15,40 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="..\src\02_Compute\Shaders\Vulkan\display.frag" />
+    <ClCompile Include="..\src\02_Compute\02_Compute.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\src\02_Compute\Shaders\D3D12\compute.comp">
+      <Filter>Shaders\D3D12</Filter>
+    </None>
+    <None Include="..\src\02_Compute\Shaders\D3D12\display.frag">
+      <Filter>Shaders\D3D12</Filter>
+    </None>
+    <None Include="..\src\02_Compute\Shaders\D3D12\display.vert">
+      <Filter>Shaders\D3D12</Filter>
+    </None>
+    <None Include="..\src\02_Compute\Shaders\D3D12\profile.frag">
+      <Filter>Shaders\D3D12</Filter>
+    </None>
+    <None Include="..\src\02_Compute\Shaders\D3D12\profile.vert">
+      <Filter>Shaders\D3D12</Filter>
+    </None>
+    <None Include="..\src\02_Compute\Shaders\Vulkan\compute.comp">
+      <Filter>Shaders\Vulkan</Filter>
+    </None>
+    <None Include="..\src\02_Compute\Shaders\Vulkan\display.frag">
+      <Filter>Shaders\Vulkan</Filter>
+    </None>
+    <None Include="..\src\02_Compute\Shaders\Vulkan\display.vert">
+      <Filter>Shaders\Vulkan</Filter>
+    </None>
+    <None Include="..\src\02_Compute\Shaders\Vulkan\profile.frag">
+      <Filter>Shaders\Vulkan</Filter>
+    </None>
+    <None Include="..\src\02_Compute\Shaders\Vulkan\profile.vert">
+      <Filter>Shaders\Vulkan</Filter>
+    </None>
   </ItemGroup>
 </Project>
