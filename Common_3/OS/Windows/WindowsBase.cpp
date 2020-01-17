@@ -358,7 +358,7 @@ void openWindow(const char* app_name, WindowsDesc* winDesc)
 	{
 		getRecommendedResolution(&winDesc->windowedRect);
 	}
-
+	
 	RECT clientRect = { (LONG)winDesc->windowedRect.left, (LONG)winDesc->windowedRect.top, (LONG)winDesc->windowedRect.right,
 						(LONG)winDesc->windowedRect.bottom };
 	AdjustWindowRect(&clientRect, WS_OVERLAPPEDWINDOW, FALSE);

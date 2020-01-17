@@ -760,7 +760,7 @@ public:
 
 		removePipeline(pRenderer, pRaymarchingPipeline);
 		removePipeline(pRenderer, pSkyBoxDrawPipeline);
-		//removePipeline(pRenderer, pSpherePipeline);
+		removePipeline(pRenderer, pSpherePipeline);
 
 		removeSwapChain(pRenderer, pSwapChain);
 		removeRenderTarget(pRenderer, pDepthBuffer);
