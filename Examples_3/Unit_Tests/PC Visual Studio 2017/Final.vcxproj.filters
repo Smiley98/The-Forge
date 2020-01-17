@@ -10,6 +10,15 @@
     <Filter Include="Shaders\Vulkan">
       <UniqueIdentifier>{73c7697d-0e9d-412c-8028-db7d1dc84b6e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Scenes">
+      <UniqueIdentifier>{8955f6e6-93d4-4e63-a53c-3e7e119372f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utilities">
+      <UniqueIdentifier>{6817c4f0-c4bc-4258-99c5-3d91011c3ec9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Singletons">
+      <UniqueIdentifier>{bd919547-9a9d-4e42-b505-9aac23d9cbad}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\src\Final\Shaders\Vulkan\basic.frag">
@@ -35,5 +44,31 @@
     <ClCompile Include="..\src\Final\Final.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Utilities.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneMain.cpp">
+      <Filter>Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneManager.cpp">
+      <Filter>Singletons</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Scene.h">
+      <Filter>Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneMain.h">
+      <Filter>Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="Singleton.h">
+      <Filter>Singletons</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneManager.h">
+      <Filter>Singletons</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
