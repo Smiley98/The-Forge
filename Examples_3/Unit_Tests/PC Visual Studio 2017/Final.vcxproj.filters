@@ -19,6 +19,15 @@
     <Filter Include="Singletons">
       <UniqueIdentifier>{bd919547-9a9d-4e42-b505-9aac23d9cbad}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Rendering">
+      <UniqueIdentifier>{6ff29291-79cb-4553-b310-a48499632915}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UI">
+      <UniqueIdentifier>{62cf5bb3-fbb5-4754-8a0f-9251011934b1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Management">
+      <UniqueIdentifier>{ee55184c-cddf-46db-8ef2-3cba62eb3a16}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\src\Final\Shaders\Vulkan\basic.frag">
@@ -44,21 +53,45 @@
     <ClCompile Include="..\src\Final\Final.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Final\SceneManager.cpp">
-      <Filter>Singletons</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\Final\SceneMain.cpp">
       <Filter>Scenes</Filter>
     </ClCompile>
     <ClCompile Include="..\src\Final\Utilities.cpp">
       <Filter>Utilities</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\Final\UIContext.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Final\Pipeline.cpp">
+      <Filter>Management</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Final\PipelineManager.cpp">
+      <Filter>Management</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Final\RasterManager.cpp">
+      <Filter>Management</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Final\ShaderManager.cpp">
+      <Filter>Management</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Final\UniformManager.cpp">
+      <Filter>Management</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Final\VertexManager.cpp">
+      <Filter>Management</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Final\SceneManager.cpp">
+      <Filter>Management</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Final\QueueManager.cpp">
+      <Filter>Management</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Final\SynchronizationManager.cpp">
+      <Filter>Management</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\Final\Singleton.h">
-      <Filter>Singletons</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\Final\SceneManager.h">
       <Filter>Singletons</Filter>
     </ClInclude>
     <ClInclude Include="..\src\Final\Scene.h">
@@ -70,5 +103,39 @@
     <ClInclude Include="..\src\Final\Utilities.h">
       <Filter>Utilities</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\Final\UIContext.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Final\Pipeline.h">
+      <Filter>Management</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Final\PipelineManager.h">
+      <Filter>Management</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Final\RasterManager.h">
+      <Filter>Management</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Final\UniformManager.h">
+      <Filter>Management</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Final\VertexManager.h">
+      <Filter>Management</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Final\ShaderManager.h">
+      <Filter>Management</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Final\SingletonLocal.h">
+      <Filter>Singletons</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Final\SceneManager.h">
+      <Filter>Management</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Final\QueueManager.h">
+      <Filter>Management</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Final\SynchronizationManager.h">
+      <Filter>Management</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Final\ScreenBufferDef.h" />
   </ItemGroup>
 </Project>

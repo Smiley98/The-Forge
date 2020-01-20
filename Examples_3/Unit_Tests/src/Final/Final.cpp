@@ -1,4 +1,4 @@
-#define MAX_PLANETS 20
+#define MAX_PLANETS 1    // Does not affect test, just for allocating space in uniform block. Must match with shader.
 
 //Interfaces
 #include "../../../../Common_3/OS/Interfaces/ICameraController.h"
@@ -17,11 +17,20 @@
 
 #include "../../../../Common_3/OS/Interfaces/IMemory.h"
 
+/// Demo structures
+struct PlanetInfoStruct
+{
+	mat4  mTransform;
+	vec4  mColor;
+};
+
 struct UniformBlock
 {
 	mat4 mProjectView;
 	mat4 mToWorldMat[MAX_PLANETS];
 	vec4 mColor[MAX_PLANETS];
+
+	// Point Light Information
 	vec3 mLightPosition;
 	vec3 mLightColor;
 };
@@ -29,48 +38,50 @@ struct UniformBlock
 const uint32_t gImageCount = 3;
 bool           gMicroProfiler = false;
 bool           bPrevToggleMicroProfiler = false;
+const uint     gNumPlanets = 1;
 
-mat4 gRetardPlanetTransform = mat4::identity();
-vec4 gRetardPlanetColour = vec4(1.0f, 0.0f, 0.0f, 1.0f);
-
+//Only object that I haven't wrapped.
 Renderer* pRenderer = NULL;
 
-Queue*   pGraphicsQueue = NULL;
+Queue* pGraphicsQueue = NULL;
 CmdPool* pCmdPool = NULL;
-Cmd**    ppCmds = NULL;
+Cmd** ppCmds = NULL;
 
-SwapChain*    pSwapChain = NULL;
+SwapChain* pSwapChain = NULL;
 RenderTarget* pDepthBuffer = NULL;
-Fence*        pRenderCompleteFences[gImageCount] = { NULL };
-Semaphore*    pImageAcquiredSemaphore = NULL;
-Semaphore*    pRenderCompleteSemaphores[gImageCount] = { NULL };
+Fence* pRenderCompleteFences[gImageCount] = { NULL };
+Semaphore* pImageAcquiredSemaphore = NULL;
+Semaphore* pRenderCompleteSemaphores[gImageCount] = { NULL };
 
-Shader*   pSphereShader = NULL;
-Buffer*   pSphereVertexBuffer = NULL;
+Shader* pSphereShader = NULL;
+Buffer* pSphereVertexBuffer = NULL;
 Pipeline* pSpherePipeline = NULL;
 
-Shader*        pSkyBoxDrawShader = NULL;
-Buffer*        pSkyBoxVertexBuffer = NULL;
-Pipeline*      pSkyBoxDrawPipeline = NULL;
-Sampler*       pSamplerSkyBox = NULL;
-Texture*       pSkyBoxTextures[6];
-
+Shader* pSkyBoxDrawShader = NULL;
+Buffer* pSkyBoxVertexBuffer = NULL;
+Pipeline* pSkyBoxDrawPipeline = NULL;
 RootSignature* pRootSignature = NULL;
+Sampler* pSamplerSkyBox = NULL;
+Texture* pSkyBoxTextures[6];
 DescriptorSet* pDescriptorSetTexture = { NULL };
 DescriptorSet* pDescriptorSetUniforms = { NULL };
 VirtualJoystickUI gVirtualJoystick;
 DepthState* pDepth = NULL;
-
 RasterizerState* pSkyboxRast = NULL;
 RasterizerState* pSphereRast = NULL;
 
-Buffer* pUniformBuffer[gImageCount] = { NULL };
-UniformBlock gUniformData;
+//Can reuse the entire sphere pipeline!
+Buffer* pCubeVertexBuffer = NULL;
 
-const uint32_t gNumUniformBlocks = 1;
-const uint32_t gNumUniformBuffers = 3 * gNumUniformBlocks;
+Buffer* pProjViewUniformBuffer[gImageCount] = { NULL };
+Buffer* pSkyboxUniformBuffer[gImageCount] = { NULL };
 
 uint32_t gFrameIndex = 0;
+
+int              gNumberOfSpherePoints;
+UniformBlock     gUniformData;
+UniformBlock     gUniformDataSky;
+PlanetInfoStruct gPlanetInfoData[gNumPlanets];
 
 ICameraController* pCameraController = NULL;
 
@@ -85,78 +96,65 @@ TextDrawDesc gFrameTimeDraw = TextDrawDesc(0, 0xff00ffff, 18);
 
 GuiComponent* pGui = NULL;
 
-void InitPaths() {
-	// FILE PATHS
-	PathHandle programDirectory = fsCopyProgramDirectoryPath();
-	if (!fsPlatformUsesBundledResources())
-	{
-		PathHandle resourceDirRoot = fsAppendPathComponent(programDirectory, "../../../src/Final");
-		fsSetResourceDirectoryRootPath(resourceDirRoot);
-
-		fsSetRelativePathForResourceDirectory(RD_TEXTURES, "../../UnitTestResources/Textures");
-		fsSetRelativePathForResourceDirectory(RD_MESHES, "../../UnitTestResources/Meshes");
-		fsSetRelativePathForResourceDirectory(RD_BUILTIN_FONTS, "../../UnitTestResources/Fonts");
-		fsSetRelativePathForResourceDirectory(RD_ANIMATIONS, "../../UnitTestResources/Animation");
-		fsSetRelativePathForResourceDirectory(RD_MIDDLEWARE_TEXT, "../../../../Middleware_3/Text");
-		fsSetRelativePathForResourceDirectory(RD_MIDDLEWARE_UI, "../../../../Middleware_3/UI");
-	}
-}
-bool InitRenderer(IApp* app) {
-	RendererDesc settings = { 0 };
-	initRenderer(app->GetName(), &settings, &pRenderer);
-	if (!pRenderer)
-		return false;
-	return true;
-}
-void InitQueue() {
-	QueueDesc queueDesc = {};
-	queueDesc.mType = CMD_POOL_DIRECT;
-	queueDesc.mFlag = QUEUE_FLAG_INIT_MICROPROFILE;
-	addQueue(pRenderer, &queueDesc, &pGraphicsQueue);
-	addCmdPool(pRenderer, pGraphicsQueue, false, &pCmdPool);
-	addCmd_n(pCmdPool, false, gImageCount, &ppCmds);
-}
-void InitSemaphores() {
-	for (uint32_t i = 0; i < gImageCount; ++i)
-	{
-		addFence(pRenderer, &pRenderCompleteFences[i]);
-		addSemaphore(pRenderer, &pRenderCompleteSemaphores[i]);
-	}
-	addSemaphore(pRenderer, &pImageAcquiredSemaphore);
-	initResourceLoaderInterface(pRenderer);
-}
-bool InitJoystick() {
-	if (!gVirtualJoystick.Init(pRenderer, "circlepad", RD_TEXTURES))
-	{
-		LOGF(LogLevel::eERROR, "Could not initialize Virtual Joystick.");
-		return false;
-	}
-	return true;
-}
-
-class Transformations :
-	public IApp
+class Transformations : public IApp
 {
 public:
 	bool Init()
 	{
-		//Necessary:
-		InitPaths();
-		InitRenderer(this);
-		InitQueue();
-		InitSemaphores();
-		InitJoystick();
-		
-		//Unnecessary:
+		// FILE PATHS
+		PathHandle programDirectory = fsCopyProgramDirectoryPath();
+		if (!fsPlatformUsesBundledResources())
+		{
+			PathHandle resourceDirRoot = fsAppendPathComponent(programDirectory, "../../../src/01_Transformations");
+			fsSetResourceDirectoryRootPath(resourceDirRoot);
+
+			fsSetRelativePathForResourceDirectory(RD_TEXTURES, "../../UnitTestResources/Textures");
+			fsSetRelativePathForResourceDirectory(RD_MESHES, "../../UnitTestResources/Meshes");
+			fsSetRelativePathForResourceDirectory(RD_BUILTIN_FONTS, "../../UnitTestResources/Fonts");
+			fsSetRelativePathForResourceDirectory(RD_ANIMATIONS, "../../UnitTestResources/Animation");
+			fsSetRelativePathForResourceDirectory(RD_MIDDLEWARE_TEXT, "../../../../Middleware_3/Text");
+			fsSetRelativePathForResourceDirectory(RD_MIDDLEWARE_UI, "../../../../Middleware_3/UI");
+		}
+
+		// window and renderer setup
+		RendererDesc settings = { 0 };
+		initRenderer(GetName(), &settings, &pRenderer);
+		//check for init success
+		if (!pRenderer)
+			return false;
+
+		QueueDesc queueDesc = {};
+		queueDesc.mType = CMD_POOL_DIRECT;
+		queueDesc.mFlag = QUEUE_FLAG_INIT_MICROPROFILE;
+		addQueue(pRenderer, &queueDesc, &pGraphicsQueue);
+		addCmdPool(pRenderer, pGraphicsQueue, false, &pCmdPool);
+		addCmd_n(pCmdPool, false, gImageCount, &ppCmds);
+
+		for (uint32_t i = 0; i < gImageCount; ++i)
+		{
+			addFence(pRenderer, &pRenderCompleteFences[i]);
+			addSemaphore(pRenderer, &pRenderCompleteSemaphores[i]);
+		}
+		addSemaphore(pRenderer, &pImageAcquiredSemaphore);
+
+		initResourceLoaderInterface(pRenderer);
+
+		// Loads Skybox Textures
 		for (int i = 0; i < 6; ++i)
-		{	// Loads Skybox Textures
-            PathHandle textureFilePath = fsCopyPathInResourceDirectory(RD_TEXTURES, pSkyBoxImageFileNames[i]);
+		{
+			PathHandle textureFilePath = fsCopyPathInResourceDirectory(RD_TEXTURES, pSkyBoxImageFileNames[i]);
 			TextureLoadDesc textureDesc = {};
 			textureDesc.pFilePath = textureFilePath;
 			textureDesc.ppTexture = &pSkyBoxTextures[i];
 			addResource(&textureDesc, true);
 		}
-		
+
+		if (!gVirtualJoystick.Init(pRenderer, "circlepad", RD_TEXTURES))
+		{
+			LOGF(LogLevel::eERROR, "Could not initialize Virtual Joystick.");
+			return false;
+		}
+
 		ShaderLoadDesc skyShader = {};
 		skyShader.mStages[0] = { "skybox.vert", NULL, 0, RD_SHADER_SOURCES };
 		skyShader.mStages[1] = { "skybox.frag", NULL, 0, RD_SHADER_SOURCES };
@@ -175,8 +173,8 @@ public:
 									ADDRESS_MODE_CLAMP_TO_EDGE };
 		addSampler(pRenderer, &samplerDesc, &pSamplerSkyBox);
 
-		Shader*           shaders[] = { pSphereShader, pSkyBoxDrawShader };
-		const char*       pStaticSamplers[] = { "uSampler0" };
+		Shader* shaders[] = { pSphereShader, pSkyBoxDrawShader };
+		const char* pStaticSamplers[] = { "uSampler0" };
 		RootSignatureDesc rootDesc = {};
 		rootDesc.mStaticSamplerCount = 1;
 		rootDesc.ppStaticSamplerNames = pStaticSamplers;
@@ -187,15 +185,16 @@ public:
 
 		DescriptorSetDesc desc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_NONE, 1 };
 		addDescriptorSet(pRenderer, &desc, &pDescriptorSetTexture);
-
-		desc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_PER_FRAME, gNumUniformBuffers };
+		desc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_PER_FRAME, gImageCount * 2 };
 		addDescriptorSet(pRenderer, &desc, &pDescriptorSetUniforms);
 
 		RasterizerStateDesc rasterizerStateDesc = {};
 		rasterizerStateDesc.mCullMode = CULL_MODE_NONE;
 		addRasterizerState(pRenderer, &rasterizerStateDesc, &pSkyboxRast);
-		rasterizerStateDesc.mCullMode = CULL_MODE_FRONT;
-		addRasterizerState(pRenderer, &rasterizerStateDesc, &pSphereRast);
+
+		RasterizerStateDesc sphereRasterizerStateDesc = {};
+		sphereRasterizerStateDesc.mCullMode = CULL_MODE_FRONT;
+		addRasterizerState(pRenderer, &sphereRasterizerStateDesc, &pSphereRast);
 
 		DepthStateDesc depthStateDesc = {};
 		depthStateDesc.mDepthTest = true;
@@ -203,14 +202,9 @@ public:
 		depthStateDesc.mDepthFunc = CMP_LEQUAL;
 		addDepthState(pRenderer, &depthStateDesc, &pDepth);
 
-		// Generate sphere vertex buffer
-		const int sphereResolution = 30;
-		const float sphereDiameter = 0.5f;
-		int numSpherePoints;
-		float* pSpherePoints;//Vertex data output -> sizeof(float3) * 2 * internally_calculated_number_of_points. (* 2 cause 2 attributes).
-		generateSpherePoints(&pSpherePoints, &numSpherePoints, sphereResolution, sphereDiameter);
-
-		uint64_t       sphereDataSize = numSpherePoints * sizeof(float);
+		float* pSpherePoints;
+		generateSpherePoints(&pSpherePoints, &gNumberOfSpherePoints, 10, 5.0f);
+		uint64_t sphereDataSize = gNumberOfSpherePoints * sizeof(float);
 		BufferLoadDesc sphereVbDesc = {};
 		sphereVbDesc.mDesc.mDescriptors = DESCRIPTOR_TYPE_VERTEX_BUFFER;
 		sphereVbDesc.mDesc.mMemoryUsage = RESOURCE_MEMORY_USAGE_GPU_ONLY;
@@ -220,6 +214,20 @@ public:
 		sphereVbDesc.ppBuffer = &pSphereVertexBuffer;
 		addResource(&sphereVbDesc);
 		conf_free(pSpherePoints);
+
+		int cubeVertexDataIndices;
+		float* pCubePoints;
+		generateCuboidPoints(&pCubePoints, &cubeVertexDataIndices);
+		uint64_t cubeDataSize = cubeVertexDataIndices * sizeof(float);
+		BufferLoadDesc cubeVbDesc = {};
+		cubeVbDesc.mDesc.mDescriptors = DESCRIPTOR_TYPE_VERTEX_BUFFER;
+		cubeVbDesc.mDesc.mMemoryUsage = RESOURCE_MEMORY_USAGE_GPU_ONLY;
+		cubeVbDesc.mDesc.mSize = cubeDataSize;
+		cubeVbDesc.mDesc.mVertexStride = sizeof(float) * 6;
+		cubeVbDesc.pData = pCubePoints;
+		cubeVbDesc.ppBuffer = &pCubeVertexBuffer;
+		addResource(&cubeVbDesc);
+		conf_free(pCubePoints);
 
 		//Generate sky box vertex buffer
 		float skyBoxPoints[] = {
@@ -261,16 +269,21 @@ public:
 		BufferLoadDesc ubDesc = {};
 		ubDesc.mDesc.mDescriptors = DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		ubDesc.mDesc.mMemoryUsage = RESOURCE_MEMORY_USAGE_CPU_TO_GPU;
+		ubDesc.mDesc.mSize = sizeof(UniformBlock);
 		ubDesc.mDesc.mFlags = BUFFER_CREATION_FLAG_PERSISTENT_MAP_BIT;
 		ubDesc.pData = NULL;
-		ubDesc.mDesc.mSize = sizeof(UniformBlock);
 		for (uint32_t i = 0; i < gImageCount; ++i)
 		{
-			ubDesc.ppBuffer = &pUniformBuffer[i];
+			ubDesc.ppBuffer = &pProjViewUniformBuffer[i];
+			addResource(&ubDesc);
+			ubDesc.ppBuffer = &pSkyboxUniformBuffer[i];
 			addResource(&ubDesc);
 		}
-
 		finishResourceLoading();
+
+		// Sun
+		gPlanetInfoData[0].mTransform = mat4::identity();
+		gPlanetInfoData[0].mColor = vec4(0.9f, 0.6f, 0.1f, 0.0f);
 
 		if (!gAppUI.Init(pRenderer))
 			return false;
@@ -286,10 +299,10 @@ public:
 
 		pGui->AddWidget(CheckboxWidget("Toggle Micro Profiler", &gMicroProfiler));
 
-		//Raymarching motion parameters:
-		CameraMotionParameters cmp{ 1.6f, 6.0f, 2.0f };
-		vec3                   camPos{ 3.5, 1.0, 0.5 };
-		vec3                   lookAt{ -0.5f, -0.4f, 0.5f };
+		//CameraMotionParameters cmp{ 160.0f, 600.0f, 200.0f };
+		CameraMotionParameters cmp{ 16.0f, 60.0f, 20.0f };
+		vec3                   camPos{ 48.0f, 48.0f, 20.0f };
+		vec3                   lookAt{ 0 };
 
 		pCameraController = createFpsCameraController(camPos, lookAt);
 
@@ -298,14 +311,14 @@ public:
 		if (!initInputSystem(pWindow))
 			return false;
 
-    // Initialize microprofiler and it's UI.
-    initProfiler();
-    
-    // Gpu profiler can only be added after initProfile.
-    addGpuProfiler(pRenderer, pGraphicsQueue, &pGpuProfiler, "GpuProfiler");
+		// Initialize microprofiler and it's UI.
+		initProfiler();
+
+		// Gpu profiler can only be added after initProfile.
+		addGpuProfiler(pRenderer, pGraphicsQueue, &pGpuProfiler, "GpuProfiler");
 
 		// App Actions
-    InputActionDesc actionDesc = { InputBindings::BUTTON_FULLSCREEN, [](InputActionContext* ctx) { toggleFullscreen(((IApp*)ctx->pUserData)->pWindow); return true; }, this };
+		InputActionDesc actionDesc = { InputBindings::BUTTON_FULLSCREEN, [](InputActionContext* ctx) { toggleFullscreen(((IApp*)ctx->pUserData)->pWindow); return true; }, this };
 		addInputAction(&actionDesc);
 		actionDesc = { InputBindings::BUTTON_EXIT, [](InputActionContext* ctx) { requestShutdown(); return true; } };
 		addInputAction(&actionDesc);
@@ -335,7 +348,7 @@ public:
 		addInputAction(&actionDesc);
 		actionDesc = { InputBindings::BUTTON_NORTH, [](InputActionContext* ctx) { pCameraController->resetView(); return true; } };
 		addInputAction(&actionDesc);
-		
+
 		// Prepare descriptor sets
 		DescriptorData params[6] = {};
 		params[0].pName = "RightText";
@@ -354,11 +367,13 @@ public:
 
 		for (uint32_t i = 0; i < gImageCount; ++i)
 		{
-			DescriptorData params = {};
-			params.pName = "uniformBlock";
+			DescriptorData params[1] = {};
+			params[0].pName = "uniformBlock";
+			params[0].ppBuffers = &pSkyboxUniformBuffer[i];
+			updateDescriptorSet(pRenderer, i * 2 + 0, pDescriptorSetUniforms, 1, params);
 
-			params.ppBuffers = &pUniformBuffer[i];
-			updateDescriptorSet(pRenderer, i * gNumUniformBlocks + 0, pDescriptorSetUniforms, 1, &params);
+			params[0].ppBuffers = &pProjViewUniformBuffer[i];
+			updateDescriptorSet(pRenderer, i * 2 + 1, pDescriptorSetUniforms, 1, params);
 		}
 
 		return true;
@@ -381,12 +396,14 @@ public:
 
 		for (uint32_t i = 0; i < gImageCount; ++i)
 		{
-			removeResource(pUniformBuffer[i]);
+			removeResource(pProjViewUniformBuffer[i]);
+			removeResource(pSkyboxUniformBuffer[i]);
 		}
 
 		removeDescriptorSet(pRenderer, pDescriptorSetTexture);
 		removeDescriptorSet(pRenderer, pDescriptorSetUniforms);
 
+		removeResource(pCubeVertexBuffer);
 		removeResource(pSphereVertexBuffer);
 		removeResource(pSkyBoxVertexBuffer);
 
@@ -504,24 +521,33 @@ public:
 
 		static float currentTime = 0.0f;
 		currentTime += deltaTime * 1000.0f;
-		
+
+		// update camera with time
+		mat4 viewMat = pCameraController->getViewMatrix();
+
 		const float aspectInverse = (float)mSettings.mHeight / (float)mSettings.mWidth;
 		const float horizontal_fov = PI / 2.0f;
-
-		mat4 projMat = mat4::perspective(horizontal_fov, aspectInverse, 0.1f, 1000.0f);
-		mat4 viewMat = pCameraController->getViewMatrix();
+		mat4        projMat = mat4::perspective(horizontal_fov, aspectInverse, 0.1f, 1000.0f);
 		gUniformData.mProjectView = projMat * viewMat;
-		
-		//gUniformDataRaymarching.inverseWorldMatrices[i] = inverse(parentMat * rotOrbitY * rotOrbitZ * trans * rotSelf);
-		//trans * rotSelf * scale;
 
-		if(gMicroProfiler != bPrevToggleMicroProfiler)
+		// point light parameters
+		gUniformData.mLightPosition = vec3(0, 0, 0);
+		gUniformData.mLightColor = vec3(0.9f, 0.9f, 0.7f);
+
+		gUniformData.mToWorldMat[0] = gPlanetInfoData[0].mTransform;
+		gUniformData.mColor[0] = gPlanetInfoData[0].mColor;
+
+		//Zero the translation for the skybox view matrix.
+		viewMat.setTranslation(vec3(0.0f));
+		gUniformDataSky = gUniformData;
+		gUniformDataSky.mProjectView = projMat * viewMat;
+
+		if (gMicroProfiler != bPrevToggleMicroProfiler)
 		{
-		   toggleProfiler();
-		   bPrevToggleMicroProfiler = gMicroProfiler;
+			toggleProfiler();
+			bPrevToggleMicroProfiler = gMicroProfiler;
 		}
-
-		gAppUI.Update(deltaTime);  
+		gAppUI.Update(deltaTime);
 	}
 
 	void Draw()
@@ -529,8 +555,8 @@ public:
 		acquireNextImage(pRenderer, pSwapChain, pImageAcquiredSemaphore, NULL, &gFrameIndex);
 
 		RenderTarget* pRenderTarget = pSwapChain->ppSwapchainRenderTargets[gFrameIndex];
-		Semaphore*    pRenderCompleteSemaphore = pRenderCompleteSemaphores[gFrameIndex];
-		Fence*        pRenderCompleteFence = pRenderCompleteFences[gFrameIndex];
+		Semaphore* pRenderCompleteSemaphore = pRenderCompleteSemaphores[gFrameIndex];
+		Fence* pRenderCompleteFence = pRenderCompleteFences[gFrameIndex];
 
 		// Stall if CPU is running "Swap Chain Buffer Count" frames ahead of GPU
 		FenceStatus fenceStatus;
@@ -539,8 +565,11 @@ public:
 			waitForFences(pRenderer, 1, &pRenderCompleteFence);
 
 		// Update uniform buffers
-		BufferUpdateDesc cbv = { pUniformBuffer[gFrameIndex], &gUniformData };
-		updateResource(&cbv);
+		BufferUpdateDesc viewProjCbv = { pProjViewUniformBuffer[gFrameIndex], &gUniformData };
+		updateResource(&viewProjCbv);
+
+		BufferUpdateDesc skyboxViewProjCbv = { pSkyboxUniformBuffer[gFrameIndex], &gUniformDataSky };
+		updateResource(&skyboxViewProjCbv);
 
 		// simply record the screen cleaning command
 		LoadActionsDesc loadActions = {};
@@ -555,7 +584,6 @@ public:
 
 		Cmd* cmd = ppCmds[gFrameIndex];
 		beginCmd(cmd);
-
 		cmdBeginGpuFrameProfile(cmd, pGpuProfiler);
 
 		TextureBarrier barriers[] = {
@@ -567,40 +595,45 @@ public:
 		cmdBindRenderTargets(cmd, 1, &pRenderTarget, pDepthBuffer, &loadActions, NULL, NULL, -1, -1);
 		cmdSetViewport(cmd, 0.0f, 0.0f, (float)pRenderTarget->mDesc.mWidth, (float)pRenderTarget->mDesc.mHeight, 0.0f, 1.0f);
 		cmdSetScissor(cmd, 0, 0, pRenderTarget->mDesc.mWidth, pRenderTarget->mDesc.mHeight);
-
 		cmdBindDescriptorSet(cmd, 0, pDescriptorSetTexture);
-		//if (GetAsyncKeyState(0xA0))
-		//{
-			cmdBindPipeline(cmd, pSkyBoxDrawPipeline);
-			cmdBindDescriptorSet(cmd, gFrameIndex * gNumUniformBlocks + 0, pDescriptorSetUniforms);
-			cmdBindVertexBuffer(cmd, 1, &pSkyBoxVertexBuffer, NULL);
-			cmdDraw(cmd, 36, 0);//36 triangles in a cube.
 
-			//cmdBindPipeline(cmd, pSpherePipeline);
-			//cmdBindDescriptorSet(cmd, gFrameIndex * gNumUniformBlocks/* + 1*/, pDescriptorSetUniforms);
-			//cmdBindVertexBuffer(cmd, 1, &pSphereVertexBuffer, NULL);
-			//cmdDrawInstanced(cmd, gNumberOfSpherePoints / 6, 0, gNumPlanets, 0);
-		//} else I used to render half broken rays.
+		//// draw skybox
+		cmdBindPipeline(cmd, pSkyBoxDrawPipeline);
+		cmdBindDescriptorSet(cmd, gFrameIndex * 2 + 0, pDescriptorSetUniforms);
+		cmdBindVertexBuffer(cmd, 1, &pSkyBoxVertexBuffer, NULL);
+		cmdDraw(cmd, 36, 0);
+
+		////// draw planets
+		cmdBindPipeline(cmd, pSpherePipeline);
+		cmdBindDescriptorSet(cmd, gFrameIndex * 2 + 1, pDescriptorSetUniforms);
+		cmdBindVertexBuffer(cmd, 1, &pCubeVertexBuffer, NULL);
+		cmdDraw(cmd, 36, 0);
+
+		//Sadly there's more to updating my uniform buffer than this. I don't think we can update after calling beginCmd(). 
+		//gUniformData.mToWorldMat[0].setTranslation(vec3(3.0f, 0.0f, 0.0f));
+		//viewProjCbv = { pProjViewUniformBuffer[gFrameIndex], &gUniformData };
+		//updateResource(&viewProjCbv);
+
+		cmdBindVertexBuffer(cmd, 1, &pSphereVertexBuffer, NULL);
+		cmdDrawInstanced(cmd, gNumberOfSpherePoints / 6, 0, gNumPlanets, 0);
 
 		loadActions = {};
 		loadActions.mLoadActionsColor[0] = LOAD_ACTION_LOAD;
 		cmdBindRenderTargets(cmd, 1, &pRenderTarget, NULL, &loadActions, NULL, NULL, -1, -1);
+		cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw UI", true);
 		static HiresTimer gTimer;
 		gTimer.GetUSec(true);
 
 		gVirtualJoystick.Draw(cmd, { 1.0f, 1.0f, 1.0f, 1.0f });
-
 		gAppUI.DrawText(cmd, float2(8, 15), eastl::string().sprintf("CPU %f ms", gTimer.GetUSecAverage() / 1000.0f).c_str(), &gFrameTimeDraw);
 
-	#if !defined(__ANDROID__)
+#if !defined(__ANDROID__)
 		gAppUI.DrawText(cmd, float2(8, 40), eastl::string().sprintf("GPU %f ms", (float)pGpuProfiler->mCumulativeTime * 1000.0f).c_str(), &gFrameTimeDraw);
 		gAppUI.DrawDebugGpuProfile(cmd, float2(8, 65), pGpuProfiler, NULL);
-	#endif
-
+#endif
 		cmdDrawProfiler();
 
 		gAppUI.Gui(pGui);
-
 		gAppUI.Draw(cmd);
 		cmdBindRenderTargets(cmd, 0, NULL, NULL, NULL, NULL, NULL, -1, -1);
 		cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
@@ -637,6 +670,7 @@ public:
 
 	bool addDepthBuffer()
 	{
+		// Add depth buffer
 		RenderTargetDesc depthRT = {};
 		depthRT.mArraySize = 1;
 		depthRT.mClearValue.depth = 1.0f;

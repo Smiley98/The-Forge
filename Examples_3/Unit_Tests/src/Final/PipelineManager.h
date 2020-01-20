@@ -1,9 +1,9 @@
 #pragma once
-#include "Singleton.h"
+#include "SingletonLocal.h"
 namespace p2 {
 	class Pipeline;
 	class PipelineManager :
-		public Singleton<PipelineManager>
+		public SingletonLocal<PipelineManager>
 	{
 	public:
 		enum PipelineType : unsigned int {
@@ -16,5 +16,3 @@ namespace p2 {
 		Pipeline* s_pipelineActive;
 	};
 }
-
-

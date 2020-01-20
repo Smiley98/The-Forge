@@ -202,7 +202,7 @@ public:
 		addDepthState(pRenderer, &depthStateDesc, &pDepth);
 
 		float* pSpherePoints;
-		generateSpherePoints(&pSpherePoints, &gNumberOfSpherePoints, 10);
+		generateSpherePoints(&pSpherePoints, &gNumberOfSpherePoints, 10, 5.0f);
 		uint64_t sphereDataSize = gNumberOfSpherePoints * sizeof(float);
 		BufferLoadDesc sphereVbDesc = {};
 		sphereVbDesc.mDesc.mDescriptors = DESCRIPTOR_TYPE_VERTEX_BUFFER;
@@ -298,7 +298,8 @@ public:
 
 		pGui->AddWidget(CheckboxWidget("Toggle Micro Profiler", &gMicroProfiler));
 
-		CameraMotionParameters cmp{ 160.0f, 600.0f, 200.0f };
+		//CameraMotionParameters cmp{ 160.0f, 600.0f, 200.0f };
+		CameraMotionParameters cmp{ 16.0f, 60.0f, 20.0f };
 		vec3                   camPos{ 48.0f, 48.0f, 20.0f };
 		vec3                   lookAt{ 0 };
 
@@ -596,22 +597,24 @@ public:
 		cmdBindDescriptorSet(cmd, 0, pDescriptorSetTexture);
 
 		//// draw skybox
-		cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw skybox", true);
 		cmdBindPipeline(cmd, pSkyBoxDrawPipeline);
 		cmdBindDescriptorSet(cmd, gFrameIndex * 2 + 0, pDescriptorSetUniforms);
 		cmdBindVertexBuffer(cmd, 1, &pSkyBoxVertexBuffer, NULL);
 		cmdDraw(cmd, 36, 0);
-		cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
 
 		////// draw planets
-		cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw Planets", true);
 		cmdBindPipeline(cmd, pSpherePipeline);
 		cmdBindDescriptorSet(cmd, gFrameIndex * 2 + 1, pDescriptorSetUniforms);
 		cmdBindVertexBuffer(cmd, 1, &pCubeVertexBuffer, NULL);
 		cmdDraw(cmd, 36, 0);
-		//cmdBindVertexBuffer(cmd, 1, &pSphereVertexBuffer, NULL);
-		//cmdDrawInstanced(cmd, gNumberOfSpherePoints / 6, 0, gNumPlanets, 0);
-		cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
+
+		//Sadly there's more to updating my uniform buffer than this. I don't think we can update after calling beginCmd(). 
+		//gUniformData.mToWorldMat[0].setTranslation(vec3(3.0f, 0.0f, 0.0f));
+		//viewProjCbv = { pProjViewUniformBuffer[gFrameIndex], &gUniformData };
+		//updateResource(&viewProjCbv);
+
+		cmdBindVertexBuffer(cmd, 1, &pSphereVertexBuffer, NULL);
+		cmdDrawInstanced(cmd, gNumberOfSpherePoints / 6, 0, gNumPlanets, 0);
 
 		loadActions = {};
 		loadActions.mLoadActionsColor[0] = LOAD_ACTION_LOAD;

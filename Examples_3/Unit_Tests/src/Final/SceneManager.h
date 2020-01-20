@@ -1,9 +1,9 @@
 #pragma once
-#include "Singleton.h"
+#include "SingletonLocal.h"
 namespace p2 {
 	class Scene;
 	class SceneManager :
-		public Singleton<SceneManager>
+		public SingletonLocal<SceneManager>
 	{
 	public:
 		~SceneManager();
