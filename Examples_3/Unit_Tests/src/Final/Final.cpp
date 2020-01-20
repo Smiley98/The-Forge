@@ -102,7 +102,7 @@ class Transformations : public IApp
 {
 private:
 	p2::PathManager pathManager;
-	p2::QueueManager queueManager;// = p2::QueueManager(*pRenderer);
+	p2::QueueManager queueManager;
 	//p2::SynchronizationManager syncManager;
 
 public:
@@ -371,8 +371,7 @@ public:
 
 	void Exit()
 	{
-		//waitQueueIdle(pGraphicsQueue);
-		waitQueueIdle(queueManager.m_graphicsQueue);
+		queueManager.Exit();
 
 		exitInputSystem();
 
@@ -417,15 +416,8 @@ public:
 		}
 		removeSemaphore(pRenderer, pImageAcquiredSemaphore);
 
-		//removeCmd_n(pCmdPool, gImageCount, ppCmds);
-		//removeCmdPool(pRenderer, pCmdPool);
-		removeCmd_n(queueManager.m_commandPool, IMAGE_COUNT, queueManager.m_commands);
-		removeCmdPool(pRenderer, queueManager.m_commandPool);
-
 		removeGpuProfiler(pRenderer, pGpuProfiler);
 		removeResourceLoaderInterface(pRenderer);
-		//removeQueue(pGraphicsQueue);
-		removeQueue(queueManager.m_graphicsQueue);
 		removeRenderer(pRenderer);
 	}
 
@@ -494,8 +486,7 @@ public:
 
 	void Unload()
 	{
-		//waitQueueIdle(pGraphicsQueue);
-		waitQueueIdle(queueManager.m_graphicsQueue);
+		queueManager.Unload();
 
 		unloadProfiler();
 		gAppUI.Unload();

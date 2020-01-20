@@ -22,6 +22,10 @@ namespace p2 {
 		~QueueManager();
 
 		bool Init() final;
+
+		void Unload() final;
+		void Exit() final;
+
 		const char* GetName() final;
 	};
 }
