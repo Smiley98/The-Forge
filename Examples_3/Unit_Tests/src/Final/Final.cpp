@@ -11,11 +11,12 @@
 #include "../../../../Middleware_3/UI/AppUI.h"
 #include "../../../../Common_3/Renderer/IRenderer.h"
 #include "../../../../Common_3/Renderer/ResourceLoader.h"
-
-//Math
 #include "../../../../Common_3/OS/Math/MathTypes.h"
-
 #include "../../../../Common_3/OS/Interfaces/IMemory.h"
+
+#include "PathManager.h"
+//#include "QueueManager.h"
+//#include "SynchronizationManager.h"
 
 /// Demo structures
 struct PlanetInfoStruct
@@ -98,11 +99,17 @@ GuiComponent* pGui = NULL;
 
 class Transformations : public IApp
 {
+private:
+	p2::PathManager pathManager;
+	//p2::QueueManager queueManager;
+	//p2::SynchronizationManager syncManager;
+
 public:
 	bool Init()
 	{
+		pathManager.Init();
 		// FILE PATHS
-		PathHandle programDirectory = fsCopyProgramDirectoryPath();
+		/*PathHandle programDirectory = fsCopyProgramDirectoryPath();
 		if (!fsPlatformUsesBundledResources())
 		{
 			PathHandle resourceDirRoot = fsAppendPathComponent(programDirectory, "../../../src/01_Transformations");
@@ -114,12 +121,10 @@ public:
 			fsSetRelativePathForResourceDirectory(RD_ANIMATIONS, "../../UnitTestResources/Animation");
 			fsSetRelativePathForResourceDirectory(RD_MIDDLEWARE_TEXT, "../../../../Middleware_3/Text");
 			fsSetRelativePathForResourceDirectory(RD_MIDDLEWARE_UI, "../../../../Middleware_3/UI");
-		}
+		}*/
 
-		// window and renderer setup
 		RendererDesc settings = { 0 };
 		initRenderer(GetName(), &settings, &pRenderer);
-		//check for init success
 		if (!pRenderer)
 			return false;
 
@@ -137,6 +142,7 @@ public:
 		}
 		addSemaphore(pRenderer, &pImageAcquiredSemaphore);
 
+		//Called on renderer, so we can leave this here.
 		initResourceLoaderInterface(pRenderer);
 
 		// Loads Skybox Textures

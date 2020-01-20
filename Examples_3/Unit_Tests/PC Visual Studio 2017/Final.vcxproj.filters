@@ -28,6 +28,9 @@
     <Filter Include="Management">
       <UniqueIdentifier>{ee55184c-cddf-46db-8ef2-3cba62eb3a16}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Interfaces">
+      <UniqueIdentifier>{79cab239-d663-4bad-959b-e17275d6f709}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\src\Final\Shaders\Vulkan\basic.frag">
@@ -89,6 +92,12 @@
     <ClCompile Include="..\src\Final\SynchronizationManager.cpp">
       <Filter>Management</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\Final\PathManager.cpp">
+      <Filter>Management</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Final\TextureManager.cpp">
+      <Filter>Management</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\Final\Singleton.h">
@@ -137,5 +146,14 @@
       <Filter>Management</Filter>
     </ClInclude>
     <ClInclude Include="..\src\Final\ScreenBufferDef.h" />
+    <ClInclude Include="..\src\Final\PathManager.h">
+      <Filter>Management</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Final\TextureManager.h">
+      <Filter>Management</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Final\IResource.h">
+      <Filter>Interfaces</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

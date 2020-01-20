@@ -36,6 +36,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\Final\Final.cpp" />
+    <ClCompile Include="..\src\Final\PathManager.cpp" />
     <ClCompile Include="..\src\Final\Pipeline.cpp" />
     <ClCompile Include="..\src\Final\PipelineManager.cpp" />
     <ClCompile Include="..\src\Final\QueueManager.cpp" />
@@ -44,12 +45,15 @@
     <ClCompile Include="..\src\Final\SceneManager.cpp" />
     <ClCompile Include="..\src\Final\ShaderManager.cpp" />
     <ClCompile Include="..\src\Final\SynchronizationManager.cpp" />
+    <ClCompile Include="..\src\Final\TextureManager.cpp" />
     <ClCompile Include="..\src\Final\UIContext.cpp" />
     <ClCompile Include="..\src\Final\UniformManager.cpp" />
     <ClCompile Include="..\src\Final\Utilities.cpp" />
     <ClCompile Include="..\src\Final\VertexManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\Final\IResource.h" />
+    <ClInclude Include="..\src\Final\PathManager.h" />
     <ClInclude Include="..\src\Final\Pipeline.h" />
     <ClInclude Include="..\src\Final\PipelineManager.h" />
     <ClInclude Include="..\src\Final\QueueManager.h" />
@@ -62,6 +66,7 @@
     <ClInclude Include="..\src\Final\Singleton.h" />
     <ClInclude Include="..\src\Final\SingletonLocal.h" />
     <ClInclude Include="..\src\Final\SynchronizationManager.h" />
+    <ClInclude Include="..\src\Final\TextureManager.h" />
     <ClInclude Include="..\src\Final\UIContext.h" />
     <ClInclude Include="..\src\Final\UniformManager.h" />
     <ClInclude Include="..\src\Final\Utilities.h" />
