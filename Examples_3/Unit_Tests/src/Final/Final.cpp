@@ -14,8 +14,9 @@
 #include "../../../../Common_3/OS/Math/MathTypes.h"
 #include "../../../../Common_3/OS/Interfaces/IMemory.h"
 
+#include "ScreenBufferDef.h"
 #include "PathManager.h"
-//#include "QueueManager.h"
+#include "QueueManager.h"
 //#include "SynchronizationManager.h"
 
 /// Demo structures
@@ -44,9 +45,9 @@ const uint     gNumPlanets = 1;
 //Only object that I haven't wrapped.
 Renderer* pRenderer = NULL;
 
-Queue* pGraphicsQueue = NULL;
+/*Queue* pGraphicsQueue = NULL;
 CmdPool* pCmdPool = NULL;
-Cmd** ppCmds = NULL;
+Cmd** ppCmds = NULL;*/
 
 SwapChain* pSwapChain = NULL;
 RenderTarget* pDepthBuffer = NULL;
@@ -101,39 +102,21 @@ class Transformations : public IApp
 {
 private:
 	p2::PathManager pathManager;
-	//p2::QueueManager queueManager;
+	p2::QueueManager queueManager;// = p2::QueueManager(*pRenderer);
 	//p2::SynchronizationManager syncManager;
 
 public:
 	bool Init()
 	{
 		pathManager.Init();
-		// FILE PATHS
-		/*PathHandle programDirectory = fsCopyProgramDirectoryPath();
-		if (!fsPlatformUsesBundledResources())
-		{
-			PathHandle resourceDirRoot = fsAppendPathComponent(programDirectory, "../../../src/01_Transformations");
-			fsSetResourceDirectoryRootPath(resourceDirRoot);
-
-			fsSetRelativePathForResourceDirectory(RD_TEXTURES, "../../UnitTestResources/Textures");
-			fsSetRelativePathForResourceDirectory(RD_MESHES, "../../UnitTestResources/Meshes");
-			fsSetRelativePathForResourceDirectory(RD_BUILTIN_FONTS, "../../UnitTestResources/Fonts");
-			fsSetRelativePathForResourceDirectory(RD_ANIMATIONS, "../../UnitTestResources/Animation");
-			fsSetRelativePathForResourceDirectory(RD_MIDDLEWARE_TEXT, "../../../../Middleware_3/Text");
-			fsSetRelativePathForResourceDirectory(RD_MIDDLEWARE_UI, "../../../../Middleware_3/UI");
-		}*/
 
 		RendererDesc settings = { 0 };
 		initRenderer(GetName(), &settings, &pRenderer);
 		if (!pRenderer)
 			return false;
 
-		QueueDesc queueDesc = {};
-		queueDesc.mType = CMD_POOL_DIRECT;
-		queueDesc.mFlag = QUEUE_FLAG_INIT_MICROPROFILE;
-		addQueue(pRenderer, &queueDesc, &pGraphicsQueue);
-		addCmdPool(pRenderer, pGraphicsQueue, false, &pCmdPool);
-		addCmd_n(pCmdPool, false, gImageCount, &ppCmds);
+		queueManager.m_renderer = pRenderer;
+		queueManager.Init();
 
 		for (uint32_t i = 0; i < gImageCount; ++i)
 		{
@@ -321,7 +304,8 @@ public:
 		initProfiler();
 
 		// Gpu profiler can only be added after initProfile.
-		addGpuProfiler(pRenderer, pGraphicsQueue, &pGpuProfiler, "GpuProfiler");
+		//addGpuProfiler(pRenderer, pGraphicsQueue, &pGpuProfiler, "GpuProfiler");
+		addGpuProfiler(pRenderer, queueManager.m_graphicsQueue, &pGpuProfiler, "GpuProfiler");
 
 		// App Actions
 		InputActionDesc actionDesc = { InputBindings::BUTTON_FULLSCREEN, [](InputActionContext* ctx) { toggleFullscreen(((IApp*)ctx->pUserData)->pWindow); return true; }, this };
@@ -387,7 +371,8 @@ public:
 
 	void Exit()
 	{
-		waitQueueIdle(pGraphicsQueue);
+		//waitQueueIdle(pGraphicsQueue);
+		waitQueueIdle(queueManager.m_graphicsQueue);
 
 		exitInputSystem();
 
@@ -432,12 +417,15 @@ public:
 		}
 		removeSemaphore(pRenderer, pImageAcquiredSemaphore);
 
-		removeCmd_n(pCmdPool, gImageCount, ppCmds);
-		removeCmdPool(pRenderer, pCmdPool);
+		//removeCmd_n(pCmdPool, gImageCount, ppCmds);
+		//removeCmdPool(pRenderer, pCmdPool);
+		removeCmd_n(queueManager.m_commandPool, IMAGE_COUNT, queueManager.m_commands);
+		removeCmdPool(pRenderer, queueManager.m_commandPool);
 
 		removeGpuProfiler(pRenderer, pGpuProfiler);
 		removeResourceLoaderInterface(pRenderer);
-		removeQueue(pGraphicsQueue);
+		//removeQueue(pGraphicsQueue);
+		removeQueue(queueManager.m_graphicsQueue);
 		removeRenderer(pRenderer);
 	}
 
@@ -506,7 +494,8 @@ public:
 
 	void Unload()
 	{
-		waitQueueIdle(pGraphicsQueue);
+		//waitQueueIdle(pGraphicsQueue);
+		waitQueueIdle(queueManager.m_graphicsQueue);
 
 		unloadProfiler();
 		gAppUI.Unload();
@@ -588,7 +577,8 @@ public:
 		loadActions.mClearDepth.depth = 1.0f;
 		loadActions.mClearDepth.stencil = 0;
 
-		Cmd* cmd = ppCmds[gFrameIndex];
+		//Cmd* cmd = ppCmds[gFrameIndex];
+		Cmd* cmd = queueManager.m_commands[gFrameIndex];
 		beginCmd(cmd);
 		cmdBeginGpuFrameProfile(cmd, pGpuProfiler);
 
@@ -650,8 +640,10 @@ public:
 		cmdEndGpuFrameProfile(cmd, pGpuProfiler);
 		endCmd(cmd);
 
-		queueSubmit(pGraphicsQueue, 1, &cmd, pRenderCompleteFence, 1, &pImageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);
-		queuePresent(pGraphicsQueue, pSwapChain, gFrameIndex, 1, &pRenderCompleteSemaphore);
+		//queueSubmit(pGraphicsQueue, 1, &cmd, pRenderCompleteFence, 1, &pImageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);
+		//queuePresent(pGraphicsQueue, pSwapChain, gFrameIndex, 1, &pRenderCompleteSemaphore);
+		queueSubmit(queueManager.m_graphicsQueue, 1, &cmd, pRenderCompleteFence, 1, &pImageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);
+		queuePresent(queueManager.m_graphicsQueue, pSwapChain, gFrameIndex, 1, &pRenderCompleteSemaphore);
 		flipProfiler();
 	}
 
@@ -662,7 +654,7 @@ public:
 		SwapChainDesc swapChainDesc = {};
 		swapChainDesc.mWindowHandle = pWindow->handle;
 		swapChainDesc.mPresentQueueCount = 1;
-		swapChainDesc.ppPresentQueues = &pGraphicsQueue;
+		swapChainDesc.ppPresentQueues = &queueManager.m_graphicsQueue;//&pGraphicsQueue;
 		swapChainDesc.mWidth = mSettings.mWidth;
 		swapChainDesc.mHeight = mSettings.mHeight;
 		swapChainDesc.mImageCount = gImageCount;
