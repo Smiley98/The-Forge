@@ -46,11 +46,9 @@ const uint     gNumPlanets = 1;
 Renderer* pRenderer = NULL;
 
 Shader* pSphereShader = NULL;
-Buffer* pSphereVertexBuffer = NULL;
 Pipeline* pSpherePipeline = NULL;
 
 Shader* pSkyBoxDrawShader = NULL;
-Buffer* pSkyBoxVertexBuffer = NULL;
 Pipeline* pSkyBoxDrawPipeline = NULL;
 RootSignature* pRootSignature = NULL;
 Sampler* pSamplerSkyBox = NULL;
@@ -59,15 +57,11 @@ DescriptorSet* pDescriptorSetTexture = { NULL };
 DescriptorSet* pDescriptorSetUniforms = { NULL };
 VirtualJoystickUI gVirtualJoystick;
 
-//Can reuse the entire sphere pipeline!
-Buffer* pCubeVertexBuffer = NULL;
-
 Buffer* pProjViewUniformBuffer[IMAGE_COUNT] = { NULL };
 Buffer* pSkyboxUniformBuffer[IMAGE_COUNT] = { NULL };
 
 uint32_t gFrameIndex = 0;
 
-int              gNumberOfSpherePoints;
 UniformBlock     gUniformData;
 UniformBlock     gUniformDataSky;
 PlanetInfoStruct gPlanetInfoData[gNumPlanets];
@@ -114,6 +108,7 @@ public:
 
 		//Called on renderer, so we can leave this here.
 		initResourceLoaderInterface(pRenderer);
+		vertexManager.Init();
 
 		// Loads Skybox Textures
 		for (int i = 0; i < 6; ++i)
@@ -163,70 +158,6 @@ public:
 		addDescriptorSet(pRenderer, &desc, &pDescriptorSetTexture);
 		desc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_PER_FRAME, IMAGE_COUNT * 2 };
 		addDescriptorSet(pRenderer, &desc, &pDescriptorSetUniforms);
-
-		float* pSpherePoints;
-		generateSpherePoints(&pSpherePoints, &gNumberOfSpherePoints, 10, 5.0f);
-		uint64_t sphereDataSize = gNumberOfSpherePoints * sizeof(float);
-		BufferLoadDesc sphereVbDesc = {};
-		sphereVbDesc.mDesc.mDescriptors = DESCRIPTOR_TYPE_VERTEX_BUFFER;
-		sphereVbDesc.mDesc.mMemoryUsage = RESOURCE_MEMORY_USAGE_GPU_ONLY;
-		sphereVbDesc.mDesc.mSize = sphereDataSize;
-		sphereVbDesc.mDesc.mVertexStride = sizeof(float) * 6;
-		sphereVbDesc.pData = pSpherePoints;
-		sphereVbDesc.ppBuffer = &pSphereVertexBuffer;
-		addResource(&sphereVbDesc);
-		conf_free(pSpherePoints);
-
-		int cubeVertexDataIndices;
-		float* pCubePoints;
-		generateCuboidPoints(&pCubePoints, &cubeVertexDataIndices);
-		uint64_t cubeDataSize = cubeVertexDataIndices * sizeof(float);
-		BufferLoadDesc cubeVbDesc = {};
-		cubeVbDesc.mDesc.mDescriptors = DESCRIPTOR_TYPE_VERTEX_BUFFER;
-		cubeVbDesc.mDesc.mMemoryUsage = RESOURCE_MEMORY_USAGE_GPU_ONLY;
-		cubeVbDesc.mDesc.mSize = cubeDataSize;
-		cubeVbDesc.mDesc.mVertexStride = sizeof(float) * 6;
-		cubeVbDesc.pData = pCubePoints;
-		cubeVbDesc.ppBuffer = &pCubeVertexBuffer;
-		addResource(&cubeVbDesc);
-		conf_free(pCubePoints);
-
-		//Generate sky box vertex buffer
-		float skyBoxPoints[] = {
-			10.0f,  -10.0f, -10.0f, 6.0f,    // -z
-			-10.0f, -10.0f, -10.0f, 6.0f,   -10.0f, 10.0f,  -10.0f, 6.0f,   -10.0f, 10.0f,
-			-10.0f, 6.0f,   10.0f,  10.0f,  -10.0f, 6.0f,   10.0f,  -10.0f, -10.0f, 6.0f,
-
-			-10.0f, -10.0f, 10.0f,  2.0f,    //-x
-			-10.0f, -10.0f, -10.0f, 2.0f,   -10.0f, 10.0f,  -10.0f, 2.0f,   -10.0f, 10.0f,
-			-10.0f, 2.0f,   -10.0f, 10.0f,  10.0f,  2.0f,   -10.0f, -10.0f, 10.0f,  2.0f,
-
-			10.0f,  -10.0f, -10.0f, 1.0f,    //+x
-			10.0f,  -10.0f, 10.0f,  1.0f,   10.0f,  10.0f,  10.0f,  1.0f,   10.0f,  10.0f,
-			10.0f,  1.0f,   10.0f,  10.0f,  -10.0f, 1.0f,   10.0f,  -10.0f, -10.0f, 1.0f,
-
-			-10.0f, -10.0f, 10.0f,  5.0f,    // +z
-			-10.0f, 10.0f,  10.0f,  5.0f,   10.0f,  10.0f,  10.0f,  5.0f,   10.0f,  10.0f,
-			10.0f,  5.0f,   10.0f,  -10.0f, 10.0f,  5.0f,   -10.0f, -10.0f, 10.0f,  5.0f,
-
-			-10.0f, 10.0f,  -10.0f, 3.0f,    //+y
-			10.0f,  10.0f,  -10.0f, 3.0f,   10.0f,  10.0f,  10.0f,  3.0f,   10.0f,  10.0f,
-			10.0f,  3.0f,   -10.0f, 10.0f,  10.0f,  3.0f,   -10.0f, 10.0f,  -10.0f, 3.0f,
-
-			10.0f,  -10.0f, 10.0f,  4.0f,    //-y
-			10.0f,  -10.0f, -10.0f, 4.0f,   -10.0f, -10.0f, -10.0f, 4.0f,   -10.0f, -10.0f,
-			-10.0f, 4.0f,   -10.0f, -10.0f, 10.0f,  4.0f,   10.0f,  -10.0f, 10.0f,  4.0f,
-		};
-
-		uint64_t       skyBoxDataSize = 4 * 6 * 6 * sizeof(float);
-		BufferLoadDesc skyboxVbDesc = {};
-		skyboxVbDesc.mDesc.mDescriptors = DESCRIPTOR_TYPE_VERTEX_BUFFER;
-		skyboxVbDesc.mDesc.mMemoryUsage = RESOURCE_MEMORY_USAGE_GPU_ONLY;
-		skyboxVbDesc.mDesc.mSize = skyBoxDataSize;
-		skyboxVbDesc.mDesc.mVertexStride = sizeof(float) * 4;
-		skyboxVbDesc.pData = skyBoxPoints;
-		skyboxVbDesc.ppBuffer = &pSkyBoxVertexBuffer;
-		addResource(&skyboxVbDesc);
 
 		BufferLoadDesc ubDesc = {};
 		ubDesc.mDesc.mDescriptors = DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -347,6 +278,7 @@ public:
 		queueManager.Exit();
 		syncManager.Exit();
 		rasterManager.Exit();
+		vertexManager.Exit();
 
 		exitInputSystem();
 
@@ -367,10 +299,6 @@ public:
 
 		removeDescriptorSet(pRenderer, pDescriptorSetTexture);
 		removeDescriptorSet(pRenderer, pDescriptorSetUniforms);
-
-		removeResource(pCubeVertexBuffer);
-		removeResource(pSphereVertexBuffer);
-		removeResource(pSkyBoxVertexBuffer);
 
 		for (uint i = 0; i < 6; ++i)
 			removeResource(pSkyBoxTextures[i]);
@@ -401,20 +329,6 @@ public:
 
 		loadProfiler(&gAppUI, mSettings.mWidth, mSettings.mHeight);
 
-		//layout and pipeline for sphere draw
-		VertexLayout vertexLayout = {};
-		vertexLayout.mAttribCount = 2;
-		vertexLayout.mAttribs[0].mSemantic = SEMANTIC_POSITION;
-		vertexLayout.mAttribs[0].mFormat = TinyImageFormat_R32G32B32_SFLOAT;
-		vertexLayout.mAttribs[0].mBinding = 0;
-		vertexLayout.mAttribs[0].mLocation = 0;
-		vertexLayout.mAttribs[0].mOffset = 0;
-		vertexLayout.mAttribs[1].mSemantic = SEMANTIC_NORMAL;
-		vertexLayout.mAttribs[1].mFormat = TinyImageFormat_R32G32B32_SFLOAT;
-		vertexLayout.mAttribs[1].mBinding = 0;
-		vertexLayout.mAttribs[1].mLocation = 1;
-		vertexLayout.mAttribs[1].mOffset = 3 * sizeof(float);
-
 		PipelineDesc desc = {};
 		desc.mType = PIPELINE_TYPE_GRAPHICS;
 		GraphicsPipelineDesc& pipelineSettings = desc.mGraphicsDesc;
@@ -427,19 +341,13 @@ public:
 		pipelineSettings.mDepthStencilFormat = syncManager.m_depthBuffer->mDesc.mFormat;
 		pipelineSettings.pRootSignature = pRootSignature;
 		pipelineSettings.pShaderProgram = pSphereShader;
-		pipelineSettings.pVertexLayout = &vertexLayout;
+		//This is okay for now because the sphere and the cube have the same vertex layout.
+		pipelineSettings.pVertexLayout = &vertexManager.m_sphereVertexLayout;
 		pipelineSettings.pRasterizerState = rasterManager.m_cullFront;
 		addPipeline(pRenderer, &desc, &pSpherePipeline);
 
-		//layout and pipeline for skybox draw
-		vertexLayout = {};
-		vertexLayout.mAttribCount = 1;
-		vertexLayout.mAttribs[0].mSemantic = SEMANTIC_POSITION;
-		vertexLayout.mAttribs[0].mFormat = TinyImageFormat_R32G32B32A32_SFLOAT;
-		vertexLayout.mAttribs[0].mBinding = 0;
-		vertexLayout.mAttribs[0].mLocation = 0;
-		vertexLayout.mAttribs[0].mOffset = 0;
-
+		//Fingers fucking crossed.
+		pipelineSettings.pVertexLayout = &vertexManager.m_skyboxVertexLayout;
 		pipelineSettings.pDepthState = NULL;
 		pipelineSettings.pRasterizerState = rasterManager.m_cullNone;
 		pipelineSettings.pShaderProgram = pSkyBoxDrawShader;
@@ -550,22 +458,21 @@ public:
 		//// draw skybox
 		cmdBindPipeline(cmd, pSkyBoxDrawPipeline);
 		cmdBindDescriptorSet(cmd, gFrameIndex * 2 + 0, pDescriptorSetUniforms);
-		cmdBindVertexBuffer(cmd, 1, &pSkyBoxVertexBuffer, NULL);
-		cmdDraw(cmd, 36, 0);
+		cmdBindVertexBuffer(cmd, 1, &vertexManager.m_skyboxVertexBuffer, NULL);
+		cmdDraw(cmd, vertexManager.m_skyboxVertexCount, 0);
 
 		////// draw planets
 		cmdBindPipeline(cmd, pSpherePipeline);
 		cmdBindDescriptorSet(cmd, gFrameIndex * 2 + 1, pDescriptorSetUniforms);
-		cmdBindVertexBuffer(cmd, 1, &pCubeVertexBuffer, NULL);
-		cmdDraw(cmd, 36, 0);
+		cmdBindVertexBuffer(cmd, 1, &vertexManager.m_cubeVertexBuffer, NULL);
+		cmdDraw(cmd, vertexManager.m_cubeVertexCount, 0);
 
 		//Sadly there's more to updating my uniform buffer than this. I don't think we can update after calling beginCmd(). 
 		//gUniformData.mToWorldMat[0].setTranslation(vec3(3.0f, 0.0f, 0.0f));
 		//viewProjCbv = { pProjViewUniformBuffer[gFrameIndex], &gUniformData };
 		//updateResource(&viewProjCbv);
-
-		cmdBindVertexBuffer(cmd, 1, &pSphereVertexBuffer, NULL);
-		cmdDrawInstanced(cmd, gNumberOfSpherePoints / 6, 0, gNumPlanets, 0);
+		cmdBindVertexBuffer(cmd, 1, &vertexManager.m_sphereVertexBuffer, NULL);
+		cmdDrawInstanced(cmd, vertexManager.m_sphereVertexCount, 0, gNumPlanets, 0);
 
 		loadActions = {};
 		loadActions.mLoadActionsColor[0] = LOAD_ACTION_LOAD;
