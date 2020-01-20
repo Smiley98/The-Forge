@@ -44,31 +44,31 @@
     <ClCompile Include="..\src\Final\Final.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Utilities.cpp">
-      <Filter>Utilities</Filter>
+    <ClCompile Include="..\src\Final\SceneManager.cpp">
+      <Filter>Singletons</Filter>
     </ClCompile>
-    <ClCompile Include="SceneMain.cpp">
+    <ClCompile Include="..\src\Final\SceneMain.cpp">
       <Filter>Scenes</Filter>
     </ClCompile>
-    <ClCompile Include="SceneManager.cpp">
-      <Filter>Singletons</Filter>
+    <ClCompile Include="..\src\Final\Utilities.cpp">
+      <Filter>Utilities</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Scene.h">
+    <ClInclude Include="..\src\Final\Singleton.h">
+      <Filter>Singletons</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Final\SceneManager.h">
+      <Filter>Singletons</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Final\Scene.h">
       <Filter>Scenes</Filter>
     </ClInclude>
-    <ClInclude Include="Utilities.h">
+    <ClInclude Include="..\src\Final\SceneMain.h">
+      <Filter>Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Final\Utilities.h">
       <Filter>Utilities</Filter>
-    </ClInclude>
-    <ClInclude Include="SceneMain.h">
-      <Filter>Scenes</Filter>
-    </ClInclude>
-    <ClInclude Include="Singleton.h">
-      <Filter>Singletons</Filter>
-    </ClInclude>
-    <ClInclude Include="SceneManager.h">
-      <Filter>Singletons</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

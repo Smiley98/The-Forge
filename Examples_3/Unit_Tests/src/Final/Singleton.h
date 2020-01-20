@@ -1,5 +1,4 @@
 #pragma once
-
 namespace p2 {
     template<class T>
     class Singleton

@@ -1,32 +1,4 @@
-/*
- * Copyright (c) 2018-2019 Confetti Interactive Inc.
- *
- * This file is part of The-Forge
- * (see https://github.com/ConfettiFX/The-Forge).
- *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
-*/
-
-// Unit Test for testing transformations using a solar system.
-// Tests the basic mat4 transformations, such as scaling, rotation, and translation.
-
-#define MAX_PLANETS 20    // Does not affect test, just for allocating space in uniform block. Must match with shader.
-
+#define MAX_PLANETS 20
 
 //Interfaces
 #include "../../../../Common_3/OS/Interfaces/ICameraController.h"
@@ -45,78 +17,21 @@
 
 #include "../../../../Common_3/OS/Interfaces/IMemory.h"
 
-/// Demo structures
-struct PlanetInfoStruct
-{
-	uint  mParentIndex;
-	vec4  mColor;
-	float mYOrbitSpeed;    // Rotation speed around parent
-	float mZOrbitSpeed;
-	float mRotationSpeed;    // Rotation speed around self
-	mat4  mTranslationMat;
-	mat4  mScaleMat;
-	mat4  mSharedMat;    // Matrix to pass down to children
-};
-
 struct UniformBlock
 {
 	mat4 mProjectView;
 	mat4 mToWorldMat[MAX_PLANETS];
 	vec4 mColor[MAX_PLANETS];
-
-	// Point Light Information
 	vec3 mLightPosition;
 	vec3 mLightColor;
-};
-
-struct RaymarchingUniformBlock {
-	mat4 inverseWorldMatrices[MAX_PLANETS];
-	mat4 invView;
-	vec4 res;
-	float scalings[MAX_PLANETS];
-
-	//mat4 invView;
-	//
-	////Inverse transformation matrices.
-	//mat4 invSun;
-	//mat4 invMerc;
-	//mat4 invVenus;
-	//mat4 invEarth;
-	//mat4 invMars;
-	//mat4 invJup;
-	//mat4 invSat;
-	//mat4 invUr;
-	//mat4 invNept;
-	//mat4 invPlu;
-	//mat4 invMoon;
-	//
-	////Uniform scaling floats.
-	//float sSun;
-	//float sMerc;
-	//float sVenus;
-	//float sEarth;
-	//float sMars;
-	//float sJup;
-	//float sSat;
-	//float sUr;
-	//float sNept;
-	//float sPlu;
-	//float sMoon;
-	//
-	////Screen resolution.
-	//vec2 resolution;
 };
 
 const uint32_t gImageCount = 3;
 bool           gMicroProfiler = false;
 bool           bPrevToggleMicroProfiler = false;
-const int      gSphereResolution = 30;    // Increase for higher resolution spheres
-const float    gSphereDiameter = 0.5f;
-const uint     gNumPlanets = 11;        // Sun, Mercury -> Neptune, Pluto, Moon
-const uint     gTimeOffset = 600000;    // For visually better starting locations
-const float    gRotSelfScale = 0.0004f;
-const float    gRotOrbitYScale = 0.001f;
-const float    gRotOrbitZScale = 0.00001f;
+
+mat4 gRetardPlanetTransform = mat4::identity();
+vec4 gRetardPlanetColour = vec4(1.0f, 0.0f, 0.0f, 1.0f);
 
 Renderer* pRenderer = NULL;
 
@@ -140,40 +55,28 @@ Pipeline*      pSkyBoxDrawPipeline = NULL;
 Sampler*       pSamplerSkyBox = NULL;
 Texture*       pSkyBoxTextures[6];
 
-Shader* pRaymarchingShader = NULL;
-Buffer* pRaymarchingVertexBuffer = NULL;
-Pipeline* pRaymarchingPipeline = NULL;
-
 RootSignature* pRootSignature = NULL;
 DescriptorSet* pDescriptorSetTexture = { NULL };
 DescriptorSet* pDescriptorSetUniforms = { NULL };
 VirtualJoystickUI gVirtualJoystick;
-DepthState*      pDepth = NULL;
+DepthState* pDepth = NULL;
 
 RasterizerState* pSkyboxRast = NULL;
 RasterizerState* pSphereRast = NULL;
-RasterizerState* pRaymarchingRast = NULL;
 
-Buffer* pProjViewUniformBuffer[gImageCount] = { NULL };
-Buffer* pSkyboxUniformBuffer[gImageCount] = { NULL };
-Buffer* pRaymarchingUniformBuffer[gImageCount] = { NULL };
+Buffer* pUniformBuffer[gImageCount] = { NULL };
+UniformBlock gUniformData;
 
-UniformBlock     gUniformData;
-UniformBlock     gUniformDataSky;
-RaymarchingUniformBlock gUniformDataRaymarching;
-
-const uint32_t gNumUniformBlocks = 3;
+const uint32_t gNumUniformBlocks = 1;
 const uint32_t gNumUniformBuffers = 3 * gNumUniformBlocks;
 
 uint32_t gFrameIndex = 0;
-int              gNumberOfSpherePoints;
-PlanetInfoStruct gPlanetInfoData[gNumPlanets];
 
 ICameraController* pCameraController = NULL;
 
 /// UI
 UIApp gAppUI;
-GpuProfiler*       pGpuProfiler = NULL;
+GpuProfiler* pGpuProfiler = NULL;
 
 const char* pSkyBoxImageFileNames[] = { "Skybox_right1",  "Skybox_left2",  "Skybox_top3",
 										"Skybox_bottom4", "Skybox_front5", "Skybox_back6" };
@@ -182,78 +85,87 @@ TextDrawDesc gFrameTimeDraw = TextDrawDesc(0, 0xff00ffff, 18);
 
 GuiComponent* pGui = NULL;
 
-class Transformations: public IApp
+void InitPaths() {
+	// FILE PATHS
+	PathHandle programDirectory = fsCopyProgramDirectoryPath();
+	if (!fsPlatformUsesBundledResources())
+	{
+		PathHandle resourceDirRoot = fsAppendPathComponent(programDirectory, "../../../src/Final");
+		fsSetResourceDirectoryRootPath(resourceDirRoot);
+
+		fsSetRelativePathForResourceDirectory(RD_TEXTURES, "../../UnitTestResources/Textures");
+		fsSetRelativePathForResourceDirectory(RD_MESHES, "../../UnitTestResources/Meshes");
+		fsSetRelativePathForResourceDirectory(RD_BUILTIN_FONTS, "../../UnitTestResources/Fonts");
+		fsSetRelativePathForResourceDirectory(RD_ANIMATIONS, "../../UnitTestResources/Animation");
+		fsSetRelativePathForResourceDirectory(RD_MIDDLEWARE_TEXT, "../../../../Middleware_3/Text");
+		fsSetRelativePathForResourceDirectory(RD_MIDDLEWARE_UI, "../../../../Middleware_3/UI");
+	}
+}
+bool InitRenderer(IApp* app) {
+	RendererDesc settings = { 0 };
+	initRenderer(app->GetName(), &settings, &pRenderer);
+	if (!pRenderer)
+		return false;
+	return true;
+}
+void InitQueue() {
+	QueueDesc queueDesc = {};
+	queueDesc.mType = CMD_POOL_DIRECT;
+	queueDesc.mFlag = QUEUE_FLAG_INIT_MICROPROFILE;
+	addQueue(pRenderer, &queueDesc, &pGraphicsQueue);
+	addCmdPool(pRenderer, pGraphicsQueue, false, &pCmdPool);
+	addCmd_n(pCmdPool, false, gImageCount, &ppCmds);
+}
+void InitSemaphores() {
+	for (uint32_t i = 0; i < gImageCount; ++i)
+	{
+		addFence(pRenderer, &pRenderCompleteFences[i]);
+		addSemaphore(pRenderer, &pRenderCompleteSemaphores[i]);
+	}
+	addSemaphore(pRenderer, &pImageAcquiredSemaphore);
+	initResourceLoaderInterface(pRenderer);
+}
+bool InitJoystick() {
+	if (!gVirtualJoystick.Init(pRenderer, "circlepad", RD_TEXTURES))
+	{
+		LOGF(LogLevel::eERROR, "Could not initialize Virtual Joystick.");
+		return false;
+	}
+	return true;
+}
+
+class Transformations :
+	public IApp
 {
 public:
 	bool Init()
 	{
-        // FILE PATHS
-        PathHandle programDirectory = fsCopyProgramDirectoryPath();
-        if (!fsPlatformUsesBundledResources())
-        {
-            PathHandle resourceDirRoot = fsAppendPathComponent(programDirectory, "../../../src/Final");
-            fsSetResourceDirectoryRootPath(resourceDirRoot);
-            
-            fsSetRelativePathForResourceDirectory(RD_TEXTURES,        "../../UnitTestResources/Textures");
-            fsSetRelativePathForResourceDirectory(RD_MESHES,          "../../UnitTestResources/Meshes");
-            fsSetRelativePathForResourceDirectory(RD_BUILTIN_FONTS,    "../../UnitTestResources/Fonts");
-            fsSetRelativePathForResourceDirectory(RD_ANIMATIONS,      "../../UnitTestResources/Animation");
-            fsSetRelativePathForResourceDirectory(RD_MIDDLEWARE_TEXT,  "../../../../Middleware_3/Text");
-            fsSetRelativePathForResourceDirectory(RD_MIDDLEWARE_UI,    "../../../../Middleware_3/UI");
-        }
-        
-		// window and renderer setup
-		RendererDesc settings = { 0 };
-		initRenderer(GetName(), &settings, &pRenderer);
-		// check for init success
-		if (!pRenderer)
-			return false;
-
-		QueueDesc queueDesc = {};
-		queueDesc.mType = CMD_POOL_DIRECT;
-		queueDesc.mFlag = QUEUE_FLAG_INIT_MICROPROFILE;
-		addQueue(pRenderer, &queueDesc, &pGraphicsQueue);
-		addCmdPool(pRenderer, pGraphicsQueue, false, &pCmdPool);
-		addCmd_n(pCmdPool, false, gImageCount, &ppCmds);
-
-		for (uint32_t i = 0; i < gImageCount; ++i)
-		{
-			addFence(pRenderer, &pRenderCompleteFences[i]);
-			addSemaphore(pRenderer, &pRenderCompleteSemaphores[i]);
-		}
-		addSemaphore(pRenderer, &pImageAcquiredSemaphore);
-
-		initResourceLoaderInterface(pRenderer);
-
-		// Loads Skybox Textures
+		//Necessary:
+		InitPaths();
+		InitRenderer(this);
+		InitQueue();
+		InitSemaphores();
+		InitJoystick();
+		
+		//Unnecessary:
 		for (int i = 0; i < 6; ++i)
-		{
+		{	// Loads Skybox Textures
             PathHandle textureFilePath = fsCopyPathInResourceDirectory(RD_TEXTURES, pSkyBoxImageFileNames[i]);
 			TextureLoadDesc textureDesc = {};
 			textureDesc.pFilePath = textureFilePath;
 			textureDesc.ppTexture = &pSkyBoxTextures[i];
 			addResource(&textureDesc, true);
 		}
-
-		if (!gVirtualJoystick.Init(pRenderer, "circlepad", RD_TEXTURES))
-		{
-			LOGF(LogLevel::eERROR, "Could not initialize Virtual Joystick.");
-			return false;
-		}
-
+		
 		ShaderLoadDesc skyShader = {};
 		skyShader.mStages[0] = { "skybox.vert", NULL, 0, RD_SHADER_SOURCES };
 		skyShader.mStages[1] = { "skybox.frag", NULL, 0, RD_SHADER_SOURCES };
 		ShaderLoadDesc basicShader = {};
 		basicShader.mStages[0] = { "basic.vert", NULL, 0, RD_SHADER_SOURCES };
 		basicShader.mStages[1] = { "basic.frag", NULL, 0, RD_SHADER_SOURCES };
-		ShaderLoadDesc raymarchingShader = {};
-		raymarchingShader.mStages[0] = { "raymarching.vert", NULL, 0, RD_SHADER_SOURCES };
-		raymarchingShader.mStages[1] = { "raymarching.frag", NULL, 0, RD_SHADER_SOURCES };
 
 		addShader(pRenderer, &skyShader, &pSkyBoxDrawShader);
 		addShader(pRenderer, &basicShader, &pSphereShader);
-		addShader(pRenderer, &raymarchingShader, &pRaymarchingShader);
 
 		SamplerDesc samplerDesc = { FILTER_LINEAR,
 									FILTER_LINEAR,
@@ -263,34 +175,28 @@ public:
 									ADDRESS_MODE_CLAMP_TO_EDGE };
 		addSampler(pRenderer, &samplerDesc, &pSamplerSkyBox);
 
-		Shader*           shaders[] = { pSphereShader, pSkyBoxDrawShader/*, pRaymarchingShader*/ };
+		Shader*           shaders[] = { pSphereShader, pSkyBoxDrawShader };
 		const char*       pStaticSamplers[] = { "uSampler0" };
 		RootSignatureDesc rootDesc = {};
 		rootDesc.mStaticSamplerCount = 1;
 		rootDesc.ppStaticSamplerNames = pStaticSamplers;
 		rootDesc.ppStaticSamplers = &pSamplerSkyBox;
-		rootDesc.mShaderCount = 2;//3;
+		rootDesc.mShaderCount = 2;
 		rootDesc.ppShaders = shaders;
 		addRootSignature(pRenderer, &rootDesc, &pRootSignature);
 
-		// Specify that we want to send the texture data once, and the uniform data once per frame
 		DescriptorSetDesc desc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_NONE, 1 };
 		addDescriptorSet(pRenderer, &desc, &pDescriptorSetTexture);
 
-		//We need num uniform buffers * num swap buffers to be passed (gNumUniformBuffers).
 		desc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_PER_FRAME, gNumUniformBuffers };
 		addDescriptorSet(pRenderer, &desc, &pDescriptorSetUniforms);
 
-		// addRasterizerState() copies the passed in RasterizerStateDesc to a native rasterizer state,
-		// then allocates memory and returns the result to the double pointer
 		RasterizerStateDesc rasterizerStateDesc = {};
 		rasterizerStateDesc.mCullMode = CULL_MODE_NONE;
 		addRasterizerState(pRenderer, &rasterizerStateDesc, &pSkyboxRast);
-		addRasterizerState(pRenderer, &rasterizerStateDesc, &pRaymarchingRast);
 		rasterizerStateDesc.mCullMode = CULL_MODE_FRONT;
 		addRasterizerState(pRenderer, &rasterizerStateDesc, &pSphereRast);
 
-		// Standard lequal depth test. Consider optimizing raymarching with no depth testing and writing
 		DepthStateDesc depthStateDesc = {};
 		depthStateDesc.mDepthTest = true;
 		depthStateDesc.mDepthWrite = true;
@@ -298,10 +204,13 @@ public:
 		addDepthState(pRenderer, &depthStateDesc, &pDepth);
 
 		// Generate sphere vertex buffer
-		float* pSpherePoints;
-		generateSpherePoints(&pSpherePoints, &gNumberOfSpherePoints, gSphereResolution, gSphereDiameter);
+		const int sphereResolution = 30;
+		const float sphereDiameter = 0.5f;
+		int numSpherePoints;
+		float* pSpherePoints;//Vertex data output -> sizeof(float3) * 2 * internally_calculated_number_of_points. (* 2 cause 2 attributes).
+		generateSpherePoints(&pSpherePoints, &numSpherePoints, sphereResolution, sphereDiameter);
 
-		uint64_t       sphereDataSize = gNumberOfSpherePoints * sizeof(float);
+		uint64_t       sphereDataSize = numSpherePoints * sizeof(float);
 		BufferLoadDesc sphereVbDesc = {};
 		sphereVbDesc.mDesc.mDescriptors = DESCRIPTOR_TYPE_VERTEX_BUFFER;
 		sphereVbDesc.mDesc.mMemoryUsage = RESOURCE_MEMORY_USAGE_GPU_ONLY;
@@ -310,8 +219,6 @@ public:
 		sphereVbDesc.pData = pSpherePoints;
 		sphereVbDesc.ppBuffer = &pSphereVertexBuffer;
 		addResource(&sphereVbDesc);
-
-		// Need to free memory;
 		conf_free(pSpherePoints);
 
 		//Generate sky box vertex buffer
@@ -356,164 +263,14 @@ public:
 		ubDesc.mDesc.mMemoryUsage = RESOURCE_MEMORY_USAGE_CPU_TO_GPU;
 		ubDesc.mDesc.mFlags = BUFFER_CREATION_FLAG_PERSISTENT_MAP_BIT;
 		ubDesc.pData = NULL;
+		ubDesc.mDesc.mSize = sizeof(UniformBlock);
 		for (uint32_t i = 0; i < gImageCount; ++i)
 		{
-			ubDesc.mDesc.mSize = sizeof(UniformBlock);
-			ubDesc.ppBuffer = &pProjViewUniformBuffer[i];
-			addResource(&ubDesc);
-
-			ubDesc.ppBuffer = &pSkyboxUniformBuffer[i];
-			addResource(&ubDesc);
-
-			ubDesc.mDesc.mSize = sizeof(RaymarchingUniformBlock);
-			ubDesc.ppBuffer = &pRaymarchingUniformBuffer[i];
+			ubDesc.ppBuffer = &pUniformBuffer[i];
 			addResource(&ubDesc);
 		}
+
 		finishResourceLoading();
-
-		// Setup planets (Rotation speeds are relative to Earth's, some values randomly given)
-
-		// Sun
-		gPlanetInfoData[0].mParentIndex = 0;
-		gPlanetInfoData[0].mYOrbitSpeed = 0;    // Earth years for one orbit
-		gPlanetInfoData[0].mZOrbitSpeed = 0;
-		gPlanetInfoData[0].mRotationSpeed = 24.0f;    // Earth days for one rotation
-		gPlanetInfoData[0].mTranslationMat = mat4::translation(vec3(0.0f, 0.5f, 0.0f));
-		gPlanetInfoData[0].mScaleMat = mat4::scale(vec3(10.0f));
-		gPlanetInfoData[0].mColor = vec4(0.9f, 0.6f, 0.1f, 0.0f);
-		//gUniformDataRaymarching.scalings[0] = 10.0f;
-		gUniformDataRaymarching.scalings[0] = 1.0f;
-		//gUniformDataRaymarching.sSun = 1.0f;
-
-		// Mercury
-		gPlanetInfoData[1].mParentIndex = 0;
-		gPlanetInfoData[1].mYOrbitSpeed = 0.5f;
-		gPlanetInfoData[1].mZOrbitSpeed = 0.0f;
-		gPlanetInfoData[1].mRotationSpeed = 58.7f;
-		//gPlanetInfoData[1].mTranslationMat = mat4::translation(vec3(10.0f, 0, 0));
-		gPlanetInfoData[1].mTranslationMat = mat4::translation(vec3(1.0f, 0.5f, 0.0f));
-		gPlanetInfoData[1].mScaleMat = mat4::scale(vec3(1.0f));
-		gPlanetInfoData[1].mColor = vec4(0.7f, 0.3f, 0.1f, 1.0f);
-		//gUniformDataRaymarching.scalings[1] = 1.0f;
-		gUniformDataRaymarching.scalings[1] = 1.0f;
-		//gUniformDataRaymarching.sMerc = 0.1f;
-
-		// Venus
-		gPlanetInfoData[2].mParentIndex = 0;
-		gPlanetInfoData[2].mYOrbitSpeed = 0.8f;
-		gPlanetInfoData[2].mZOrbitSpeed = 0.0f;
-		gPlanetInfoData[2].mRotationSpeed = 243.0f;
-		//gPlanetInfoData[2].mTranslationMat = mat4::translation(vec3(20.0f, 0, 5));
-		gPlanetInfoData[2].mTranslationMat = mat4::translation(vec3(2.0f, 0.5, 0.0f));
-		gPlanetInfoData[2].mScaleMat = mat4::scale(vec3(2));
-		gPlanetInfoData[2].mColor = vec4(0.8f, 0.6f, 0.1f, 1.0f);
-		//gUniformDataRaymarching.scalings[2] = 2.0f;
-		gUniformDataRaymarching.scalings[2] = 0.2f;
-		//gUniformDataRaymarching.sVenus = 0.2f;
-
-		// Earth
-		gPlanetInfoData[3].mParentIndex = 0;
-		gPlanetInfoData[3].mYOrbitSpeed = 1.0f;
-		gPlanetInfoData[3].mZOrbitSpeed = 0.0f;
-		gPlanetInfoData[3].mRotationSpeed = 1.0f;
-		//gPlanetInfoData[3].mTranslationMat = mat4::translation(vec3(30.0f, 0, 0));
-		gPlanetInfoData[3].mTranslationMat = mat4::translation(vec3(3.0f, 0.5f, 0.0f));
-		gPlanetInfoData[3].mScaleMat = mat4::scale(vec3(4));
-		gPlanetInfoData[3].mColor = vec4(0.3f, 0.2f, 0.8f, 1.0f);
-		//gUniformDataRaymarching.scalings[3] = 4.0f;
-		gUniformDataRaymarching.scalings[3] = 0.4f;
-		//gUniformDataRaymarching.sEarth = 0.4f;
-
-		// Mars
-		gPlanetInfoData[4].mParentIndex = 0;
-		gPlanetInfoData[4].mYOrbitSpeed = 2.0f;
-		gPlanetInfoData[4].mZOrbitSpeed = 0.0f;
-		gPlanetInfoData[4].mRotationSpeed = 1.1f;
-		//gPlanetInfoData[4].mTranslationMat = mat4::translation(vec3(40.0f, 0, 0));
-		gPlanetInfoData[4].mTranslationMat = mat4::translation(vec3(4.0f, 0.5f, 0.0f));
-		gPlanetInfoData[4].mScaleMat = mat4::scale(vec3(3));
-		gPlanetInfoData[4].mColor = vec4(0.9f, 0.3f, 0.1f, 1.0f);
-		//gUniformDataRaymarching.scalings[4] = 3.0f;
-		gUniformDataRaymarching.scalings[4] = 0.3f;
-		//gUniformDataRaymarching.sMars = 0.3f;
-
-		// Jupiter
-		gPlanetInfoData[5].mParentIndex = 0;
-		gPlanetInfoData[5].mYOrbitSpeed = 11.0f;
-		gPlanetInfoData[5].mZOrbitSpeed = 0.0f;
-		gPlanetInfoData[5].mRotationSpeed = 0.4f;
-		//gPlanetInfoData[5].mTranslationMat = mat4::translation(vec3(50.0f, 0, 0));
-		gPlanetInfoData[5].mTranslationMat = mat4::translation(vec3(5.0f, 0.5f, 0.0f));
-		gPlanetInfoData[5].mScaleMat = mat4::scale(vec3(8));
-		gPlanetInfoData[5].mColor = vec4(0.6f, 0.4f, 0.4f, 1.0f);
-		//gUniformDataRaymarching.scalings[5] = 8.0f;
-		gUniformDataRaymarching.scalings[5] = 0.8f;
-		//gUniformDataRaymarching.sJup = 0.8f;
-
-		// Saturn
-		gPlanetInfoData[6].mParentIndex = 0;
-		gPlanetInfoData[6].mYOrbitSpeed = 29.4f;
-		gPlanetInfoData[6].mZOrbitSpeed = 0.0f;
-		gPlanetInfoData[6].mRotationSpeed = 0.5f;
-		//gPlanetInfoData[6].mTranslationMat = mat4::translation(vec3(60.0f, 0, 0));
-		gPlanetInfoData[6].mTranslationMat = mat4::translation(vec3(6.0f, 0.5f, 0.0f));
-		gPlanetInfoData[6].mScaleMat = mat4::scale(vec3(6));
-		gPlanetInfoData[6].mColor = vec4(0.7f, 0.7f, 0.5f, 1.0f);
-		//gUniformDataRaymarching.scalings[6] = 6.0f;
-		gUniformDataRaymarching.scalings[6] = 0.6f;
-		//gUniformDataRaymarching.sSat = 0.6f;
-
-		// Uranus
-		gPlanetInfoData[7].mParentIndex = 0;
-		gPlanetInfoData[7].mYOrbitSpeed = 84.07f;
-		gPlanetInfoData[7].mZOrbitSpeed = 0.0f;
-		gPlanetInfoData[7].mRotationSpeed = 0.8f;
-		//gPlanetInfoData[7].mTranslationMat = mat4::translation(vec3(70.0f, 0, 0));
-		gPlanetInfoData[7].mTranslationMat = mat4::translation(vec3(7.0f, 0.5f, 0.0f));
-		gPlanetInfoData[7].mScaleMat = mat4::scale(vec3(7));
-		gPlanetInfoData[7].mColor = vec4(0.4f, 0.4f, 0.6f, 1.0f);
-		//gUniformDataRaymarching.scalings[7] = 7.0f;
-		gUniformDataRaymarching.scalings[7] = 0.7f;
-		//gUniformDataRaymarching.sUr = 0.7f;
-
-		// Neptune
-		gPlanetInfoData[8].mParentIndex = 0;
-		gPlanetInfoData[8].mYOrbitSpeed = 164.81f;
-		gPlanetInfoData[8].mZOrbitSpeed = 0.0f;
-		gPlanetInfoData[8].mRotationSpeed = 0.9f;
-		//gPlanetInfoData[8].mTranslationMat = mat4::translation(vec3(80.0f, 0, 0));
-		gPlanetInfoData[8].mTranslationMat = mat4::translation(vec3(8.0f, 0.5f, 0.0f));
-		gPlanetInfoData[8].mScaleMat = mat4::scale(vec3(8));
-		gPlanetInfoData[8].mColor = vec4(0.5f, 0.2f, 0.9f, 1.0f);
-		//gUniformDataRaymarching.scalings[8] = 8.0f;
-		gUniformDataRaymarching.scalings[8] = 0.8f;
-		//gUniformDataRaymarching.sNept = 0.8f;
-
-		// Pluto - Not a planet XDD
-		gPlanetInfoData[9].mParentIndex = 0;
-		gPlanetInfoData[9].mYOrbitSpeed = 247.7f;
-		gPlanetInfoData[9].mZOrbitSpeed = 1.0f;
-		gPlanetInfoData[9].mRotationSpeed = 7.0f;
-		//gPlanetInfoData[9].mTranslationMat = mat4::translation(vec3(90.0f, 0, 0));
-		gPlanetInfoData[9].mTranslationMat = mat4::translation(vec3(9.0f, 0.5f, 0.0f));
-		gPlanetInfoData[9].mScaleMat = mat4::scale(vec3(1.0f));
-		gPlanetInfoData[9].mColor = vec4(0.7f, 0.5f, 0.5f, 1.0f);
-		//gUniformDataRaymarching.scalings[9] = 1.0f;
-		gUniformDataRaymarching.scalings[9] = 0.1f;
-		//gUniformDataRaymarching.sPlu = 0.1f;
-
-		// Moon
-		gPlanetInfoData[10].mParentIndex = 3;
-		gPlanetInfoData[10].mYOrbitSpeed = 1.0f;
-		gPlanetInfoData[10].mZOrbitSpeed = 200.0f;
-		gPlanetInfoData[10].mRotationSpeed = 27.0f;
-		//gPlanetInfoData[10].mTranslationMat = mat4::translation(vec3(5.0f, 0, 0));
-		gPlanetInfoData[10].mTranslationMat = mat4::translation(vec3(0.5f, 0.5f, 0.0f));
-		gPlanetInfoData[10].mScaleMat = mat4::scale(vec3(1));
-		gPlanetInfoData[10].mColor = vec4(0.3f, 0.3f, 0.4f, 1.0f);
-		//gUniformDataRaymarching.scalings[10] = 1.0f;
-		gUniformDataRaymarching.scalings[10] = 0.1f;
-		//gUniformDataRaymarching.sMoon = 0.1f;
 
 		if (!gAppUI.Init(pRenderer))
 			return false;
@@ -529,13 +286,9 @@ public:
 
 		pGui->AddWidget(CheckboxWidget("Toggle Micro Profiler", &gMicroProfiler));
 
-		//CameraMotionParameters cmp{ 160.0f, 600.0f, 200.0f };
-		//vec3                   camPos{ 48.0f, 48.0f, 20.0f };
-		//vec3                   lookAt{ 0 };
-
 		//Raymarching motion parameters:
 		CameraMotionParameters cmp{ 1.6f, 6.0f, 2.0f };
-		vec3                   camPos{ 3.5, /*10.0*/1.0, 0.5 };
+		vec3                   camPos{ 3.5, 1.0, 0.5 };
 		vec3                   lookAt{ -0.5f, -0.4f, 0.5f };
 
 		pCameraController = createFpsCameraController(camPos, lookAt);
@@ -604,16 +357,8 @@ public:
 			DescriptorData params = {};
 			params.pName = "uniformBlock";
 
-			params.ppBuffers = &pSkyboxUniformBuffer[i];
+			params.ppBuffers = &pUniformBuffer[i];
 			updateDescriptorSet(pRenderer, i * gNumUniformBlocks + 0, pDescriptorSetUniforms, 1, &params);
-
-			params.ppBuffers = &pProjViewUniformBuffer[i];
-			updateDescriptorSet(pRenderer, i * gNumUniformBlocks + 1, pDescriptorSetUniforms, 1, &params);
-
-			//Not sure why this doesn't work if I name my uniform block "uniformBlockRaymarching" in my shader(s).
-			//params.pName = "uniformBlockRaymarching";
-			params.ppBuffers = &pRaymarchingUniformBuffer[i];
-			updateDescriptorSet(pRenderer, i * gNumUniformBlocks + 2, pDescriptorSetUniforms, 1, &params);
 		}
 
 		return true;
@@ -636,9 +381,7 @@ public:
 
 		for (uint32_t i = 0; i < gImageCount; ++i)
 		{
-			removeResource(pProjViewUniformBuffer[i]);
-			removeResource(pSkyboxUniformBuffer[i]);
-			removeResource(pRaymarchingUniformBuffer[i]);
+			removeResource(pUniformBuffer[i]);
 		}
 
 		removeDescriptorSet(pRenderer, pDescriptorSetTexture);
@@ -653,11 +396,9 @@ public:
 		removeSampler(pRenderer, pSamplerSkyBox);
 		removeShader(pRenderer, pSphereShader);
 		removeShader(pRenderer, pSkyBoxDrawShader);
-		removeShader(pRenderer, pRaymarchingShader);
 		removeRootSignature(pRenderer, pRootSignature);
 
 		removeDepthState(pDepth);
-		removeRasterizerState(pRaymarchingRast);
 		removeRasterizerState(pSphereRast);
 		removeRasterizerState(pSkyboxRast);
 
@@ -737,15 +478,6 @@ public:
 		pipelineSettings.pShaderProgram = pSkyBoxDrawShader;
 		addPipeline(pRenderer, &desc, &pSkyBoxDrawPipeline);
 
-		///*
-		//We don't need to worry about depth for rays for now, just copy the skybox settings but have no attributes.
-		vertexLayout.mAttribCount = 0;
-		//Not really necessary since the skybox rasterization state is identical, but we didn't know that at the time of creation.
-		pipelineSettings.pRasterizerState = pRaymarchingRast;
-		pipelineSettings.pShaderProgram = pRaymarchingShader;
-		addPipeline(pRenderer, &desc, &pRaymarchingPipeline);
-		//*/
-
 		return true;
 	}
 
@@ -758,7 +490,6 @@ public:
 
 		gVirtualJoystick.Unload();
 
-		removePipeline(pRenderer, pRaymarchingPipeline);
 		removePipeline(pRenderer, pSkyBoxDrawPipeline);
 		removePipeline(pRenderer, pSpherePipeline);
 
@@ -771,118 +502,26 @@ public:
 		updateInputSystem(mSettings.mWidth, mSettings.mHeight);
 		pCameraController->update(deltaTime);
 
-		gUniformDataRaymarching.res = vec4((float)mSettings.mWidth, (float)mSettings.mHeight, 0.0f, 0.0f);
-		//gUniformDataRaymarching.resolution = vec2((float)mSettings.mWidth, (float)mSettings.mHeight);
-		mat4 viewMat = pCameraController->getViewMatrix();
-		gUniformDataRaymarching.invView = inverse(viewMat);
-
-		/************************************************************************/
-		// Scene Update
-		/************************************************************************/
 		static float currentTime = 0.0f;
 		currentTime += deltaTime * 1000.0f;
 		
 		const float aspectInverse = (float)mSettings.mHeight / (float)mSettings.mWidth;
 		const float horizontal_fov = PI / 2.0f;
-		mat4        projMat = mat4::perspective(horizontal_fov, aspectInverse, 0.1f, 1000.0f);
+
+		mat4 projMat = mat4::perspective(horizontal_fov, aspectInverse, 0.1f, 1000.0f);
+		mat4 viewMat = pCameraController->getViewMatrix();
 		gUniformData.mProjectView = projMat * viewMat;
 		
-		// point light parameters
-		gUniformData.mLightPosition = vec3(0, 0, 0);
-		gUniformData.mLightColor = vec3(0.9f, 0.9f, 0.7f);    // Pale Yellow
-		
-		// update planet transformations
-		for (unsigned int i = 0; i < gNumPlanets; i++)
+		//gUniformDataRaymarching.inverseWorldMatrices[i] = inverse(parentMat * rotOrbitY * rotOrbitZ * trans * rotSelf);
+		//trans * rotSelf * scale;
+
+		if(gMicroProfiler != bPrevToggleMicroProfiler)
 		{
-			mat4 rotSelf, rotOrbitY, rotOrbitZ, trans, scale, parentMat;
-			rotSelf = rotOrbitY = rotOrbitZ = trans = scale = parentMat = mat4::identity();
-			if (gPlanetInfoData[i].mRotationSpeed > 0.0f)
-				rotSelf = mat4::rotationY(gRotSelfScale * (currentTime + gTimeOffset) / gPlanetInfoData[i].mRotationSpeed);
-			if (gPlanetInfoData[i].mYOrbitSpeed > 0.0f)
-				rotOrbitY = mat4::rotationY(gRotOrbitYScale * (currentTime + gTimeOffset) / gPlanetInfoData[i].mYOrbitSpeed);
-			if (gPlanetInfoData[i].mZOrbitSpeed > 0.0f)
-				rotOrbitZ = mat4::rotationZ(gRotOrbitZScale * (currentTime + gTimeOffset) / gPlanetInfoData[i].mZOrbitSpeed);
-			if (gPlanetInfoData[i].mParentIndex > 0)
-				parentMat = gPlanetInfoData[gPlanetInfoData[i].mParentIndex].mSharedMat;
-		
-			scale = gPlanetInfoData[i].mScaleMat;
-			trans = gPlanetInfoData[i].mTranslationMat;
-			trans[3] *= 10.0f;//Ray scene is 10x smaller and I don't have time to program matching cameras.
-		
-			gPlanetInfoData[i].mSharedMat = parentMat * rotOrbitY * trans;
-			gUniformData.mToWorldMat[i] = parentMat * rotOrbitY * rotOrbitZ * trans * rotSelf * scale;
-			gUniformData.mColor[i] = gPlanetInfoData[i].mColor;
-
-			//This doesn't seem to be affecting the rays. Sadly I don't have time to debug this.
-			trans[3] /= 10.0f;
-			//Can't scale with matrices when raymarching because scaling isn't a rigid body transformation (distorts euclidean space).
-			gUniformDataRaymarching.inverseWorldMatrices[i] = inverse(parentMat * rotOrbitY * rotOrbitZ * trans * rotSelf);
-			//(We send up the scales separately).
-
-
-			//This didn't work either :'(
-			//Sooooooo I guess I can't count / don't understand memory layout std140 cause there seems to be memory damage.
-			//Gonna go back to high school programming and just not use arrays ;)
-			//trans[3] /= 10.0f;
-			//mat4 planetInv = inverse(parentMat * rotOrbitY * rotOrbitZ * trans * rotSelf);
-			//
-			////RIP programming practices:
-			//switch (i) {
-			//case 0:
-			//	gUniformDataRaymarching.invSun = planetInv;
-			//	break;
-			//case 1:
-			//	gUniformDataRaymarching.invMerc = planetInv;
-			//	break;
-			//case 2:
-			//	gUniformDataRaymarching.invVenus = planetInv;
-			//	break;
-			//case 3:
-			//	gUniformDataRaymarching.invEarth = planetInv;
-			//	break;
-			//case 4:
-			//	gUniformDataRaymarching.invMars = planetInv;
-			//	break;
-			//case 5:
-			//	gUniformDataRaymarching.invJup = planetInv;
-			//	break;
-			//case 6:
-			//	gUniformDataRaymarching.invSat = planetInv;
-			//	break;
-			//case 7:
-			//	gUniformDataRaymarching.invUr = planetInv;
-			//	break;
-			//case 8:
-			//	gUniformDataRaymarching.invNept = planetInv;
-			//	break;
-			//case 9:
-			//	gUniformDataRaymarching.invPlu = planetInv;
-			//	break;
-			//case 10:
-			//	gUniformDataRaymarching.invMoon = planetInv;
-			//	break;
-			//default:
-			//	break;
-			//}
+		   toggleProfiler();
+		   bPrevToggleMicroProfiler = gMicroProfiler;
 		}
 
-		viewMat.setTranslation(vec3(0));
-		gUniformDataSky = gUniformData;
-		gUniformDataSky.mProjectView = projMat * viewMat;
-		
-		/************************************************************************/
-		/************************************************************************/
-
-    if(gMicroProfiler != bPrevToggleMicroProfiler)
-    {
-       toggleProfiler();
-       bPrevToggleMicroProfiler = gMicroProfiler;
-    }
-
-    /************************************************************************/
-    // Update GUI
-    /************************************************************************/
-    gAppUI.Update(deltaTime);  
+		gAppUI.Update(deltaTime);  
 	}
 
 	void Draw()
@@ -900,12 +539,8 @@ public:
 			waitForFences(pRenderer, 1, &pRenderCompleteFence);
 
 		// Update uniform buffers
-		BufferUpdateDesc viewProjCbv = { pProjViewUniformBuffer[gFrameIndex], &gUniformData };
-		updateResource(&viewProjCbv);
-		BufferUpdateDesc skyboxViewProjCbv = { pSkyboxUniformBuffer[gFrameIndex], &gUniformDataSky };
-		updateResource(&skyboxViewProjCbv);
-		BufferUpdateDesc raymarchingCbv = { pRaymarchingUniformBuffer[gFrameIndex], &gUniformDataRaymarching };
-		updateResource(&raymarchingCbv);
+		BufferUpdateDesc cbv = { pUniformBuffer[gFrameIndex], &gUniformData };
+		updateResource(&cbv);
 
 		// simply record the screen cleaning command
 		LoadActionsDesc loadActions = {};
@@ -934,37 +569,22 @@ public:
 		cmdSetScissor(cmd, 0, 0, pRenderTarget->mDesc.mWidth, pRenderTarget->mDesc.mHeight);
 
 		cmdBindDescriptorSet(cmd, 0, pDescriptorSetTexture);
-		if (GetAsyncKeyState(0xA0))
-		{
-			//// draw skybox
-			cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw Skybox", true);
+		//if (GetAsyncKeyState(0xA0))
+		//{
 			cmdBindPipeline(cmd, pSkyBoxDrawPipeline);
 			cmdBindDescriptorSet(cmd, gFrameIndex * gNumUniformBlocks + 0, pDescriptorSetUniforms);
 			cmdBindVertexBuffer(cmd, 1, &pSkyBoxVertexBuffer, NULL);
-			cmdDraw(cmd, 36, 0);
-			cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
+			cmdDraw(cmd, 36, 0);//36 triangles in a cube.
 
-			//// draw planets
-			cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw Planets", true);
-			cmdBindPipeline(cmd, pSpherePipeline);
-			cmdBindDescriptorSet(cmd, gFrameIndex * gNumUniformBlocks + 1, pDescriptorSetUniforms);
-			cmdBindVertexBuffer(cmd, 1, &pSphereVertexBuffer, NULL);
-			cmdDrawInstanced(cmd, gNumberOfSpherePoints / 6, 0, gNumPlanets, 0);
-			cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
-		}
-		else
-		{
-			cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw Rays", true);
-			cmdBindPipeline(cmd, pRaymarchingPipeline);
-			cmdBindDescriptorSet(cmd, gFrameIndex * gNumUniformBlocks + 2, pDescriptorSetUniforms);
-			cmdDraw(cmd, 3, 0);
-			cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
-		}
+			//cmdBindPipeline(cmd, pSpherePipeline);
+			//cmdBindDescriptorSet(cmd, gFrameIndex * gNumUniformBlocks/* + 1*/, pDescriptorSetUniforms);
+			//cmdBindVertexBuffer(cmd, 1, &pSphereVertexBuffer, NULL);
+			//cmdDrawInstanced(cmd, gNumberOfSpherePoints / 6, 0, gNumPlanets, 0);
+		//} else I used to render half broken rays.
 
-	loadActions = {};
-	loadActions.mLoadActionsColor[0] = LOAD_ACTION_LOAD;
-	cmdBindRenderTargets(cmd, 1, &pRenderTarget, NULL, &loadActions, NULL, NULL, -1, -1);
-    cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw UI", true);
+		loadActions = {};
+		loadActions.mLoadActionsColor[0] = LOAD_ACTION_LOAD;
+		cmdBindRenderTargets(cmd, 1, &pRenderTarget, NULL, &loadActions, NULL, NULL, -1, -1);
 		static HiresTimer gTimer;
 		gTimer.GetUSec(true);
 
@@ -972,30 +592,28 @@ public:
 
 		gAppUI.DrawText(cmd, float2(8, 15), eastl::string().sprintf("CPU %f ms", gTimer.GetUSecAverage() / 1000.0f).c_str(), &gFrameTimeDraw);
 
-#if !defined(__ANDROID__)
-    gAppUI.DrawText(
-      cmd, float2(8, 40), eastl::string().sprintf("GPU %f ms", (float)pGpuProfiler->mCumulativeTime * 1000.0f).c_str(),
-      &gFrameTimeDraw);
-    gAppUI.DrawDebugGpuProfile(cmd, float2(8, 65), pGpuProfiler, NULL);
-#endif
+	#if !defined(__ANDROID__)
+		gAppUI.DrawText(cmd, float2(8, 40), eastl::string().sprintf("GPU %f ms", (float)pGpuProfiler->mCumulativeTime * 1000.0f).c_str(), &gFrameTimeDraw);
+		gAppUI.DrawDebugGpuProfile(cmd, float2(8, 65), pGpuProfiler, NULL);
+	#endif
 
-    cmdDrawProfiler();
+		cmdDrawProfiler();
 
-    gAppUI.Gui(pGui);
+		gAppUI.Gui(pGui);
 
 		gAppUI.Draw(cmd);
 		cmdBindRenderTargets(cmd, 0, NULL, NULL, NULL, NULL, NULL, -1, -1);
-    cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
+		cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
 
 		barriers[0] = { pRenderTarget->pTexture, RESOURCE_STATE_PRESENT };
 		cmdResourceBarrier(cmd, 0, NULL, 1, barriers);
 
-    cmdEndGpuFrameProfile(cmd, pGpuProfiler);
+		cmdEndGpuFrameProfile(cmd, pGpuProfiler);
 		endCmd(cmd);
 
 		queueSubmit(pGraphicsQueue, 1, &cmd, pRenderCompleteFence, 1, &pImageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);
 		queuePresent(pGraphicsQueue, pSwapChain, gFrameIndex, 1, &pRenderCompleteSemaphore);
-    flipProfiler();
+		flipProfiler();
 	}
 
 	const char* GetName() { return "01_Transformations"; }
@@ -1019,7 +637,6 @@ public:
 
 	bool addDepthBuffer()
 	{
-		// Add depth buffer
 		RenderTargetDesc depthRT = {};
 		depthRT.mArraySize = 1;
 		depthRT.mClearValue.depth = 1.0f;

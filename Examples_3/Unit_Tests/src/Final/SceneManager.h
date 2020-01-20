@@ -12,21 +12,25 @@ namespace p2 {
 		void Render();
 
 		enum SceneType : unsigned int {
-			MENU,
-			INSTRUCTION,
+			//MENU,
+			//INSTRUCTION,
 			MAIN,
-			END,
-			NUM_SCENES
+			//END,
+			SIZE
 		};
 
 		void Change(SceneType sceneType);
-		const Scene& GetScene(SceneType sceneType);
-		const Scene& GetSceneActive();
+
+		//Honestly these shouldn't exist. There's shouldn't be any reason to externally get/set a scene.
+		//Scenes should be well-defined upon initialization.
+		//const Scene& GetScene(SceneType sceneType);
+		//const Scene& GetSceneActive();
 
 	private:
 		SceneManager();
 
-		Scene* s_scenes[SceneType::NUM_SCENES];
+		Scene* s_scenes[SceneType::SIZE];
 		Scene* s_sceneActive;
 	};
 }
+ 
