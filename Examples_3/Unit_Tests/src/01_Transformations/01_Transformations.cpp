@@ -69,6 +69,9 @@ DepthState* pDepth = NULL;
 RasterizerState* pSkyboxRast = NULL;
 RasterizerState* pSphereRast = NULL;
 
+//Can reuse the entire sphere pipeline!
+Buffer* pCubeVertexBuffer = NULL;
+
 Buffer* pProjViewUniformBuffer[gImageCount] = { NULL };
 Buffer* pSkyboxUniformBuffer[gImageCount] = { NULL };
 
@@ -198,11 +201,9 @@ public:
 		depthStateDesc.mDepthFunc = CMP_LEQUAL;
 		addDepthState(pRenderer, &depthStateDesc, &pDepth);
 
-		// Generate sphere vertex buffer
 		float* pSpherePoints;
 		generateSpherePoints(&pSpherePoints, &gNumberOfSpherePoints, 10);
-
-		uint64_t       sphereDataSize = gNumberOfSpherePoints * sizeof(float);
+		uint64_t sphereDataSize = gNumberOfSpherePoints * sizeof(float);
 		BufferLoadDesc sphereVbDesc = {};
 		sphereVbDesc.mDesc.mDescriptors = DESCRIPTOR_TYPE_VERTEX_BUFFER;
 		sphereVbDesc.mDesc.mMemoryUsage = RESOURCE_MEMORY_USAGE_GPU_ONLY;
@@ -211,9 +212,21 @@ public:
 		sphereVbDesc.pData = pSpherePoints;
 		sphereVbDesc.ppBuffer = &pSphereVertexBuffer;
 		addResource(&sphereVbDesc);
-
-		// Need to free memory;
 		conf_free(pSpherePoints);
+
+		int cubeVertexDataIndices;
+		float* pCubePoints;
+		generateCuboidPoints(&pCubePoints, &cubeVertexDataIndices);
+		uint64_t cubeDataSize = cubeVertexDataIndices * sizeof(float);
+		BufferLoadDesc cubeVbDesc = {};
+		cubeVbDesc.mDesc.mDescriptors = DESCRIPTOR_TYPE_VERTEX_BUFFER;
+		cubeVbDesc.mDesc.mMemoryUsage = RESOURCE_MEMORY_USAGE_GPU_ONLY;
+		cubeVbDesc.mDesc.mSize = cubeDataSize;
+		cubeVbDesc.mDesc.mVertexStride = sizeof(float) * 6;
+		cubeVbDesc.pData = pCubePoints;
+		cubeVbDesc.ppBuffer = &pCubeVertexBuffer;
+		addResource(&cubeVbDesc);
+		conf_free(pCubePoints);
 
 		//Generate sky box vertex buffer
 		float skyBoxPoints[] = {
@@ -388,6 +401,7 @@ public:
 		removeDescriptorSet(pRenderer, pDescriptorSetTexture);
 		removeDescriptorSet(pRenderer, pDescriptorSetUniforms);
 
+		removeResource(pCubeVertexBuffer);
 		removeResource(pSphereVertexBuffer);
 		removeResource(pSkyBoxVertexBuffer);
 
@@ -593,9 +607,10 @@ public:
 		cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw Planets", true);
 		cmdBindPipeline(cmd, pSpherePipeline);
 		cmdBindDescriptorSet(cmd, gFrameIndex * 2 + 1, pDescriptorSetUniforms);
-		cmdBindVertexBuffer(cmd, 1, &pSphereVertexBuffer, NULL);
-		//Sure enough, we can draw just the sun by passing in 1 in place of gNumPlanets.
-		cmdDrawInstanced(cmd, gNumberOfSpherePoints / 6, 0, /*gNumPlanets*/1, 0);
+		cmdBindVertexBuffer(cmd, 1, &pCubeVertexBuffer, NULL);
+		cmdDraw(cmd, 36, 0);
+		//cmdBindVertexBuffer(cmd, 1, &pSphereVertexBuffer, NULL);
+		//cmdDrawInstanced(cmd, gNumberOfSpherePoints / 6, 0, gNumPlanets, 0);
 		cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
 
 		loadActions = {};
