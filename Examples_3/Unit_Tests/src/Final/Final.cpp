@@ -17,6 +17,8 @@
 #include "PathManager.h"
 #include "QueueManager.h"
 #include "SynchronizationManager.h"
+#include "RasterManager.h"
+#include "VertexManager.h"
 
 /// Demo structures
 struct PlanetInfoStruct
@@ -56,9 +58,6 @@ Texture* pSkyBoxTextures[6];
 DescriptorSet* pDescriptorSetTexture = { NULL };
 DescriptorSet* pDescriptorSetUniforms = { NULL };
 VirtualJoystickUI gVirtualJoystick;
-DepthState* pDepth = NULL;
-RasterizerState* pSkyboxRast = NULL;
-RasterizerState* pSphereRast = NULL;
 
 //Can reuse the entire sphere pipeline!
 Buffer* pCubeVertexBuffer = NULL;
@@ -92,6 +91,8 @@ private:
 	p2::PathManager pathManager;
 	p2::QueueManager queueManager;
 	p2::SynchronizationManager syncManager;
+	p2::RasterManager rasterManager;
+	p2::VertexManager vertexManager;
 
 public:
 	bool Init()
@@ -105,10 +106,11 @@ public:
 
 		queueManager.m_renderer = pRenderer;
 		syncManager.m_renderer = pRenderer;
+		rasterManager.m_renderer = pRenderer;
 
 		queueManager.Init();
 		syncManager.Init();
-		
+		rasterManager.Init();
 
 		//Called on renderer, so we can leave this here.
 		initResourceLoaderInterface(pRenderer);
@@ -161,20 +163,6 @@ public:
 		addDescriptorSet(pRenderer, &desc, &pDescriptorSetTexture);
 		desc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_PER_FRAME, IMAGE_COUNT * 2 };
 		addDescriptorSet(pRenderer, &desc, &pDescriptorSetUniforms);
-
-		RasterizerStateDesc rasterizerStateDesc = {};
-		rasterizerStateDesc.mCullMode = CULL_MODE_NONE;
-		addRasterizerState(pRenderer, &rasterizerStateDesc, &pSkyboxRast);
-
-		RasterizerStateDesc sphereRasterizerStateDesc = {};
-		sphereRasterizerStateDesc.mCullMode = CULL_MODE_FRONT;
-		addRasterizerState(pRenderer, &sphereRasterizerStateDesc, &pSphereRast);
-
-		DepthStateDesc depthStateDesc = {};
-		depthStateDesc.mDepthTest = true;
-		depthStateDesc.mDepthWrite = true;
-		depthStateDesc.mDepthFunc = CMP_LEQUAL;
-		addDepthState(pRenderer, &depthStateDesc, &pDepth);
 
 		float* pSpherePoints;
 		generateSpherePoints(&pSpherePoints, &gNumberOfSpherePoints, 10, 5.0f);
@@ -358,6 +346,7 @@ public:
 	{
 		queueManager.Exit();
 		syncManager.Exit();
+		rasterManager.Exit();
 
 		exitInputSystem();
 
@@ -390,10 +379,6 @@ public:
 		removeShader(pRenderer, pSphereShader);
 		removeShader(pRenderer, pSkyBoxDrawShader);
 		removeRootSignature(pRenderer, pRootSignature);
-
-		removeDepthState(pDepth);
-		removeRasterizerState(pSphereRast);
-		removeRasterizerState(pSkyboxRast);
 
 		removeGpuProfiler(pRenderer, pGpuProfiler);
 		removeResourceLoaderInterface(pRenderer);
@@ -435,7 +420,7 @@ public:
 		GraphicsPipelineDesc& pipelineSettings = desc.mGraphicsDesc;
 		pipelineSettings.mPrimitiveTopo = PRIMITIVE_TOPO_TRI_LIST;
 		pipelineSettings.mRenderTargetCount = 1;
-		pipelineSettings.pDepthState = pDepth;
+		pipelineSettings.pDepthState = rasterManager.m_depth;
 		pipelineSettings.pColorFormats = &syncManager.m_swapChain->ppSwapchainRenderTargets[0]->mDesc.mFormat;
 		pipelineSettings.mSampleCount = syncManager.m_swapChain->ppSwapchainRenderTargets[0]->mDesc.mSampleCount;
 		pipelineSettings.mSampleQuality = syncManager.m_swapChain->ppSwapchainRenderTargets[0]->mDesc.mSampleQuality;
@@ -443,7 +428,7 @@ public:
 		pipelineSettings.pRootSignature = pRootSignature;
 		pipelineSettings.pShaderProgram = pSphereShader;
 		pipelineSettings.pVertexLayout = &vertexLayout;
-		pipelineSettings.pRasterizerState = pSphereRast;
+		pipelineSettings.pRasterizerState = rasterManager.m_cullFront;
 		addPipeline(pRenderer, &desc, &pSpherePipeline);
 
 		//layout and pipeline for skybox draw
@@ -456,7 +441,7 @@ public:
 		vertexLayout.mAttribs[0].mOffset = 0;
 
 		pipelineSettings.pDepthState = NULL;
-		pipelineSettings.pRasterizerState = pSkyboxRast;
+		pipelineSettings.pRasterizerState = rasterManager.m_cullNone;
 		pipelineSettings.pShaderProgram = pSkyBoxDrawShader;
 		addPipeline(pRenderer, &desc, &pSkyBoxDrawPipeline);
 

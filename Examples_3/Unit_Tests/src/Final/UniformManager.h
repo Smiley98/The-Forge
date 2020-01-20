@@ -1,12 +1,13 @@
 #pragma once
 #include "ScreenBufferDef.h"
+#include "IResource.h"
 #include "SingletonLocal.h"
 #include "../../../../Common_3/Renderer/IRenderer.h"
 #include "../../../../Common_3/OS/Math/MathTypes.h"
 
 namespace p2 {
 	struct UniformManager :
-		public SingletonLocal<UniformManager>
+		public SingletonLocal<UniformManager>, public IResource
 	{
 		Buffer* uniformBuffers[IMAGE_COUNT] = { NULL };
 		Buffer* uniformBuffersSkybox[IMAGE_COUNT] = { NULL };
@@ -20,6 +21,8 @@ namespace p2 {
 			vec3 mLightPosition;
 			vec3 mLightColor;
 		} uniformData;
+
+		const char* GetName() final;
 
 		UniformManager();
 		~UniformManager();
