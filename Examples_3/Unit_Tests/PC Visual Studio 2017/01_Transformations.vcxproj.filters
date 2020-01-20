@@ -52,11 +52,5 @@
     <None Include="..\src\01_Transformations\Shaders\D3D12\profile.vert">
       <Filter>Shaders\D3D12</Filter>
     </None>
-    <None Include="..\src\01_Transformations\Shaders\Vulkan\raymarching.frag">
-      <Filter>Shaders\Vulkan</Filter>
-    </None>
-    <None Include="..\src\01_Transformations\Shaders\Vulkan\raymarching.vert">
-      <Filter>Shaders\Vulkan</Filter>
-    </None>
   </ItemGroup>
 </Project>
