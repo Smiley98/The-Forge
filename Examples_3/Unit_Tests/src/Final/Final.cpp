@@ -14,10 +14,9 @@
 #include "../../../../Common_3/OS/Math/MathTypes.h"
 #include "../../../../Common_3/OS/Interfaces/IMemory.h"
 
-#include "ScreenBufferDef.h"
 #include "PathManager.h"
 #include "QueueManager.h"
-//#include "SynchronizationManager.h"
+#include "SynchronizationManager.h"
 
 /// Demo structures
 struct PlanetInfoStruct
@@ -37,23 +36,12 @@ struct UniformBlock
 	vec3 mLightColor;
 };
 
-const uint32_t gImageCount = 3;
 bool           gMicroProfiler = false;
 bool           bPrevToggleMicroProfiler = false;
 const uint     gNumPlanets = 1;
 
 //Only object that I haven't wrapped.
 Renderer* pRenderer = NULL;
-
-/*Queue* pGraphicsQueue = NULL;
-CmdPool* pCmdPool = NULL;
-Cmd** ppCmds = NULL;*/
-
-SwapChain* pSwapChain = NULL;
-RenderTarget* pDepthBuffer = NULL;
-Fence* pRenderCompleteFences[gImageCount] = { NULL };
-Semaphore* pImageAcquiredSemaphore = NULL;
-Semaphore* pRenderCompleteSemaphores[gImageCount] = { NULL };
 
 Shader* pSphereShader = NULL;
 Buffer* pSphereVertexBuffer = NULL;
@@ -75,8 +63,8 @@ RasterizerState* pSphereRast = NULL;
 //Can reuse the entire sphere pipeline!
 Buffer* pCubeVertexBuffer = NULL;
 
-Buffer* pProjViewUniformBuffer[gImageCount] = { NULL };
-Buffer* pSkyboxUniformBuffer[gImageCount] = { NULL };
+Buffer* pProjViewUniformBuffer[IMAGE_COUNT] = { NULL };
+Buffer* pSkyboxUniformBuffer[IMAGE_COUNT] = { NULL };
 
 uint32_t gFrameIndex = 0;
 
@@ -103,7 +91,7 @@ class Transformations : public IApp
 private:
 	p2::PathManager pathManager;
 	p2::QueueManager queueManager;
-	//p2::SynchronizationManager syncManager;
+	p2::SynchronizationManager syncManager;
 
 public:
 	bool Init()
@@ -116,14 +104,11 @@ public:
 			return false;
 
 		queueManager.m_renderer = pRenderer;
-		queueManager.Init();
+		syncManager.m_renderer = pRenderer;
 
-		for (uint32_t i = 0; i < gImageCount; ++i)
-		{
-			addFence(pRenderer, &pRenderCompleteFences[i]);
-			addSemaphore(pRenderer, &pRenderCompleteSemaphores[i]);
-		}
-		addSemaphore(pRenderer, &pImageAcquiredSemaphore);
+		queueManager.Init();
+		syncManager.Init();
+		
 
 		//Called on renderer, so we can leave this here.
 		initResourceLoaderInterface(pRenderer);
@@ -174,7 +159,7 @@ public:
 
 		DescriptorSetDesc desc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_NONE, 1 };
 		addDescriptorSet(pRenderer, &desc, &pDescriptorSetTexture);
-		desc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_PER_FRAME, gImageCount * 2 };
+		desc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_PER_FRAME, IMAGE_COUNT * 2 };
 		addDescriptorSet(pRenderer, &desc, &pDescriptorSetUniforms);
 
 		RasterizerStateDesc rasterizerStateDesc = {};
@@ -261,7 +246,7 @@ public:
 		ubDesc.mDesc.mSize = sizeof(UniformBlock);
 		ubDesc.mDesc.mFlags = BUFFER_CREATION_FLAG_PERSISTENT_MAP_BIT;
 		ubDesc.pData = NULL;
-		for (uint32_t i = 0; i < gImageCount; ++i)
+		for (uint32_t i = 0; i < IMAGE_COUNT; ++i)
 		{
 			ubDesc.ppBuffer = &pProjViewUniformBuffer[i];
 			addResource(&ubDesc);
@@ -355,7 +340,7 @@ public:
 		params[5].ppTextures = &pSkyBoxTextures[5];
 		updateDescriptorSet(pRenderer, 0, pDescriptorSetTexture, 6, params);
 
-		for (uint32_t i = 0; i < gImageCount; ++i)
+		for (uint32_t i = 0; i < IMAGE_COUNT; ++i)
 		{
 			DescriptorData params[1] = {};
 			params[0].pName = "uniformBlock";
@@ -372,6 +357,7 @@ public:
 	void Exit()
 	{
 		queueManager.Exit();
+		syncManager.Exit();
 
 		exitInputSystem();
 
@@ -384,7 +370,7 @@ public:
 		// Exit profile
 		exitProfiler();
 
-		for (uint32_t i = 0; i < gImageCount; ++i)
+		for (uint32_t i = 0; i < IMAGE_COUNT; ++i)
 		{
 			removeResource(pProjViewUniformBuffer[i]);
 			removeResource(pSkyboxUniformBuffer[i]);
@@ -409,13 +395,6 @@ public:
 		removeRasterizerState(pSphereRast);
 		removeRasterizerState(pSkyboxRast);
 
-		for (uint32_t i = 0; i < gImageCount; ++i)
-		{
-			removeFence(pRenderer, pRenderCompleteFences[i]);
-			removeSemaphore(pRenderer, pRenderCompleteSemaphores[i]);
-		}
-		removeSemaphore(pRenderer, pImageAcquiredSemaphore);
-
 		removeGpuProfiler(pRenderer, pGpuProfiler);
 		removeResourceLoaderInterface(pRenderer);
 		removeRenderer(pRenderer);
@@ -429,10 +408,10 @@ public:
 		if (!addDepthBuffer())
 			return false;
 
-		if (!gAppUI.Load(pSwapChain->ppSwapchainRenderTargets))
+		if (!gAppUI.Load(syncManager.m_swapChain->ppSwapchainRenderTargets))
 			return false;
 
-		if (!gVirtualJoystick.Load(pSwapChain->ppSwapchainRenderTargets[0]))
+		if (!gVirtualJoystick.Load(syncManager.m_swapChain->ppSwapchainRenderTargets[0]))
 			return false;
 
 		loadProfiler(&gAppUI, mSettings.mWidth, mSettings.mHeight);
@@ -457,10 +436,10 @@ public:
 		pipelineSettings.mPrimitiveTopo = PRIMITIVE_TOPO_TRI_LIST;
 		pipelineSettings.mRenderTargetCount = 1;
 		pipelineSettings.pDepthState = pDepth;
-		pipelineSettings.pColorFormats = &pSwapChain->ppSwapchainRenderTargets[0]->mDesc.mFormat;
-		pipelineSettings.mSampleCount = pSwapChain->ppSwapchainRenderTargets[0]->mDesc.mSampleCount;
-		pipelineSettings.mSampleQuality = pSwapChain->ppSwapchainRenderTargets[0]->mDesc.mSampleQuality;
-		pipelineSettings.mDepthStencilFormat = pDepthBuffer->mDesc.mFormat;
+		pipelineSettings.pColorFormats = &syncManager.m_swapChain->ppSwapchainRenderTargets[0]->mDesc.mFormat;
+		pipelineSettings.mSampleCount = syncManager.m_swapChain->ppSwapchainRenderTargets[0]->mDesc.mSampleCount;
+		pipelineSettings.mSampleQuality = syncManager.m_swapChain->ppSwapchainRenderTargets[0]->mDesc.mSampleQuality;
+		pipelineSettings.mDepthStencilFormat = syncManager.m_depthBuffer->mDesc.mFormat;
 		pipelineSettings.pRootSignature = pRootSignature;
 		pipelineSettings.pShaderProgram = pSphereShader;
 		pipelineSettings.pVertexLayout = &vertexLayout;
@@ -496,8 +475,7 @@ public:
 		removePipeline(pRenderer, pSkyBoxDrawPipeline);
 		removePipeline(pRenderer, pSpherePipeline);
 
-		removeSwapChain(pRenderer, pSwapChain);
-		removeRenderTarget(pRenderer, pDepthBuffer);
+		syncManager.Unload();
 	}
 
 	void Update(float deltaTime)
@@ -538,11 +516,11 @@ public:
 
 	void Draw()
 	{
-		acquireNextImage(pRenderer, pSwapChain, pImageAcquiredSemaphore, NULL, &gFrameIndex);
+		acquireNextImage(pRenderer, syncManager.m_swapChain, syncManager.m_imageAcquiredSemaphore, NULL, &gFrameIndex);
 
-		RenderTarget* pRenderTarget = pSwapChain->ppSwapchainRenderTargets[gFrameIndex];
-		Semaphore* pRenderCompleteSemaphore = pRenderCompleteSemaphores[gFrameIndex];
-		Fence* pRenderCompleteFence = pRenderCompleteFences[gFrameIndex];
+		RenderTarget* pRenderTarget = syncManager.m_swapChain->ppSwapchainRenderTargets[gFrameIndex];
+		Semaphore* pRenderCompleteSemaphore = syncManager.m_renderCompleteSemaphores[gFrameIndex];
+		Fence* pRenderCompleteFence = syncManager.m_renderCompleteFences[gFrameIndex];
 
 		// Stall if CPU is running "Swap Chain Buffer Count" frames ahead of GPU
 		FenceStatus fenceStatus;
@@ -575,11 +553,11 @@ public:
 
 		TextureBarrier barriers[] = {
 			{ pRenderTarget->pTexture, RESOURCE_STATE_RENDER_TARGET },
-			{ pDepthBuffer->pTexture, RESOURCE_STATE_DEPTH_WRITE },
+			{ syncManager.m_depthBuffer->pTexture, RESOURCE_STATE_DEPTH_WRITE },
 		};
 		cmdResourceBarrier(cmd, 0, NULL, 2, barriers);
 
-		cmdBindRenderTargets(cmd, 1, &pRenderTarget, pDepthBuffer, &loadActions, NULL, NULL, -1, -1);
+		cmdBindRenderTargets(cmd, 1, &pRenderTarget, syncManager.m_depthBuffer, &loadActions, NULL, NULL, -1, -1);
 		cmdSetViewport(cmd, 0.0f, 0.0f, (float)pRenderTarget->mDesc.mWidth, (float)pRenderTarget->mDesc.mHeight, 0.0f, 1.0f);
 		cmdSetScissor(cmd, 0, 0, pRenderTarget->mDesc.mWidth, pRenderTarget->mDesc.mHeight);
 		cmdBindDescriptorSet(cmd, 0, pDescriptorSetTexture);
@@ -631,10 +609,8 @@ public:
 		cmdEndGpuFrameProfile(cmd, pGpuProfiler);
 		endCmd(cmd);
 
-		//queueSubmit(pGraphicsQueue, 1, &cmd, pRenderCompleteFence, 1, &pImageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);
-		//queuePresent(pGraphicsQueue, pSwapChain, gFrameIndex, 1, &pRenderCompleteSemaphore);
-		queueSubmit(queueManager.m_graphicsQueue, 1, &cmd, pRenderCompleteFence, 1, &pImageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);
-		queuePresent(queueManager.m_graphicsQueue, pSwapChain, gFrameIndex, 1, &pRenderCompleteSemaphore);
+		queueSubmit(queueManager.m_graphicsQueue, 1, &cmd, pRenderCompleteFence, 1, &syncManager.m_imageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);
+		queuePresent(queueManager.m_graphicsQueue, syncManager.m_swapChain, gFrameIndex, 1, &pRenderCompleteSemaphore);
 		flipProfiler();
 	}
 
@@ -648,13 +624,13 @@ public:
 		swapChainDesc.ppPresentQueues = &queueManager.m_graphicsQueue;//&pGraphicsQueue;
 		swapChainDesc.mWidth = mSettings.mWidth;
 		swapChainDesc.mHeight = mSettings.mHeight;
-		swapChainDesc.mImageCount = gImageCount;
+		swapChainDesc.mImageCount = IMAGE_COUNT;
 		swapChainDesc.mSampleCount = SAMPLE_COUNT_1;
 		swapChainDesc.mColorFormat = getRecommendedSwapchainFormat(true);
 		swapChainDesc.mEnableVsync = false;
-		::addSwapChain(pRenderer, &swapChainDesc, &pSwapChain);
+		::addSwapChain(pRenderer, &swapChainDesc, &syncManager.m_swapChain);
 
-		return pSwapChain != NULL;
+		return syncManager.m_swapChain != NULL;
 	}
 
 	bool addDepthBuffer()
@@ -671,9 +647,9 @@ public:
 		depthRT.mSampleQuality = 0;
 		depthRT.mWidth = mSettings.mWidth;
 		depthRT.mFlags = TEXTURE_CREATION_FLAG_ON_TILE;
-		addRenderTarget(pRenderer, &depthRT, &pDepthBuffer);
+		addRenderTarget(pRenderer, &depthRT, &syncManager.m_depthBuffer);
 
-		return pDepthBuffer != NULL;
+		return syncManager.m_depthBuffer != NULL;
 	}
 };
 
