@@ -17,10 +17,11 @@ namespace p2 {
 	{
 		PathHandle programDirectory = fsCopyProgramDirectoryPath();
 		if (!fsPlatformUsesBundledResources())
-		{
-			PathHandle resourceDirRoot = fsAppendPathComponent(programDirectory, "../../../src/01_Transformations");
+		{	//The resource directory root doesn't really matter as long as all exes are in the same directory (which they are).
+			PathHandle resourceDirRoot = fsAppendPathComponent(programDirectory, "../../../src/Final");
 			fsSetResourceDirectoryRootPath(resourceDirRoot);
 
+			//Add my stuff to /Textures and /Meshes.
 			fsSetRelativePathForResourceDirectory(RD_TEXTURES, "../../UnitTestResources/Textures");
 			fsSetRelativePathForResourceDirectory(RD_MESHES, "../../UnitTestResources/Meshes");
 			fsSetRelativePathForResourceDirectory(RD_BUILTIN_FONTS, "../../UnitTestResources/Fonts");

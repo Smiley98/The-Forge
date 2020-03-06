@@ -557,7 +557,7 @@ public:
 		Semaphore* pRenderCompleteSemaphore = pRenderCompleteSemaphores[gFrameIndex];
 		Fence* pRenderCompleteFence = pRenderCompleteFences[gFrameIndex];
 
-		// Stall if CPU is running "Swap Chain Buffer Count" frames ahead of GPU
+		// Stall if CPU is ahead of the GPU.
 		FenceStatus fenceStatus;
 		getFenceStatus(pRenderer, pRenderCompleteFence, &fenceStatus);
 		if (fenceStatus == FENCE_STATUS_INCOMPLETE)

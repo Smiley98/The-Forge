@@ -50,12 +50,13 @@ Pipeline* pSpherePipeline = NULL;
 
 Shader* pSkyBoxDrawShader = NULL;
 Pipeline* pSkyBoxDrawPipeline = NULL;
+
 RootSignature* pRootSignature = NULL;
 Sampler* pSamplerSkyBox = NULL;
 Texture* pSkyBoxTextures[6];
+
 DescriptorSet* pDescriptorSetTexture = { NULL };
 DescriptorSet* pDescriptorSetUniforms = { NULL };
-VirtualJoystickUI gVirtualJoystick;
 
 Buffer* pProjViewUniformBuffer[IMAGE_COUNT] = { NULL };
 Buffer* pSkyboxUniformBuffer[IMAGE_COUNT] = { NULL };
@@ -71,6 +72,7 @@ ICameraController* pCameraController = NULL;
 /// UI
 UIApp gAppUI;
 GpuProfiler* pGpuProfiler = NULL;
+VirtualJoystickUI gVirtualJoystick;
 
 const char* pSkyBoxImageFileNames[] = { "Skybox_right1",  "Skybox_left2",  "Skybox_top3",
 										"Skybox_bottom4", "Skybox_front5", "Skybox_back6" };
@@ -469,8 +471,9 @@ public:
 
 		//Sadly there's more to updating my uniform buffer than this. I don't think we can update after calling beginCmd(). 
 		//gUniformData.mToWorldMat[0].setTranslation(vec3(3.0f, 0.0f, 0.0f));
-		//viewProjCbv = { pProjViewUniformBuffer[gFrameIndex], &gUniformData };
-		//updateResource(&viewProjCbv);
+		viewProjCbv = { pProjViewUniformBuffer[gFrameIndex], &gUniformData };
+		updateResource(&viewProjCbv);
+
 		cmdBindVertexBuffer(cmd, 1, &vertexManager.m_sphereVertexBuffer, NULL);
 		cmdDrawInstanced(cmd, vertexManager.m_sphereVertexCount, 0, gNumPlanets, 0);
 
