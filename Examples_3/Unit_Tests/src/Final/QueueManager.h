@@ -4,6 +4,7 @@
 #include "../../../../Common_3/Renderer/IRenderer.h"
 #include <memory>
 
+//Should be called CommandManager instead.
 namespace p2 {
 	struct QueueManager :
 		public SingletonLocal<QueueManager>, public IResource

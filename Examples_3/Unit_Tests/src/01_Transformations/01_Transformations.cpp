@@ -1,4 +1,4 @@
-#define MAX_PLANETS 1    // Does not affect test, just for allocating space in uniform block. Must match with shader.
+#define MAX_PLANETS 20    // Does not affect test, just for allocating space in uniform block. Must match with shader.
 
 //Interfaces
 #include "../../../../Common_3/OS/Interfaces/ICameraController.h"
@@ -38,7 +38,7 @@ struct UniformBlock
 const uint32_t gImageCount = 3;
 bool           gMicroProfiler = false;
 bool           bPrevToggleMicroProfiler = false;
-const uint     gNumPlanets = 1;
+const uint     gNumPlanets = 11;
 
 Renderer* pRenderer = NULL;
 
@@ -602,17 +602,9 @@ public:
 		cmdBindVertexBuffer(cmd, 1, &pSkyBoxVertexBuffer, NULL);
 		cmdDraw(cmd, 36, 0);
 
-		////// draw planets
+		//// draw planets
 		cmdBindPipeline(cmd, pSpherePipeline);
 		cmdBindDescriptorSet(cmd, gFrameIndex * 2 + 1, pDescriptorSetUniforms);
-		cmdBindVertexBuffer(cmd, 1, &pCubeVertexBuffer, NULL);
-		cmdDraw(cmd, 36, 0);
-
-		//Sadly there's more to updating my uniform buffer than this. I don't think we can update after calling beginCmd(). 
-		//gUniformData.mToWorldMat[0].setTranslation(vec3(3.0f, 0.0f, 0.0f));
-		//viewProjCbv = { pProjViewUniformBuffer[gFrameIndex], &gUniformData };
-		//updateResource(&viewProjCbv);
-
 		cmdBindVertexBuffer(cmd, 1, &pSphereVertexBuffer, NULL);
 		cmdDrawInstanced(cmd, gNumberOfSpherePoints / 6, 0, gNumPlanets, 0);
 

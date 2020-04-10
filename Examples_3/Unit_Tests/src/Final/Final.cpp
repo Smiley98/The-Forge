@@ -29,9 +29,9 @@ struct PlanetInfoStruct
 
 struct UniformBlock
 {
-	mat4 mProjectView;
-	mat4 mToWorldMat[MAX_PLANETS];
-	vec4 mColor[MAX_PLANETS];
+	mat4 mProjectionView;
+	mat4 mWorldMatrices[MAX_PLANETS];
+	vec4 mColors[MAX_PLANETS];
 
 	// Point Light Information
 	vec3 mLightPosition;
@@ -90,6 +90,15 @@ private:
 	p2::RasterManager rasterManager;
 	p2::VertexManager vertexManager;
 
+	void barrier(Cmd* cmd);
+	void present(Cmd* cmd);
+	void bindTexture(Cmd* cmd);
+	void setView(Cmd* cmd);
+	void clear(Cmd* cmd);
+	void drawCube(Cmd* cmd);
+	void drawSphere(Cmd* cmd);
+	void drawSkybox(Cmd* cmd);
+
 public:
 	bool Init()
 	{
@@ -108,7 +117,7 @@ public:
 		syncManager.Init();
 		rasterManager.Init();
 
-		//Called on renderer, so we can leave this here.
+		//Any calls to addResource() require the loader to be initialized, which is why vertex manager init is called after.
 		initResourceLoaderInterface(pRenderer);
 		vertexManager.Init();
 
@@ -158,6 +167,8 @@ public:
 
 		DescriptorSetDesc desc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_NONE, 1 };
 		addDescriptorSet(pRenderer, &desc, &pDescriptorSetTexture);
+
+		//This means only support 2 uniform clocks.
 		desc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_PER_FRAME, IMAGE_COUNT * 2 };
 		addDescriptorSet(pRenderer, &desc, &pDescriptorSetUniforms);
 
@@ -178,7 +189,8 @@ public:
 
 		// Sun
 		gPlanetInfoData[0].mTransform = mat4::identity();
-		gPlanetInfoData[0].mColor = vec4(0.9f, 0.6f, 0.1f, 0.0f);
+		//gPlanetInfoData[0].mColor = vec4(0.9f, 0.6f, 0.1f, 0.0f);
+		gPlanetInfoData[0].mColor = vec4(1.0f, 1.0f, 1.0f, 0.0f);
 
 		if (!gAppUI.Init(pRenderer))
 			return false;
@@ -210,7 +222,6 @@ public:
 		initProfiler();
 
 		// Gpu profiler can only be added after initProfile.
-		//addGpuProfiler(pRenderer, pGraphicsQueue, &pGpuProfiler, "GpuProfiler");
 		addGpuProfiler(pRenderer, queueManager.m_graphicsQueue, &pGpuProfiler, "GpuProfiler");
 
 		// App Actions
@@ -386,20 +397,18 @@ public:
 
 		const float aspectInverse = (float)mSettings.mHeight / (float)mSettings.mWidth;
 		const float horizontal_fov = PI / 2.0f;
-		mat4        projMat = mat4::perspective(horizontal_fov, aspectInverse, 0.1f, 1000.0f);
-		gUniformData.mProjectView = projMat * viewMat;
+		mat4 projMat = mat4::perspective(horizontal_fov, aspectInverse, 0.1f, 1000.0f);
+		gUniformData.mProjectionView = projMat * viewMat;
 
 		// point light parameters
 		gUniformData.mLightPosition = vec3(0, 0, 0);
-		gUniformData.mLightColor = vec3(0.9f, 0.9f, 0.7f);
-
-		gUniformData.mToWorldMat[0] = gPlanetInfoData[0].mTransform;
-		gUniformData.mColor[0] = gPlanetInfoData[0].mColor;
+		gUniformData.mWorldMatrices[0] = gPlanetInfoData[0].mTransform;
+		gUniformData.mColors[0] = gPlanetInfoData[0].mColor;
 
 		//Zero the translation for the skybox view matrix.
 		viewMat.setTranslation(vec3(0.0f));
 		gUniformDataSky = gUniformData;
-		gUniformDataSky.mProjectView = projMat * viewMat;
+		gUniformDataSky.mProjectionView = projMat * viewMat;
 
 		if (gMicroProfiler != bPrevToggleMicroProfiler)
 		{
@@ -412,101 +421,47 @@ public:
 	void Draw()
 	{
 		acquireNextImage(pRenderer, syncManager.m_swapChain, syncManager.m_imageAcquiredSemaphore, NULL, &gFrameIndex);
-
-		RenderTarget* pRenderTarget = syncManager.m_swapChain->ppSwapchainRenderTargets[gFrameIndex];
 		Semaphore* pRenderCompleteSemaphore = syncManager.m_renderCompleteSemaphores[gFrameIndex];
 		Fence* pRenderCompleteFence = syncManager.m_renderCompleteFences[gFrameIndex];
-
-		// Stall if CPU is running "Swap Chain Buffer Count" frames ahead of GPU
 		FenceStatus fenceStatus;
-		getFenceStatus(pRenderer, pRenderCompleteFence, &fenceStatus);
-		if (fenceStatus == FENCE_STATUS_INCOMPLETE)
-			waitForFences(pRenderer, 1, &pRenderCompleteFence);
-
-		// Update uniform buffers
-		BufferUpdateDesc viewProjCbv = { pProjViewUniformBuffer[gFrameIndex], &gUniformData };
-		updateResource(&viewProjCbv);
+		Cmd* cmd = queueManager.m_commands[gFrameIndex];
 
 		BufferUpdateDesc skyboxViewProjCbv = { pSkyboxUniformBuffer[gFrameIndex], &gUniformDataSky };
 		updateResource(&skyboxViewProjCbv);
 
-		// simply record the screen cleaning command
-		LoadActionsDesc loadActions = {};
-		loadActions.mLoadActionsColor[0] = LOAD_ACTION_CLEAR;
-		loadActions.mClearColorValues[0].r = 1.0f;
-		loadActions.mClearColorValues[0].g = 1.0f;
-		loadActions.mClearColorValues[0].b = 0.0f;
-		loadActions.mClearColorValues[0].a = 0.0f;
-		loadActions.mLoadActionDepth = LOAD_ACTION_CLEAR;
-		loadActions.mClearDepth.depth = 1.0f;
-		loadActions.mClearDepth.stencil = 0;
-
-		//Cmd* cmd = ppCmds[gFrameIndex];
-		Cmd* cmd = queueManager.m_commands[gFrameIndex];
-		beginCmd(cmd);
-		cmdBeginGpuFrameProfile(cmd, pGpuProfiler);
-
-		TextureBarrier barriers[] = {
-			{ pRenderTarget->pTexture, RESOURCE_STATE_RENDER_TARGET },
-			{ syncManager.m_depthBuffer->pTexture, RESOURCE_STATE_DEPTH_WRITE },
-		};
-		cmdResourceBarrier(cmd, 0, NULL, 2, barriers);
-
-		cmdBindRenderTargets(cmd, 1, &pRenderTarget, syncManager.m_depthBuffer, &loadActions, NULL, NULL, -1, -1);
-		cmdSetViewport(cmd, 0.0f, 0.0f, (float)pRenderTarget->mDesc.mWidth, (float)pRenderTarget->mDesc.mHeight, 0.0f, 1.0f);
-		cmdSetScissor(cmd, 0, 0, pRenderTarget->mDesc.mWidth, pRenderTarget->mDesc.mHeight);
-		cmdBindDescriptorSet(cmd, 0, pDescriptorSetTexture);
-
-		//// draw skybox
-		cmdBindPipeline(cmd, pSkyBoxDrawPipeline);
-		cmdBindDescriptorSet(cmd, gFrameIndex * 2 + 0, pDescriptorSetUniforms);
-		cmdBindVertexBuffer(cmd, 1, &vertexManager.m_skyboxVertexBuffer, NULL);
-		cmdDraw(cmd, vertexManager.m_skyboxVertexCount, 0);
-
-		////// draw planets
-		cmdBindPipeline(cmd, pSpherePipeline);
-		cmdBindDescriptorSet(cmd, gFrameIndex * 2 + 1, pDescriptorSetUniforms);
-		cmdBindVertexBuffer(cmd, 1, &vertexManager.m_cubeVertexBuffer, NULL);
-		cmdDraw(cmd, vertexManager.m_cubeVertexCount, 0);
-
-		//Sadly there's more to updating my uniform buffer than this. I don't think we can update after calling beginCmd(). 
-		//gUniformData.mToWorldMat[0].setTranslation(vec3(3.0f, 0.0f, 0.0f));
-		viewProjCbv = { pProjViewUniformBuffer[gFrameIndex], &gUniformData };
+		gUniformData.mColors[0] = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+		BufferUpdateDesc viewProjCbv = { pProjViewUniformBuffer[gFrameIndex], &gUniformData };
 		updateResource(&viewProjCbv);
 
-		cmdBindVertexBuffer(cmd, 1, &vertexManager.m_sphereVertexBuffer, NULL);
-		cmdDrawInstanced(cmd, vertexManager.m_sphereVertexCount, 0, gNumPlanets, 0);
+		getFenceStatus(pRenderer, pRenderCompleteFence, &fenceStatus);
+		if (fenceStatus == FENCE_STATUS_INCOMPLETE)
+			waitForFences(pRenderer, 1, &pRenderCompleteFence);
 
-		loadActions = {};
-		loadActions.mLoadActionsColor[0] = LOAD_ACTION_LOAD;
-		cmdBindRenderTargets(cmd, 1, &pRenderTarget, NULL, &loadActions, NULL, NULL, -1, -1);
-		cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw UI", true);
-		static HiresTimer gTimer;
-		gTimer.GetUSec(true);
-
-		gVirtualJoystick.Draw(cmd, { 1.0f, 1.0f, 1.0f, 1.0f });
-		gAppUI.DrawText(cmd, float2(8, 15), eastl::string().sprintf("CPU %f ms", gTimer.GetUSecAverage() / 1000.0f).c_str(), &gFrameTimeDraw);
-
-#if !defined(__ANDROID__)
-		gAppUI.DrawText(cmd, float2(8, 40), eastl::string().sprintf("GPU %f ms", (float)pGpuProfiler->mCumulativeTime * 1000.0f).c_str(), &gFrameTimeDraw);
-		gAppUI.DrawDebugGpuProfile(cmd, float2(8, 65), pGpuProfiler, NULL);
-#endif
-		cmdDrawProfiler();
-
-		gAppUI.Gui(pGui);
-		gAppUI.Draw(cmd);
-		cmdBindRenderTargets(cmd, 0, NULL, NULL, NULL, NULL, NULL, -1, -1);
-		cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
-
-		barriers[0] = { pRenderTarget->pTexture, RESOURCE_STATE_PRESENT };
-		cmdResourceBarrier(cmd, 0, NULL, 1, barriers);
-
-		cmdEndGpuFrameProfile(cmd, pGpuProfiler);
+		//Haven't figured out which "things" (ie texture, render target, viewport, scissor) are persistent yet.
+		//Will require a deep dive ;)
+		beginCmd(cmd);
+		setView(cmd);
+		clear(cmd);
+		bindTexture(cmd);
+		drawSkybox(cmd);
+		drawSphere(cmd);
 		endCmd(cmd);
-
 		queueSubmit(queueManager.m_graphicsQueue, 1, &cmd, pRenderCompleteFence, 1, &syncManager.m_imageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);
+
+		getFenceStatus(pRenderer, pRenderCompleteFence, &fenceStatus);
+		if (fenceStatus == FENCE_STATUS_INCOMPLETE)
+			waitForFences(pRenderer, 1, &pRenderCompleteFence);
+
+		gUniformData.mColors[0] = vec4(0.0f, 1.0f, 0.0f, 1.0f);
+		updateResource(&viewProjCbv);
+
+		beginCmd(cmd);
+		drawCube(cmd);
+		endCmd(cmd);
+		queueSubmit(queueManager.m_graphicsQueue, 1, &cmd, pRenderCompleteFence, 1, &syncManager.m_imageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);
+
+		//Submits an image for presentation (only call this after all draw calls are finished).
 		queuePresent(queueManager.m_graphicsQueue, syncManager.m_swapChain, gFrameIndex, 1, &pRenderCompleteSemaphore);
-		flipProfiler();
 	}
 
 	const char* GetName() { return "01_Transformations"; }
@@ -549,3 +504,67 @@ public:
 };
 
 DEFINE_APPLICATION_MAIN(Transformations)
+
+void Transformations::barrier(Cmd* cmd)
+{
+	RenderTarget* pRenderTarget = syncManager.m_swapChain->ppSwapchainRenderTargets[gFrameIndex];
+	TextureBarrier barriers[] = { { pRenderTarget->pTexture, RESOURCE_STATE_RENDER_TARGET }, { syncManager.m_depthBuffer->pTexture, RESOURCE_STATE_DEPTH_WRITE }, };
+	cmdResourceBarrier(cmd, 0, NULL, 2, barriers);
+}
+
+void Transformations::present(Cmd* cmd) {
+	RenderTarget* pRenderTarget = syncManager.m_swapChain->ppSwapchainRenderTargets[gFrameIndex];
+	TextureBarrier barriers[] = { pRenderTarget->pTexture, RESOURCE_STATE_PRESENT };
+	cmdResourceBarrier(cmd, 0, NULL, 1, barriers);
+}
+
+void Transformations::bindTexture(Cmd* cmd)
+{
+	cmdBindDescriptorSet(cmd, 0, pDescriptorSetTexture);
+}
+
+void Transformations::setView(Cmd* cmd)
+{
+	RenderTarget* pRenderTarget = syncManager.m_swapChain->ppSwapchainRenderTargets[gFrameIndex];
+	cmdSetViewport(cmd, 0.0f, 0.0f, (float)pRenderTarget->mDesc.mWidth, (float)pRenderTarget->mDesc.mHeight, 0.0f, 1.0f);
+	cmdSetScissor(cmd, 0, 0, pRenderTarget->mDesc.mWidth, pRenderTarget->mDesc.mHeight);
+}
+
+void Transformations::clear(Cmd* cmd)
+{
+	RenderTarget* pRenderTarget = syncManager.m_swapChain->ppSwapchainRenderTargets[gFrameIndex];
+	LoadActionsDesc loadActions = {};
+	loadActions.mLoadActionsColor[0] = LOAD_ACTION_CLEAR;
+	loadActions.mClearColorValues[0].r = 1.0f;
+	loadActions.mClearColorValues[0].g = 1.0f;
+	loadActions.mClearColorValues[0].b = 1.0f;
+	loadActions.mClearColorValues[0].a = 1.0f;
+	loadActions.mLoadActionDepth = LOAD_ACTION_CLEAR;
+	loadActions.mClearDepth.depth = 1.0f;
+	loadActions.mClearDepth.stencil = 0;
+	cmdBindRenderTargets(cmd, 1, &pRenderTarget, syncManager.m_depthBuffer, &loadActions, NULL, NULL, -1, -1);
+}
+
+void Transformations::drawCube(Cmd* cmd)
+{
+	cmdBindPipeline(cmd, pSpherePipeline);
+	cmdBindDescriptorSet(cmd, gFrameIndex * 2 + 1, pDescriptorSetUniforms);
+	cmdBindVertexBuffer(cmd, 1, &vertexManager.m_cubeVertexBuffer, NULL);
+	cmdDraw(cmd, vertexManager.m_cubeVertexCount, 0);
+}
+
+void Transformations::drawSphere(Cmd* cmd)
+{
+	cmdBindPipeline(cmd, pSpherePipeline);
+	cmdBindDescriptorSet(cmd, gFrameIndex * 2 + 1, pDescriptorSetUniforms);
+	cmdBindVertexBuffer(cmd, 1, &vertexManager.m_sphereVertexBuffer, NULL);
+	cmdDrawInstanced(cmd, vertexManager.m_sphereVertexCount, 0, gNumPlanets, 0);
+}
+
+void Transformations::drawSkybox(Cmd* cmd)
+{
+	cmdBindPipeline(cmd, pSkyBoxDrawPipeline);
+	cmdBindDescriptorSet(cmd, gFrameIndex * 2 + 0, pDescriptorSetUniforms);
+	cmdBindVertexBuffer(cmd, 1, &vertexManager.m_skyboxVertexBuffer, NULL);
+	cmdDraw(cmd, vertexManager.m_skyboxVertexCount, 0);
+}
