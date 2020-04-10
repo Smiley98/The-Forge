@@ -66,6 +66,9 @@
 //input
 #include "../../../../Common_3/OS/Interfaces/IMemory.h"
 
+//Forward+
+#include "../../src/Final/FrustumGrid.h"
+
 namespace eastl
 {
 	template <>
@@ -469,7 +472,7 @@ typedef enum TransparencyType
 
 struct
 {
-	float3 mLightPosition = { 0, 7, 1.7 };    //light position, will be changed by GUI editor if not iOS
+	float3 mLightPosition = { 0.f, 7.f, 1.7f };    //light position, will be changed by GUI editor if not iOS
 } gLightCpuSettings;
 
 /************************************************************************/
@@ -518,6 +521,12 @@ Semaphore* pImageAcquiredSemaphore = NULL;
 Semaphore* pRenderCompleteSemaphores[gImageCount] = { NULL };
 
 uint32_t gTransparencyType = TRANSPARENCY_TYPE_PHENOMENOLOGICAL;
+
+
+// forward+
+p2::FrustumGrid frustumGrid;
+
+
 
 void AddObject(
 	MeshResource mesh, vec3 position, vec4 color, vec3 translucency = vec3(0.0f), float eta = 1.0f, float collimation = 0.0f,
@@ -719,6 +728,7 @@ class Transparency: public IApp
 		CreateUniformBuffers();
 		CreateDescriptorSets();
 
+
 		/************************************************************************/
 		// Add GPU profiler
 		/************************************************************************/
@@ -889,9 +899,20 @@ class Transparency: public IApp
 		mat4        viewMat = pCameraController->getViewMatrix();
 		const float aspectInverse = (float)mSettings.mHeight / (float)mSettings.mWidth;
 		const float horizontal_fov = PI / 2.0f;
-		mat4        projMat = mat4::perspective(horizontal_fov, aspectInverse, zNear, zFar);    //view matrix
+		mat4        projMat = mat4::perspective(horizontal_fov, aspectInverse, zNear, zFar);
 		vec3        camPos = pCameraController->getViewPosition();
 		mat4        vpMatrix = projMat * viewMat;
+
+		{
+			// create frustum divisions for Forward+
+			static bool initialized = false;
+			if (!initialized)
+			{
+				frustumGrid.updateTiles(zNear, zFar, horizontal_fov, mSettings.mWidth, mSettings.mHeight);
+				initialized = true;
+			}
+		}
+
 		/************************************************************************/
 		// Light Update
 		/************************************************************************/

@@ -28,6 +28,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\15_Transparency\15_Transparency.cpp" />
+    <ClCompile Include="..\src\Final\FrustumGrid.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\src\15_Transparency\Shaders\D3D12\AdaptiveOITClear.frag" />
@@ -102,6 +103,7 @@
     <ClInclude Include="..\src\15_Transparency\Shaders\D3D12\shaderDefs.h" />
     <ClInclude Include="..\src\15_Transparency\Shaders\Vulkan\AOIT.h" />
     <ClInclude Include="..\src\15_Transparency\Shaders\Vulkan\shaderDefs.h" />
+    <ClInclude Include="..\src\Final\FrustumGrid.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{69CBDFA9-4368-4749-9417-08F68C856C94}</ProjectGuid>
