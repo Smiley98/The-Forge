@@ -104,6 +104,7 @@ typedef enum MeshResource
 	MESH_SPHERE,
 	MESH_PLANE,
 	MESH_LION,
+	MESH_SPONZA,
 	MESH_COUNT,
 	/* vvv These meshes have different behaviour to the other meshes vvv */
 	MESH_PARTICLE_SYSTEM
@@ -468,7 +469,7 @@ typedef enum TransparencyType
 
 struct
 {
-	float3 mLightPosition = { 0, 10, 10 };    //light position, will be changed by GUI editor if not iOS
+	float3 mLightPosition = { 0, 7, 1.7 };    //light position, will be changed by GUI editor if not iOS
 } gLightCpuSettings;
 
 /************************************************************************/
@@ -552,63 +553,65 @@ void AddParticleSystem(vec3 position, vec4 color, vec3 translucency = vec3(0.0f)
 
 static void CreateScene()
 {
+	AddObject(MESH_SPONZA, vec3(0.0f), vec4(1.0f), vec3(0.0f), 1.0f, 1.0f, vec3(0.01f, 0.01f, 0.01f));
+
 	// Set plane
 	AddObject(MESH_CUBE, vec3(0.0f), vec4(1.0f), vec3(0.0f), 1.0f, 1.0f, vec3(100.0f, 0.5f, 100.0f));
 
 	// Set cubes
-	const float cubeDist = 3.0f;
-	vec3        curTrans = { -cubeDist * (CUBES_EACH_ROW - 1) / 2.f, 2.3f, -cubeDist * (CUBES_EACH_COL - 1) / 2.f };
+	//const float cubeDist = 3.0f;
+	//vec3        curTrans = { -cubeDist * (CUBES_EACH_ROW - 1) / 2.f, 2.3f, -cubeDist * (CUBES_EACH_COL - 1) / 2.f };
+	//
+	//for (int i = 0; i < CUBES_EACH_ROW; ++i)
+	//{
+	//	curTrans.setX(-cubeDist * (CUBES_EACH_ROW - 1) / 2.f);
+	//
+	//	for (int j = 0; j < CUBES_EACH_COL; j++)
+	//	{
+	//		AddObject(
+	//			MESH_CUBE, curTrans,
+	//			vec4(float(i + 1) / CUBES_EACH_ROW, 1.0f - float(i + 1) / CUBES_EACH_ROW, 0.0f, float(j + 1) / CUBES_EACH_COL), vec3(0.0f),
+	//			1.0f, 1.0f, vec3(1.0f));
+	//		curTrans.setX(curTrans.getX() + cubeDist);
+	//	}
+	//
+	//	curTrans.setZ(curTrans.getZ() + cubeDist);
+	//}
 
-	for (int i = 0; i < CUBES_EACH_ROW; ++i)
-	{
-		curTrans.setX(-cubeDist * (CUBES_EACH_ROW - 1) / 2.f);
-
-		for (int j = 0; j < CUBES_EACH_COL; j++)
-		{
-			AddObject(
-				MESH_CUBE, curTrans,
-				vec4(float(i + 1) / CUBES_EACH_ROW, 1.0f - float(i + 1) / CUBES_EACH_ROW, 0.0f, float(j + 1) / CUBES_EACH_COL), vec3(0.0f),
-				1.0f, 1.0f, vec3(1.0f));
-			curTrans.setX(curTrans.getX() + cubeDist);
-		}
-
-		curTrans.setZ(curTrans.getZ() + cubeDist);
-	}
-
-	AddObject(MESH_CUBE, vec3(15.0f, 4.0f, 5.0f), vec4(1.0f, 0.0f, 0.0f, 0.9f), vec3(0.0f), 1.0f, 1.0f, vec3(4.0f, 4.0f, 0.1f));
-	AddObject(MESH_CUBE, vec3(15.0f, 4.0f, 0.0f), vec4(0.0f, 1.0f, 0.0f, 0.9f), vec3(0.0f), 1.0f, 1.0f, vec3(4.0f, 4.0f, 0.1f));
-	AddObject(MESH_CUBE, vec3(15.0f, 4.0f, -5.0f), vec4(0.0f, 0.0f, 1.0f, 0.9f), vec3(0.0f), 1.0f, 1.0f, vec3(4.0f, 4.0f, 0.1f));
-
-	AddObject(MESH_CUBE, vec3(-15.0f, 4.0f, 5.0f), vec4(1.0f, 0.0f, 0.0f, 0.5f), vec3(0.0f), 1.0f, 1.0f, vec3(4.0f, 4.0f, 0.1f));
-	AddObject(MESH_CUBE, vec3(-15.0f, 4.0f, 0.0f), vec4(0.0f, 1.0f, 0.0f, 0.5f), vec3(0.0f), 1.0f, 1.0f, vec3(4.0f, 4.0f, 0.1f));
-	AddObject(MESH_CUBE, vec3(-15.0f, 4.0f, -5.0f), vec4(0.0f, 0.0f, 1.0f, 0.5f), vec3(0.0f), 1.0f, 1.0f, vec3(4.0f, 4.0f, 0.1f));
-
-	for (int i = 0; i < 25; ++i)
-		AddObject(
-			MESH_CUBE, vec3(i * 2.0f - 25.0f, 4.0f, 25.0f), vec4(3.0f, 3.0f, 10.0f, 0.1f), vec3(0.0f), 1.0f, 1.0f, vec3(0.1f, 4.0f, 4.0f));
-
-	AddObject(MESH_CUBE, vec3(1.0f, 5.0f, -22.0f), vec4(1.0f, 0.0f, 0.0f, 1.0f), vec3(0.0f), 1.0f, 0.0f, vec3(0.5f, 0.5f, 0.01f));
-	AddObject(MESH_CUBE, vec3(-1.0f, 5.0f, -35.0f), vec4(0.0f, 1.0f, 0.0f, 1.0f), vec3(0.0f), 1.0f, 0.0f, vec3(1.0f, 1.0f, 0.005f));
-	AddObject(MESH_SPHERE, vec3(0.0f, 5.0f, -25.0f), vec4(0.3f, 0.3f, 1.0f, 0.9f), vec3(0.3f, 0.3f, 1.0f), 1.5f, 0.0f, vec3(4.0f));
-
-	AddObject(MESH_LION, vec3(10.0f, 0.0f, -25.0f), vec4(1.0f), vec3(0.0f), 1.0f, 0.0f, vec3(0.25f), vec3(0.0f, PI, 0.0f));
-	AddObject(
-		MESH_CUBE, vec3(7.0f, 5.0f, -22.0f), vec4(1.0f, 0.3f, 0.3f, 0.9f), vec3(1.0f, 0.3f, 0.3f), 1.0f, 0.0f, vec3(1.5f, 4.0f, 0.005f));
-	AddObject(
-		MESH_CUBE, vec3(10.0f, 5.0f, -22.0f), vec4(0.3f, 1.0f, 0.3f, 0.9f), vec3(0.3f, 1.0f, 0.3f), 1.0f, 0.5f, vec3(1.5f, 4.0f, 0.005f));
-	AddObject(
-		MESH_CUBE, vec3(13.0f, 5.0f, -22.0f), vec4(0.3f, 0.3f, 1.0f, 0.9f), vec3(0.3f, 0.3f, 1.0f), 1.0f, 0.9f, vec3(1.5f, 4.0f, 0.005f));
-
-	AddParticleSystem(vec3(30.0f, 5.0f, 20.0f), vec4(1.0f, 0.0f, 0.0f, 0.5f));
-	AddParticleSystem(vec3(30.0f, 5.0f, 25.0f), vec4(1.0f, 1.0f, 0.0f, 0.5f));
-
-	AddObject(
-		MESH_PLANE, vec3(-15.0f - 5.0f, 10.0f, -25.0f), TEXTURE_MEASURING_GRID, vec3(10.0f, 1.0f, 10.0f),
-		vec3(-90.0f * (PI / 180.0f), PI, 0.0f));
-	AddObject(
-		MESH_SPHERE, vec3(-17.5f - 5.0f, 5.0f, -20.0f), vec4(0.3f, 0.3f, 1.0f, 0.9f), vec3(0.3f, 0.3f, 1.0f), 1.001f, 1.0f, vec3(1.0f));
-	AddObject(MESH_SPHERE, vec3(-15.0f - 5.0f, 5.0f, -20.0f), vec4(0.3f, 0.3f, 1.0f, 0.9f), vec3(0.3f, 0.3f, 1.0f), 1.3f, 1.0f, vec3(1.0f));
-	AddObject(MESH_SPHERE, vec3(-12.5f - 5.0f, 5.0f, -20.0f), vec4(0.3f, 0.3f, 1.0f, 0.9f), vec3(0.3f, 0.3f, 1.0f), 1.5f, 1.0f, vec3(1.0f));
+	//AddObject(MESH_CUBE, vec3(15.0f, 4.0f, 5.0f), vec4(1.0f, 0.0f, 0.0f, 0.9f), vec3(0.0f), 1.0f, 1.0f, vec3(4.0f, 4.0f, 0.1f));
+	//AddObject(MESH_CUBE, vec3(15.0f, 4.0f, 0.0f), vec4(0.0f, 1.0f, 0.0f, 0.9f), vec3(0.0f), 1.0f, 1.0f, vec3(4.0f, 4.0f, 0.1f));
+	//AddObject(MESH_CUBE, vec3(15.0f, 4.0f, -5.0f), vec4(0.0f, 0.0f, 1.0f, 0.9f), vec3(0.0f), 1.0f, 1.0f, vec3(4.0f, 4.0f, 0.1f));
+	//
+	//AddObject(MESH_CUBE, vec3(-15.0f, 4.0f, 5.0f), vec4(1.0f, 0.0f, 0.0f, 0.5f), vec3(0.0f), 1.0f, 1.0f, vec3(4.0f, 4.0f, 0.1f));
+	//AddObject(MESH_CUBE, vec3(-15.0f, 4.0f, 0.0f), vec4(0.0f, 1.0f, 0.0f, 0.5f), vec3(0.0f), 1.0f, 1.0f, vec3(4.0f, 4.0f, 0.1f));
+	//AddObject(MESH_CUBE, vec3(-15.0f, 4.0f, -5.0f), vec4(0.0f, 0.0f, 1.0f, 0.5f), vec3(0.0f), 1.0f, 1.0f, vec3(4.0f, 4.0f, 0.1f));
+	//
+	//for (int i = 0; i < 25; ++i)
+	//	AddObject(
+	//		MESH_CUBE, vec3(i * 2.0f - 25.0f, 4.0f, 25.0f), vec4(3.0f, 3.0f, 10.0f, 0.1f), vec3(0.0f), 1.0f, 1.0f, vec3(0.1f, 4.0f, 4.0f));
+	//
+	//AddObject(MESH_CUBE, vec3(1.0f, 5.0f, -22.0f), vec4(1.0f, 0.0f, 0.0f, 1.0f), vec3(0.0f), 1.0f, 0.0f, vec3(0.5f, 0.5f, 0.01f));
+	//AddObject(MESH_CUBE, vec3(-1.0f, 5.0f, -35.0f), vec4(0.0f, 1.0f, 0.0f, 1.0f), vec3(0.0f), 1.0f, 0.0f, vec3(1.0f, 1.0f, 0.005f));
+	//AddObject(MESH_SPHERE, vec3(0.0f, 5.0f, -25.0f), vec4(0.3f, 0.3f, 1.0f, 0.9f), vec3(0.3f, 0.3f, 1.0f), 1.5f, 0.0f, vec3(4.0f));
+	//
+	//AddObject(MESH_LION, vec3(10.0f, 0.0f, -25.0f), vec4(1.0f), vec3(0.0f), 1.0f, 0.0f, vec3(0.25f), vec3(0.0f, PI, 0.0f));
+	//AddObject(
+	//	MESH_CUBE, vec3(7.0f, 5.0f, -22.0f), vec4(1.0f, 0.3f, 0.3f, 0.9f), vec3(1.0f, 0.3f, 0.3f), 1.0f, 0.0f, vec3(1.5f, 4.0f, 0.005f));
+	//AddObject(
+	//	MESH_CUBE, vec3(10.0f, 5.0f, -22.0f), vec4(0.3f, 1.0f, 0.3f, 0.9f), vec3(0.3f, 1.0f, 0.3f), 1.0f, 0.5f, vec3(1.5f, 4.0f, 0.005f));
+	//AddObject(
+	//	MESH_CUBE, vec3(13.0f, 5.0f, -22.0f), vec4(0.3f, 0.3f, 1.0f, 0.9f), vec3(0.3f, 0.3f, 1.0f), 1.0f, 0.9f, vec3(1.5f, 4.0f, 0.005f));
+	//
+	//AddParticleSystem(vec3(30.0f, 5.0f, 20.0f), vec4(1.0f, 0.0f, 0.0f, 0.5f));
+	//AddParticleSystem(vec3(30.0f, 5.0f, 25.0f), vec4(1.0f, 1.0f, 0.0f, 0.5f));
+	//
+	//AddObject(
+	//	MESH_PLANE, vec3(-15.0f - 5.0f, 10.0f, -25.0f), TEXTURE_MEASURING_GRID, vec3(10.0f, 1.0f, 10.0f),
+	//	vec3(-90.0f * (PI / 180.0f), PI, 0.0f));
+	//AddObject(
+	//	MESH_SPHERE, vec3(-17.5f - 5.0f, 5.0f, -20.0f), vec4(0.3f, 0.3f, 1.0f, 0.9f), vec3(0.3f, 0.3f, 1.0f), 1.001f, 1.0f, vec3(1.0f));
+	//AddObject(MESH_SPHERE, vec3(-15.0f - 5.0f, 5.0f, -20.0f), vec4(0.3f, 0.3f, 1.0f, 0.9f), vec3(0.3f, 0.3f, 1.0f), 1.3f, 1.0f, vec3(1.0f));
+	//AddObject(MESH_SPHERE, vec3(-12.5f - 5.0f, 5.0f, -20.0f), vec4(0.3f, 0.3f, 1.0f, 0.9f), vec3(0.3f, 0.3f, 1.0f), 1.5f, 1.0f, vec3(1.0f));
 }
 
 bool DistanceCompare(const float3& a, const float3& b)
@@ -2962,7 +2965,7 @@ class Transparency: public IApp
 		eastl::vector<Vertex> vertices = {};
 		eastl::vector<uint>   indices = {};
 
-		const char* modelNames[MESH_COUNT] = { "cube.obj", "sphere.obj", "plane.obj", "lion.obj" };
+		const char* modelNames[MESH_COUNT] = { "cube.obj", "sphere.obj", "plane.obj", "lion.obj", "sponza.obj" };
 
 		for (int m = 0; m < MESH_COUNT; ++m)
 		{
@@ -2979,6 +2982,7 @@ class Transparency: public IApp
 					vertices.reserve(vertices.size() + mesh->mPositions.size());
 					indices.reserve(indices.size() + mesh->mIndices.size());
 
+					uint32_t baseVertex = (uint32_t)vertices.size();
 					for (size_t v = 0; v < mesh->mPositions.size(); ++v)
 					{
 						Vertex vertex = { float3(0.0f), float3(0.0f, 1.0f, 0.0f) };
@@ -2989,7 +2993,7 @@ class Transparency: public IApp
 					}
 
 					for (size_t j = 0; j < mesh->mIndices.size(); ++j)
-						indices.push_back(mesh->mIndices[j]);
+						indices.push_back(mesh->mIndices[j] + baseVertex);
 				}
 
 				MeshData* meshData = conf_placement_new<MeshData>(conf_malloc(sizeof(MeshData)));
