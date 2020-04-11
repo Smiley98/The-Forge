@@ -2961,6 +2961,9 @@ class Transparency: public IApp
 
 	void DestroyResources()
 	{
+		//Forward+
+		removeResource(frustumGrid.frustumBuffer);
+
 		removeResource(pBufferSkyboxVertex);
 #if USE_SHADOWS != 0
 		for (int i = 0; i < 2; ++i)
