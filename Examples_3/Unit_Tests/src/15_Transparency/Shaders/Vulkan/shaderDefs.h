@@ -58,6 +58,9 @@ layout(UNIT_CBV_LIGHT) uniform LightUniformBlock
 	mat4 sunViewProj;
 	vec4 sunDirection;
 	vec4 sunColor;
+
+	vec4 lightPositions[MAX_NUM_LIGHTS];
+	vec4 lightColours[MAX_NUM_LIGHTS];
 };
 
 layout(UNIT_CBV_CAMERA) uniform CameraUniform

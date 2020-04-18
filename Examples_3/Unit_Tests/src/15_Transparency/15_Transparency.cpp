@@ -23,6 +23,7 @@
 */
 
 #define MAX_NUM_OBJECTS 128
+#define MAX_NUM_LIGHTS 64
 #define MAX_NUM_PARTICLES 2048    // Per system
 #define CUBES_EACH_ROW 5
 #define CUBES_EACH_COL 5
@@ -183,6 +184,9 @@ typedef struct LightUniformBlock
 	mat4 mLightViewProj;
 	vec4 mLightDirection = { -1, -1, -1, 0 };
 	vec4 mLightColor = { 1, 0, 0, 1 };
+
+	vec4 mLightPositions[MAX_NUM_LIGHTS];
+	vec4 mLightColors[MAX_NUM_LIGHTS];
 } LightUniformBlock;
 
 typedef struct CameraUniform
@@ -950,8 +954,8 @@ class Transparency: public IApp
 		/************************************************************************/
 		// Light Matrix Update
 		/************************************************************************/
-		gLightUniformData.mLightDirection = vec4(lightDir, 0);
 		gLightUniformData.mLightViewProj = lightVPMatrix;
+		gLightUniformData.mLightDirection = vec4(lightDir, 0);
 		gLightUniformData.mLightColor = vec4(1, 1, 1, 1);
 		/************************************************************************/
 
@@ -2206,9 +2210,10 @@ class Transparency: public IApp
 	}
 
 	void CreateShaders()
-	{
+	{	// MAX_NUM_LIGHTS
 		// Define shader macros
 		char maxNumObjectsMacroBuffer[5] = {}; sprintf(maxNumObjectsMacroBuffer, "%i", MAX_NUM_OBJECTS);
+		char maxNumLightsMacroBuffer[5] = {}; sprintf(maxNumLightsMacroBuffer, "%i", MAX_NUM_LIGHTS);
 		char maxNumTexturesMacroBuffer[5] = {}; sprintf(maxNumTexturesMacroBuffer, "%i", TEXTURE_COUNT);
 		char aoitNodeCountMacroBuffer[5] = {}; sprintf(aoitNodeCountMacroBuffer, "%i", AOIT_NODE_COUNT);
 		char useShadowsMacroBuffer[5] = {}; sprintf(useShadowsMacroBuffer, "%i", USE_SHADOWS);
@@ -2217,6 +2222,7 @@ class Transparency: public IApp
 		char useCausticsMacroBuffer[5] = {}; sprintf(useCausticsMacroBuffer, "%i", PT_USE_CAUSTICS);
 
 		ShaderMacro maxNumObjectsMacro = { "MAX_NUM_OBJECTS", maxNumObjectsMacroBuffer };
+		ShaderMacro maxNumLightsMacro = { "MAX_NUM_LIGHTS", maxNumLightsMacroBuffer };
 		ShaderMacro maxNumTexturesMacro = { "MAX_NUM_TEXTURES", maxNumTexturesMacroBuffer };
 		ShaderMacro aoitNodeCountMacro = { "AOIT_NODE_COUNT", aoitNodeCountMacroBuffer };
 		ShaderMacro useShadowsMacro = { "USE_SHADOWS", useShadowsMacroBuffer };
@@ -2224,7 +2230,7 @@ class Transparency: public IApp
 		ShaderMacro useDiffusionMacro = { "PT_USE_DIFFUSION", useDiffusionMacroBuffer };
 		ShaderMacro useCausticsMacro = { "PT_USE_CAUSTICS", useCausticsMacroBuffer };
 
-		ShaderMacro shaderMacros[] = { maxNumObjectsMacro, maxNumTexturesMacro, aoitNodeCountMacro, useShadowsMacro,
+		ShaderMacro shaderMacros[] = { maxNumObjectsMacro, maxNumLightsMacro, maxNumTexturesMacro, aoitNodeCountMacro, useShadowsMacro,
 									   useRefractionMacro, useDiffusionMacro,   useCausticsMacro };
 		const uint  numShaderMacros = sizeof(shaderMacros) / sizeof(shaderMacros[0]);
 
