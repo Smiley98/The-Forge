@@ -158,9 +158,6 @@
     <ClCompile Include="..\src\15_Transparency\15_Transparency.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Final\FrustumGrid.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\15_Transparency\Shaders\Vulkan\shaderDefs.h">
@@ -174,9 +171,6 @@
     </ClInclude>
     <ClInclude Include="..\src\15_Transparency\Shaders\Vulkan\AOIT.h">
       <Filter>Shaders\Vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\Final\FrustumGrid.h">
-      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
