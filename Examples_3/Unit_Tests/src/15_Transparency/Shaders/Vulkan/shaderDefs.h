@@ -52,9 +52,12 @@ layout(UNIT_CBV_OBJECT) uniform ObjectUniformBlock
 
 layout(UNIT_CBV_LIGHT) uniform LightUniformBlock
 {
-	mat4 lightViewProj;
-	vec4 lightDirection;
-	vec4 lightColor;
+	//mat4 lightViewProj;
+	//vec4 lightDirection;
+	//vec4 lightColor;
+	mat4 sunViewProj;
+	vec4 sunDirection;
+	vec4 sunColor;
 };
 
 layout(UNIT_CBV_CAMERA) uniform CameraUniform

@@ -32,18 +32,24 @@
 
 vec4 Shade(uint matID, vec2 uv, vec3 worldPos, vec3 normal)
 {
-	float nDotl = dot(normal, -lightDirection.xyz);
-	Material mat = Materials[matID];
-	vec4 matColor = (mat.TextureFlags & 1) > 0 ? texture(sampler2D(MaterialTextures[mat.AlbedoTexID], LinearSampler), uv) : mat.Color;
-	vec3 viewVec = normalize(worldPos - camPosition.xyz);
+	mat4 theProjection = sunViewProj;//lightViewProj;
+	vec3 theDirection = sunDirection.xyz;//lightDirection.xyz;
+	vec3 theColour = sunColor.xyz;//lightColor.xyz;
+
+	float nDotl = dot(normal, -theDirection);
 	if (nDotl < 0.05f)
 		nDotl = 0.05f;//set as ambient color
-	vec3 diffuse = lightColor.xyz * matColor.xyz * nDotl;
-	vec3 specular = lightColor.xyz * pow(clamp(dot(reflect(-lightDirection.xyz, normal), viewVec), 0.0f, 1.0f), SPECULAR_EXP);
+
+	Material mat = Materials[matID];
+	vec4 matColor = (mat.TextureFlags & 1) > 0 ? texture(sampler2D(MaterialTextures[mat.AlbedoTexID], LinearSampler), uv) : mat.Color;
+
+	vec3 viewVec = normalize(worldPos - camPosition.xyz);
+	vec3 diffuse = theColour * matColor.xyz * nDotl;
+	vec3 specular = theColour * pow(clamp(dot(reflect(-theDirection, normal), viewVec), 0.0f, 1.0f), SPECULAR_EXP);
 	vec3 finalColor = clamp(diffuse + specular * 0.5f, 0.0f, 1.0f);
 
 #if USE_SHADOWS != 0
-	vec4 shadowMapPos = lightViewProj * vec4(worldPos, 1.0f);
+	vec4 shadowMapPos = theProjection * vec4(worldPos, 1.0f);
 	shadowMapPos.y = -shadowMapPos.y;
 	shadowMapPos.xy = (shadowMapPos.xy + 1.0f) * 0.5f;
 	if (clamp(shadowMapPos.x, 0.01f, 0.99f) == shadowMapPos.x &&
