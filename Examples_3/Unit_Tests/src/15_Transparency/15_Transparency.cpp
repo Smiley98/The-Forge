@@ -755,7 +755,7 @@ class Transparency: public IApp
 		GuiController::AddGui();
 
 		CameraMotionParameters cmp{ 16.0f, 60.0f, 20.0f };
-		vec3                   camPos{ 0, 5, -15 };
+		vec3                   camPos{ 5, 8, 1 };//0, 5, -15
 		vec3                   lookAt{ 0, 5, 0 };
 
 		pLightView = createGuiCameraController(camPos, lookAt);
@@ -1929,6 +1929,11 @@ class Transparency: public IApp
 		static HiresTimer gTimer;
 		gTimer.GetUSec(true);
 
+		//vec3 camP = pCameraController->getViewPosition();
+		vec3 camP = gCameraUniformData.mPosition.getXYZ();
+		float cx = camP.getX();
+		float cy = camP.getY();
+		float cz = camP.getZ();
 
 		gAppUI.DrawText(
 			pCmd, float2(8.0f, 15.0f), eastl::string().sprintf("CPU Time: %f ms", gCpuTimer.GetUSecAverage() / 1000.0f).c_str(),
@@ -1939,6 +1944,13 @@ class Transparency: public IApp
 		gAppUI.DrawText(
 			pCmd, float2(8.0f, 65.0f), eastl::string().sprintf("Frame Time: %f ms", gTimer.GetUSecAverage() / 1000.0f).c_str(),
 			&gFrameTimeDraw);
+		//5, 8, 1
+		gAppUI.DrawText(
+			pCmd, float2(8.0f, 500.0f), eastl::string().sprintf("Camera Position: %f %f %f", cx, cy, cz).c_str(),
+			&gFrameTimeDraw);
+		//gAppUI.DrawText(
+		//	pCmd, float2(8.0f, 500.0f), eastl::string().sprintf("Camera Position: %f %f %f", m1, m2, m3).c_str(),
+		//	&gFrameTimeDraw);
 
 		gAppUI.DrawDebugGpuProfile(pCmd, float2(8.0f, 90.0f), pGpuProfiler, NULL);
 
