@@ -32,13 +32,14 @@
 
 vec4 Shade(uint matID, vec2 uv, vec3 worldPos, vec3 normal)
 {
-	mat4 theProjection = sunViewProj;//lightViewProj;
-	vec3 theDirection = sunDirection.xyz;//lightDirection.xyz;
-	vec3 theColor = sunColor.xyz;//lightColor.xyz;
+	mat4 theProjection = sunViewProj;		//lightViewProj;
+	vec3 theDirection = sunDirection.xyz;	//lightDirection.xyz;
+	vec3 theColor = sunColor.xyz;			//lightColor.xyz;
 
+	//Minimum ambience of 0.05.
 	float nDotl = dot(normal, -theDirection);
 	if (nDotl < 0.05f)
-		nDotl = 0.05f;//set as ambient color
+		nDotl = 0.05f;
 
 	Material mat = Materials[matID];
 	vec4 matColor = (mat.TextureFlags & 1) > 0 ? texture(sampler2D(MaterialTextures[mat.AlbedoTexID], LinearSampler), uv) : mat.Color;

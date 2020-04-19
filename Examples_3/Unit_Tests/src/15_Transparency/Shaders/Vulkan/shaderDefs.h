@@ -60,7 +60,7 @@ layout(UNIT_CBV_LIGHT) uniform LightUniformBlock
 	vec4 sunColor;
 
 	vec4 lightPositions[MAX_NUM_LIGHTS];
-	vec4 lightColours[MAX_NUM_LIGHTS];
+	vec4 lightColors[MAX_NUM_LIGHTS];
 };
 
 layout(UNIT_CBV_CAMERA) uniform CameraUniform
