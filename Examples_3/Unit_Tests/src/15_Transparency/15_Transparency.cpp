@@ -196,6 +196,10 @@ typedef struct LightUniformBlock
 	float mLightSizes[MAX_NUM_LIGHTS];
 } LightUniformBlock;
 
+typedef struct HeatmapUniformBlock {
+	vec4 testData = { 1, 0, 0, 1 };
+} HeatmapUniformBlock;
+
 typedef struct CameraUniform
 {
 	mat4 mViewProject;
@@ -272,6 +276,7 @@ typedef enum TextureResource
 /************************************************************************/
 // Shaders
 /************************************************************************/
+Shader* pShaderHeatmap = NULL;
 Shader* pShaderSkybox = NULL;
 #if USE_SHADOWS != 0
 Shader* pShaderShadow = NULL;
@@ -301,6 +306,7 @@ Shader* pShaderAOITClear = NULL;
 /************************************************************************/
 // Root signature
 /************************************************************************/
+//RootSignature* pRootSignatureHeatmap = NULL;
 RootSignature* pRootSignatureSkybox = NULL;
 #if USE_SHADOWS != 0
 RootSignature* pRootSignatureGaussianBlur = NULL;
@@ -334,6 +340,7 @@ RootSignature* pRootSignatureAOITClear = NULL;
 #define SHADE_PT 1
 #define SHADE_PT_SHADOW 2
 
+//DescriptorSet* pDescriptorSetHeatmap = { NULL };
 DescriptorSet* pDescriptorSetSkybox[2] = { NULL };
 DescriptorSet* pDescriptorSetGaussianBlur = { NULL };
 DescriptorSet* pDescriptorSetUniforms = { NULL };
@@ -354,6 +361,7 @@ DescriptorSet* pDescriptorSetAOITComposite = { NULL };
 /************************************************************************/
 // Pipelines
 /************************************************************************/
+Pipeline* pPipelineHeatmap = NULL;
 Pipeline* pPipelineSkybox = NULL;
 #if USE_SHADOWS != 0
 Pipeline* pPipelineShadow = NULL;
@@ -461,6 +469,7 @@ Texture*  pTextures[TEXTURE_COUNT] = {};
 /************************************************************************/
 // Uniform buffers
 /************************************************************************/
+Buffer* pBufferHeatmap[gImageCount] = { NULL };
 Buffer* pBufferMaterials[gImageCount] = { NULL };
 Buffer* pBufferOpaqueObjectTransforms[gImageCount] = { NULL };
 Buffer* pBufferTransparentObjectTransforms[gImageCount] = { NULL };
@@ -495,6 +504,7 @@ uint32_t     gFrameIndex = 0;
 GpuProfiler* pGpuProfiler = NULL;
 float        gCurrentTime = 0.0f;
 
+HeatmapUniformBlock    gHeatmapUniformData;
 MaterialUniformBlock   gMaterialUniformData;
 ObjectInfoUniformBlock gObjectInfoUniformData;
 ObjectInfoUniformBlock gTransparentObjectInfoUniformData;
@@ -753,7 +763,6 @@ class Transparency: public IApp
 		CreateResources();
 		CreateUniformBuffers();
 		CreateDescriptorSets();
-
 
 		/************************************************************************/
 		// Add GPU profiler
@@ -1888,6 +1897,8 @@ class Transparency: public IApp
 		/************************************************************************/
 		// Update uniform buffers
 		/************************************************************************/
+		BufferUpdateDesc heatmapBufferUpdateDesc = { pBufferHeatmap[gFrameIndex], &gHeatmapUniformData };
+		updateResource(&heatmapBufferUpdateDesc);
 		BufferUpdateDesc materialBufferUpdateDesc = { pBufferMaterials[gFrameIndex], &gMaterialUniformData };
 		updateResource(&materialBufferUpdateDesc);
 		BufferUpdateDesc opaqueBufferUpdateDesc = { pBufferOpaqueObjectTransforms[gFrameIndex], &gObjectInfoUniformData };
@@ -2001,11 +2012,17 @@ class Transparency: public IApp
 		cmdEndDebugMarker(pCmd);
 		////////////////////////////////////////////////////////
 
-		barriers1[0] = { pRenderTargetScreen->pTexture, RESOURCE_STATE_PRESENT };
-		cmdResourceBarrier(pCmd, 0, NULL, 1, barriers1);
+		//Moving present state to later command.
+		//barriers1[0] = { pRenderTargetScreen->pTexture, RESOURCE_STATE_PRESENT };
+		//cmdResourceBarrier(pCmd, 0, NULL, 1, barriers1);
 
 		cmdEndGpuFrameProfile(pCmd, pGpuProfiler);
 		endCmd(pCmd);
+
+		beginCmd(pCmd);
+
+		endCmd(pCmd);
+
 
 		queueSubmit(pGraphicsQueue, 1, &pCmd, pRenderCompleteFence, 1, &pImageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);
 		queuePresent(pGraphicsQueue, pSwapChain, gFrameIndex, 1, &pRenderCompleteSemaphore);
@@ -2321,6 +2338,11 @@ class Transparency: public IApp
 		addShader(pRenderer, &copyShadowDepthShaderDesc, &pShaderPTCopyShadowDepth);
 #endif
 #endif
+		// Heatmap post-processing shader
+		ShaderLoadDesc heatmapShaderDesc = {};
+		heatmapShaderDesc.mStages[0] = { "heatmap.vert", shaderMacros, numShaderMacros, RD_SHADER_SOURCES };
+		heatmapShaderDesc.mStages[1] = { "heatmap.frag", shaderMacros, numShaderMacros, RD_SHADER_SOURCES };
+		addShader(pRenderer, &heatmapShaderDesc, &pShaderHeatmap);
 
 		// Forward shading shader
 		ShaderLoadDesc forwardShaderDesc = {};
@@ -2512,6 +2534,16 @@ class Transparency: public IApp
 		forwardRootSignatureDesc.mMaxBindlessTextures = TEXTURE_COUNT;
 		addRootSignature(pRenderer, &forwardRootSignatureDesc, &pRootSignature);
 
+		// Heatmap shading root signature (don't think we need this cause the generic one [pRootSignature] should suffice).
+		//RootSignatureDesc heatmapRootSignatureDesc = {};
+		//heatmapRootSignatureDesc.ppShaders = &pShaderHeatmap;
+		//heatmapRootSignatureDesc.mShaderCount = 1;
+		//heatmapRootSignatureDesc.ppStaticSamplers = staticSamplers;
+		//heatmapRootSignatureDesc.mStaticSamplerCount = numStaticSamplers;
+		//heatmapRootSignatureDesc.ppStaticSamplerNames = staticSamplerNames;
+		//heatmapRootSignatureDesc.mMaxBindlessTextures = TEXTURE_COUNT;
+		//addRootSignature(pRenderer, &heatmapRootSignatureDesc, &pRootSignatureHeatmap);
+
 		// WBOIT composite root signature
 		Shader* pShadersWBOITComposite[2] = { pShaderWBOITComposite, pShaderWBOITVComposite };
 		RootSignatureDesc wboitCompositeRootSignatureDesc = {};
@@ -2627,9 +2659,14 @@ class Transparency: public IApp
 		// Gaussian blur
 		setDesc = { pRootSignatureGaussianBlur, DESCRIPTOR_UPDATE_FREQ_NONE, 2 + (3 * 2) };
 		addDescriptorSet(pRenderer, &setDesc, &pDescriptorSetGaussianBlur);
+
 		// Uniforms
-		setDesc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_PER_FRAME, gImageCount * 4 };
+		setDesc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_PER_FRAME, gImageCount * /*4*//*5*/6 };
+		//Why was the original 4? The params array had a length of 5 in PrepareDescriptorSets(). The number dictates max sets though, so 6 should be okay.
 		addDescriptorSet(pRenderer, &setDesc, &pDescriptorSetUniforms);
+		//setDesc = { pRootSignatureHeatmap, DESCRIPTOR_UPDATE_FREQ_PER_FRAME, gImageCount };
+		//addDescriptorSet(pRenderer, &setDesc, &pDescriptorSetUniforms);
+
 		// Forward
 		setDesc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_NONE, 3 };
 		addDescriptorSet(pRenderer, &setDesc, &pDescriptorSetShade);
@@ -2790,11 +2827,11 @@ class Transparency: public IApp
 				updateDescriptorSet(pRenderer, 0, pDescriptorSetAOITShade[0], updateCount, params);
 			}
 #endif
-
+			// Uniform blocks
 			for (uint32_t i = 0; i < gImageCount; ++i)
 			{
 				// Opaque objects
-				DescriptorData params[5] = {};
+				DescriptorData params[6] = {};	//Added an additional index for the heatmap.
 				params[0].pName = "ObjectUniformBlock";
 				params[0].ppBuffers = &pBufferOpaqueObjectTransforms[i];
 				params[1].pName = "CameraUniform";
@@ -2805,19 +2842,21 @@ class Transparency: public IApp
 				params[3].ppBuffers = &pBufferLightUniform[i];
 				params[4].pName = "WBOITSettings";
 				params[4].ppBuffers = &pBufferWBOITSettings[i];
+				params[5].pName = "HeatmapUniformBlock";
+				params[5].ppBuffers = &pBufferHeatmap[i];
 
 				// View Shadow Geom Opaque
-				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_SHADOW, GEOM_OPAQUE), pDescriptorSetUniforms, 5, params);
+				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_SHADOW, GEOM_OPAQUE), pDescriptorSetUniforms, 6, params);
 				// View Shadow Geom Transparent
 				params[0].ppBuffers = &pBufferTransparentObjectTransforms[i];
-				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_SHADOW, GEOM_TRANSPARENT), pDescriptorSetUniforms, 5, params);
+				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_SHADOW, GEOM_TRANSPARENT), pDescriptorSetUniforms, 6, params);
 				params[0].ppBuffers = &pBufferOpaqueObjectTransforms[i];
 				params[1].ppBuffers = &pBufferCameraUniform[i];
 				// View Camera Geom Opaque
-				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_CAMERA, GEOM_OPAQUE), pDescriptorSetUniforms, 5, params);
+				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_CAMERA, GEOM_OPAQUE), pDescriptorSetUniforms, 6, params);
 				// View Camera Geom Transparent
 				params[0].ppBuffers = &pBufferTransparentObjectTransforms[i];
-				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_CAMERA, GEOM_TRANSPARENT), pDescriptorSetUniforms, 5, params);
+				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_CAMERA, GEOM_TRANSPARENT), pDescriptorSetUniforms, 6, params);
 
 #if AOIT_ENABLE
 				if (pRenderer->pActiveGpuSettings->mROVsSupported)
@@ -3148,6 +3187,18 @@ class Transparency: public IApp
 
 	void CreateUniformBuffers()
 	{
+		BufferLoadDesc heatmapUBDesc = {};
+		heatmapUBDesc.mDesc.mDescriptors = DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		heatmapUBDesc.mDesc.mMemoryUsage = RESOURCE_MEMORY_USAGE_CPU_TO_GPU;
+		heatmapUBDesc.mDesc.mSize = sizeof(HeatmapUniformBlock);
+		heatmapUBDesc.mDesc.mFlags = BUFFER_CREATION_FLAG_PERSISTENT_MAP_BIT;
+		heatmapUBDesc.pData = NULL;
+		for (int i = 0; i < gImageCount; ++i)
+		{
+			heatmapUBDesc.ppBuffer = &pBufferHeatmap[i];
+			addResource(&heatmapUBDesc);
+		}
+
 		BufferLoadDesc materialUBDesc = {};
 		materialUBDesc.mDesc.mDescriptors = DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		materialUBDesc.mDesc.mMemoryUsage = RESOURCE_MEMORY_USAGE_CPU_TO_GPU;
@@ -3608,6 +3659,23 @@ class Transparency: public IApp
 		forwardPipelineDesc.pDepthState = pDepthStateEnable;
 		forwardPipelineDesc.pBlendState = NULL;
 		addPipeline(pRenderer, &desc, &pPipelineForward);
+
+		// Heatmap shading pipeline
+		desc.mGraphicsDesc = {};
+		GraphicsPipelineDesc& heatmapPipelineDesc = desc.mGraphicsDesc;
+		heatmapPipelineDesc.mPrimitiveTopo = PRIMITIVE_TOPO_TRI_LIST;
+		heatmapPipelineDesc.pShaderProgram = pShaderHeatmap;
+		heatmapPipelineDesc.pRootSignature = pRootSignature;//pRootSignatureHeatmap;
+		heatmapPipelineDesc.mRenderTargetCount = 1;
+		heatmapPipelineDesc.pColorFormats = &pSwapChain->mDesc.mColorFormat;
+		heatmapPipelineDesc.mSampleCount = pSwapChain->mDesc.mSampleCount;
+		heatmapPipelineDesc.mSampleQuality = pSwapChain->mDesc.mSampleQuality;
+		heatmapPipelineDesc.mDepthStencilFormat = TinyImageFormat_UNDEFINED;
+		heatmapPipelineDesc.pVertexLayout = NULL;
+		heatmapPipelineDesc.pRasterizerState = pRasterizerStateCullNone;
+		heatmapPipelineDesc.pDepthState = pDepthStateDisable;
+		heatmapPipelineDesc.pBlendState = NULL;
+		addPipeline(pRenderer, &desc, &pPipelineHeatmap);
 
 		// Transparent forward shading pipeline
 		desc.mGraphicsDesc = {};
