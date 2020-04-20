@@ -535,7 +535,7 @@ uint32_t gTransparencyType = TRANSPARENCY_TYPE_PHENOMENOLOGICAL;
 
 
 // forward+
-//p2::FrustumGrid frustumGrid;
+p2::FrustumGrid frustumGrid;
 
 
 
@@ -934,7 +934,7 @@ class Transparency: public IApp
 			static bool initialized = false;
 			if (!initialized)
 			{
-				//frustumGrid.updateTiles(zNear, zFar, horizontal_fov, mSettings.mWidth, mSettings.mHeight);
+				frustumGrid.updateTiles(zNear, zFar, horizontal_fov, mSettings.mWidth, mSettings.mHeight);
 				initialized = true;
 			}
 		}
@@ -3006,7 +3006,7 @@ class Transparency: public IApp
 	void DestroyResources()
 	{
 		//Forward+
-		//removeResource(frustumGrid.frustumBuffer);
+		removeResource(frustumGrid.frustumBuffer);
 
 		removeResource(pBufferSkyboxVertex);
 #if USE_SHADOWS != 0
