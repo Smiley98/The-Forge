@@ -65,10 +65,9 @@ void main()
 	vec3 normal = normalize(NormalOut.xyz);
 	vec3 view = normalize(camPosition.xyz - WorldPosition.xyz);
 
-	//for (uint i = 0; i < MAX_NUM_LIGHTS; i++) {
-	//	pointContribution += PointLight(i, WorldPosition.xyz, normal, view);
-	//}
-	pointContribution += PointLight(0, WorldPosition.xyz, normal, view);
+	for (uint i = 0; i < MAX_NUM_LIGHTS; i++) {
+		pointContribution += PointLight(i, WorldPosition.xyz, normal, view);
+	}
 
 	vec4 directionContribution = Shade(MatID, UV.xy, WorldPosition.xyz, normal);
 	

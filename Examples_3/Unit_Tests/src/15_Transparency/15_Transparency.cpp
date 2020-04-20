@@ -43,6 +43,9 @@
 #define PT_USE_DIFFUSION 1
 #define PT_USE_CAUSTICS (0 & USE_SHADOWS)
 
+#define FRAND	(static_cast <float> (rand()) / static_cast <float> (RAND_MAX))
+#define FRAND_RANGE(_MIN_, _MAX_ ) (FRAND * ((_MAX_)-(_MIN_)) + (_MIN_))
+
 //tiny stl
 #include "../../../../Common_3/ThirdParty/OpenSource/EASTL/sort.h"
 #include "../../../../Common_3/ThirdParty/OpenSource/EASTL/string.h"
@@ -69,6 +72,7 @@
 
 //Forward+
 //#include "../../src/Final/FrustumGrid.h"
+//#include <random>//Idk why including this breaks... Forcing c++ >= 11 doesn't fix this :(
 
 namespace eastl
 {
@@ -187,6 +191,7 @@ typedef struct LightUniformBlock
 
 	vec4 mLightPositions[MAX_NUM_LIGHTS];
 	vec4 mLightColors[MAX_NUM_LIGHTS];
+	float mLightSizes[MAX_NUM_LIGHTS];
 } LightUniformBlock;
 
 typedef struct CameraUniform
@@ -693,6 +698,77 @@ class Transparency: public IApp
 		//xyz min = (-12.5, 2.0, -5.0)
 		//xyz max = (12.5, 7.5, 5.0)
 
+		//xD can't include random :'(
+		//std::default_random_engine rng;
+		//std::uniform_real_distribution<float> xDistribution(-12.5f, 12.5f);
+		//std::uniform_real_distribution<float> yDistribution(2.0f, 7.5f);
+		//std::uniform_real_distribution<float> zDistribution(-5.0f, 5.0f);
+		//std::uniform_real_distribution<float> colorDistribution(0.0f, 1.0f);
+		//for (size_t i = 0; i < MAX_NUM_LIGHTS; i++) {
+		//	gLightUniformData.mLightPositions[i] = vec4(xDistribution(rng), yDistribution(rng), zDistribution(rng), 1.0f);
+		//	gLightUniformData.mLightColors[i] = vec4(colorDistribution(rng), colorDistribution(rng), colorDistribution(rng), 1.0f);
+		//}
+
+		for (size_t i = 0; i < MAX_NUM_LIGHTS; i++) {
+			float x = FRAND_RANGE(-12.5f, 12.5f);
+			float y = FRAND_RANGE(2.0f, 7.5f);
+			float z = FRAND_RANGE(-5.0f, 5.0f);
+			float r = FRAND_RANGE(0.0f, 1.0f);
+			float g = FRAND_RANGE(0.0f, 1.0f);
+			float b = FRAND_RANGE(0.0f, 1.0f);
+			gLightUniformData.mLightPositions[i] = vec4(x, y, z, 1.0f);
+			gLightUniformData.mLightColors[i] = vec4(r, g, b, 1.0f);
+		}
+
+		//1d[x + WIDTH * (y + DEPTH * z)] = 3d[x][y][z];
+		//{	
+		//	//xyz:
+		//	const float xIncrement = 25.0f / 4.0f;
+		//	const float yIncrement = 5.5f / 16.0f;
+		//	const float zIncrement = 10.0f / 64.0f;
+		//	float xDelta = -12.5f - xIncrement;
+		//	float yDelta = 2.0f - yIncrement;
+		//	float zDelta = -5.0f - zIncrement;
+		//	for (size_t x = 0; x < 4; x++) {
+		//		xDelta += xIncrement;
+		//		for (size_t y = 0; y < 4; y++) {
+		//			yDelta += yIncrement;
+		//			for (size_t z = 0; z < 4; z++) {
+		//				zDelta += zIncrement;
+		//				vec4 position(xDelta, yDelta, zDelta, 1.0f);
+		//				vec4 color(FRAND_RANGE(0.0f, 1.0f), FRAND_RANGE(0.0f, 1.0f), FRAND_RANGE(0.0f, 1.0f), 1.0f);
+		//				const size_t index = x + 4 * (y + 4 * z);
+		//				gLightUniformData.mLightPositions[index] = position;
+		//				gLightUniformData.mLightColors[index] = color;
+		//			}
+		//		}
+		//	}
+		//}
+		//{
+		//	//yzx:
+		//	const float yIncrement = 5.5f / 4.0f;
+		//	const float zIncrement = 10.0f / 16.0f;
+		//	const float xIncrement = 25.0f / 64.0f;
+		//	float xDelta = -12.5f - xIncrement;
+		//	float yDelta = 2.0f - yIncrement;
+		//	float zDelta = -5.0f - zIncrement;
+		//	for (size_t y = 0; y < 4; y++) {
+		//		yDelta += yIncrement;
+		//		for (size_t z = 0; z < 4; z++) {
+		//			zDelta += zIncrement;
+		//			for (size_t x = 0; x < 4; x++) {
+		//				xDelta += xIncrement;
+		//				vec4 position(xDelta, yDelta, zDelta, 1.0f);
+		//				vec4 color(FRAND_RANGE(0.0f, 1.0f), FRAND_RANGE(0.0f, 1.0f), FRAND_RANGE(0.0f, 1.0f), 1.0f);
+		//				const size_t index = x + 4 * (y + 4 * z);
+		//				gLightUniformData.mLightPositions[index] = position;
+		//				gLightUniformData.mLightColors[index] = color;
+		//			}
+		//		}
+		//	}
+		//}
+		//Apparently I don't have the capacity to generate a uniform grid...
+
         // FILE PATHS
         PathHandle programDirectory = fsCopyProgramDirectoryPath();
         if (!fsPlatformUsesBundledResources())
@@ -962,8 +1038,8 @@ class Transparency: public IApp
 		// Light Matrix Update
 		/************************************************************************/
 		gLightUniformData.mSunViewProj = lightVPMatrix;
-		gLightUniformData.mSunDirection = vec4(lightDir, 0);
-		gLightUniformData.mSunColor = vec4(1, 1, 1, 1);
+		gLightUniformData.mSunDirection = vec4(lightDir, 0.0f);
+		gLightUniformData.mSunColor = vec4(1.0f, 1.0f, 1.0f, 1.0f) * 0.1f;
 		/************************************************************************/
 
 
