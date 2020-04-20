@@ -7,6 +7,7 @@
 #define UNIT_CBV_MATERIAL   UPDATE_FREQ_PER_FRAME, binding = 2
 #define UNIT_CBV_LIGHT      UPDATE_FREQ_PER_FRAME, binding = 3
 #define UNIT_CBV_WBOIT      UPDATE_FREQ_PER_FRAME, binding = 4
+#define UNIT_CBV_HEATMAP    UPDATE_FREQ_PER_FRAME, binding = 5
 
 #define UNIT_SRV_TEXTURES   UPDATE_FREQ_NONE, binding = 0
 #define UNIT_SRV_DEPTH      UPDATE_FREQ_NONE, binding = 1
@@ -75,6 +76,11 @@ layout(UNIT_CBV_CAMERA) uniform CameraUniform
 layout(UNIT_CBV_MATERIAL) uniform MaterialUniform
 {
 	Material Materials[MAX_NUM_OBJECTS];
+};
+
+layout(UNIT_CBV_HEATMAP) uniform HeatmapUniformBlock
+{
+	vec4 testData;
 };
 
 layout(UNIT_SRV_TEXTURES) uniform texture2D MaterialTextures[MAX_NUM_TEXTURES];
