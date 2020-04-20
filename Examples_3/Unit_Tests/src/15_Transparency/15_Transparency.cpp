@@ -929,15 +929,6 @@ class Transparency: public IApp
 		vec3        camPos = pCameraController->getViewPosition();
 		mat4        vpMatrix = projMat * viewMat;
 
-		{
-			// create frustum divisions for Forward+
-			static bool initialized = false;
-			if (!initialized)
-			{
-				frustumGrid.updateTiles(zNear, zFar, horizontal_fov, mSettings.mWidth, mSettings.mHeight);
-				initialized = true;
-			}
-		}
 
 		/************************************************************************/
 		// Light Update
@@ -955,6 +946,25 @@ class Transparency: public IApp
 		for (size_t i = 0; i < MAX_NUM_LIGHTS; i++) {
 			gLightUniformData.mLightSizes[i] = 4.0f + sinf(gCurrentTime * 2.0f) * 2.0f;
 		}
+
+		/************************************************************************/
+		// Forward+ Update
+		/************************************************************************/
+		{
+			// create frustum divisions for Forward+
+			static bool initialized = false;
+			if (!initialized)
+			{
+				frustumGrid.computeTiles(zNear, zFar, horizontal_fov, mSettings.mWidth, mSettings.mHeight);
+				initialized = true;
+			}
+
+			// update frustum culling
+			frustumGrid.updateFrustumCulling(gLightUniformData.mLightPositions, gLightUniformData.mLightSizes, MAX_NUM_LIGHTS, viewMat);
+		}
+
+
+
 		/************************************************************************/
 		// Scene Update
 		/************************************************************************/
@@ -3006,7 +3016,7 @@ class Transparency: public IApp
 	void DestroyResources()
 	{
 		//Forward+
-		removeResource(frustumGrid.frustumBuffer);
+		//removeResource(frustumGrid.frustumBuffer);
 
 		removeResource(pBufferSkyboxVertex);
 #if USE_SHADOWS != 0

@@ -10,12 +10,9 @@ outputs array of light indices for each frustum, up to a max of MAX_LIGHTS_PER_F
 #version 450 core
 
 layout (location = 0) in vec4 PositionIn;
-layout (location = 1) in vec3 NormalIn;
-layout (location = 2) in vec2 UVIn;
 
 const int MAX_LIGHTS_PER_FRUSTUM = 8;
 layout (location = 0) out int[MAX_LIGHTS_PER_FRUSTUM] lightIndices;
-
 
 struct Frustum(
 	vec3 left;
@@ -44,14 +41,4 @@ void main()
 	WorldPosition = objectInfo[instanceID].toWorld * PositionIn;
 	gl_Position = camViewProj * WorldPosition;
 	MatID = objectInfo[instanceID].matID;
-
-#ifdef PHENOMENOLOGICAL_TRANSPARENCY
-#if (PT_USE_REFRACTION + PT_USE_DIFFUSION) != 0
-	CSPosition = camViewMat * WorldPosition;
-#endif
-#if PT_USE_REFRACTION != 0
-	CSNormal = camViewMat * vec4(NormalOut.xyz, 0);
-	CSNormal.xyz = normalize(CSNormal.xyz);
-#endif
-#endif
 }
