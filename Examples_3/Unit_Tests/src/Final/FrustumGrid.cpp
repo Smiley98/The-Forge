@@ -36,6 +36,9 @@ namespace p2
 
 	void FrustumGrid::computeTiles(float zNear, float zFar, float horizontal_fov, int cameraWidth, int cameraHeight)
 	{
+		nearPlane = { vec3(0,0,1), zNear };
+		farPlane = { vec3(0,0,-1), -zFar };
+
 		mat4 projMat = mat4::perspective(horizontal_fov, (float)cameraHeight / cameraWidth, zNear, zFar);
 		mat4 clipToViewSpace = inverse(projMat);
 		// create every tile
@@ -47,6 +50,7 @@ namespace p2
 		frustumData = eastl::vector<Frustum>(numFrustums);
 		lightIndices = eastl::vector<int[MAX_LIGHTS_PER_FRUSTUM]>(numFrustums);
 		lightCounts = eastl::vector<int>(numFrustums);
+
 
 		// create frustum planes, expressed in view space (before perspective divide)
 		for (int col = 0; col < numColumns; col++)
@@ -224,11 +228,13 @@ namespace p2
 				vec3 lightPosView = lightPositionsView[lightIdx];
 				float lightSize = lightSizes[lightIdx];
 
-				//The light must be at least partially contained in all 4 planes to count. Else it can be culled
+				//The light must be at least partially contained in all 6 planes of the frustum to count. Else it can be culled
 				if (isSphereContained(frust.left, lightPosView, lightSize)
 					&& isSphereContained(frust.right, lightPosView, lightSize)
 					&& isSphereContained(frust.top, lightPosView, lightSize)
 					&& isSphereContained(frust.bottom, lightPosView, lightSize)
+					&& isSphereContained(nearPlane, lightPosView, lightSize)
+					&& isSphereContained(farPlane, lightPosView, lightSize)
 					)
 				{
 					numLightsThisFrustum++;

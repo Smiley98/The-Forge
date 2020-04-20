@@ -20,7 +20,7 @@ namespace p2
 		float normalOffset;   // Distance along the plane normal to translate from the origin
 	};
 
-	struct Frustum
+	struct Frustum //actually missing near and far, but those can be shared
 	{
 		// frustum planes, expressed in view space
 		Plane left;
@@ -52,7 +52,7 @@ namespace p2
 		// every frame, perform light-frustum culling and update lightCounts and lightIndices
 		void updateFrustumCulling(const vec4* lightPositions, const float* lightSizes, int numLights, const mat4& viewMatrix);
 
-		inline int toIndex(int column, int row);
+		inline int toFrustumIndex(int column, int row);
 
 	private:
 		Vector4 toClipSpace(Vector2 screenSpacePosition, int screenWidth, int screenHeight);
@@ -61,5 +61,9 @@ namespace p2
 		eastl::vector<Frustum> frustumData;
 		int numRows;
 		int numColumns;
+
+		// shared between all sub-frustums
+		Plane nearPlane;
+		Plane farPlane;
 	};
 }
