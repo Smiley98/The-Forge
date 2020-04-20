@@ -38,9 +38,7 @@ vec3 PointLight(uint lightIndex, vec3 worldPos, vec3 normal, vec3 toViewer)
 {
 	vec3 lightPosition = lightPositions[lightIndex].xyz;
 	vec3 lightColor = lightColors[lightIndex].xyz;
-	//Placeholders for now:
-	//vec3 lightPosition = vec3(5.0, 5.0, 1.0);
-	//vec3 lightColor = vec3(0.1, 0.7, 0.4);
+	float lightSize = lightSizes[lightIndex];
 
 	vec3 toLight = normalize(lightPosition - worldPos);
 	float diffuseStrength = max(dot(normal, toLight), 0.05);
@@ -51,7 +49,7 @@ vec3 PointLight(uint lightIndex, vec3 worldPos, vec3 normal, vec3 toViewer)
 	
 	//Consider sending up light sizes rather than attenuating based on distance.
 	float magnitude = length(lightPosition - worldPos);
-	float attenuation = 1.0 / (magnitude * magnitude);// * magnitude
+	float attenuation = lightSize / (magnitude * magnitude);// * magnitude
 	
 	diffuseStrength *= attenuation;
 	specularStrength *= attenuation;

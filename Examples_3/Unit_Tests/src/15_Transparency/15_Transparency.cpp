@@ -23,6 +23,8 @@
 */
 
 #define MAX_NUM_OBJECTS 128
+//An average of 37 ms/frame with 64 lights, 55ms/frame with 96 lights, 82ms/frame with 128 lights, and 163ms/frame with 256 lights.
+//(No difference between debug and release).
 #define MAX_NUM_LIGHTS 64
 #define MAX_NUM_PARTICLES 2048    // Per system
 #define CUBES_EACH_ROW 5
@@ -692,22 +694,8 @@ class Transparency: public IApp
 	bool Init() override
 	{
 		//Light values
-		//Test with (xMax, yMin, zMax)
-		gLightUniformData.mLightPositions[0] = vec4(12.5, 2.0, 5.0, 1.0);
-		gLightUniformData.mLightColors[0] = vec4(1.0, 0.0, 0.0, 1.0);
 		//xyz min = (-12.5, 2.0, -5.0)
 		//xyz max = (12.5, 7.5, 5.0)
-
-		//xD can't include random :'(
-		//std::default_random_engine rng;
-		//std::uniform_real_distribution<float> xDistribution(-12.5f, 12.5f);
-		//std::uniform_real_distribution<float> yDistribution(2.0f, 7.5f);
-		//std::uniform_real_distribution<float> zDistribution(-5.0f, 5.0f);
-		//std::uniform_real_distribution<float> colorDistribution(0.0f, 1.0f);
-		//for (size_t i = 0; i < MAX_NUM_LIGHTS; i++) {
-		//	gLightUniformData.mLightPositions[i] = vec4(xDistribution(rng), yDistribution(rng), zDistribution(rng), 1.0f);
-		//	gLightUniformData.mLightColors[i] = vec4(colorDistribution(rng), colorDistribution(rng), colorDistribution(rng), 1.0f);
-		//}
 
 		for (size_t i = 0; i < MAX_NUM_LIGHTS; i++) {
 			float x = FRAND_RANGE(-12.5f, 12.5f);
@@ -719,55 +707,6 @@ class Transparency: public IApp
 			gLightUniformData.mLightPositions[i] = vec4(x, y, z, 1.0f);
 			gLightUniformData.mLightColors[i] = vec4(r, g, b, 1.0f);
 		}
-
-		//1d[x + WIDTH * (y + DEPTH * z)] = 3d[x][y][z];
-		//{	
-		//	//xyz:
-		//	const float xIncrement = 25.0f / 4.0f;
-		//	const float yIncrement = 5.5f / 16.0f;
-		//	const float zIncrement = 10.0f / 64.0f;
-		//	float xDelta = -12.5f - xIncrement;
-		//	float yDelta = 2.0f - yIncrement;
-		//	float zDelta = -5.0f - zIncrement;
-		//	for (size_t x = 0; x < 4; x++) {
-		//		xDelta += xIncrement;
-		//		for (size_t y = 0; y < 4; y++) {
-		//			yDelta += yIncrement;
-		//			for (size_t z = 0; z < 4; z++) {
-		//				zDelta += zIncrement;
-		//				vec4 position(xDelta, yDelta, zDelta, 1.0f);
-		//				vec4 color(FRAND_RANGE(0.0f, 1.0f), FRAND_RANGE(0.0f, 1.0f), FRAND_RANGE(0.0f, 1.0f), 1.0f);
-		//				const size_t index = x + 4 * (y + 4 * z);
-		//				gLightUniformData.mLightPositions[index] = position;
-		//				gLightUniformData.mLightColors[index] = color;
-		//			}
-		//		}
-		//	}
-		//}
-		//{
-		//	//yzx:
-		//	const float yIncrement = 5.5f / 4.0f;
-		//	const float zIncrement = 10.0f / 16.0f;
-		//	const float xIncrement = 25.0f / 64.0f;
-		//	float xDelta = -12.5f - xIncrement;
-		//	float yDelta = 2.0f - yIncrement;
-		//	float zDelta = -5.0f - zIncrement;
-		//	for (size_t y = 0; y < 4; y++) {
-		//		yDelta += yIncrement;
-		//		for (size_t z = 0; z < 4; z++) {
-		//			zDelta += zIncrement;
-		//			for (size_t x = 0; x < 4; x++) {
-		//				xDelta += xIncrement;
-		//				vec4 position(xDelta, yDelta, zDelta, 1.0f);
-		//				vec4 color(FRAND_RANGE(0.0f, 1.0f), FRAND_RANGE(0.0f, 1.0f), FRAND_RANGE(0.0f, 1.0f), 1.0f);
-		//				const size_t index = x + 4 * (y + 4 * z);
-		//				gLightUniformData.mLightPositions[index] = position;
-		//				gLightUniformData.mLightColors[index] = color;
-		//			}
-		//		}
-		//	}
-		//}
-		//Apparently I don't have the capacity to generate a uniform grid...
 
         // FILE PATHS
         PathHandle programDirectory = fsCopyProgramDirectoryPath();
@@ -1012,6 +951,10 @@ class Transparency: public IApp
 		mat4 lightViewMat = pLightView->getViewMatrix();
 		mat4 lightProjMat = mat4::orthographic(-50.0f, 50.0f, -50.0f, 50.0f, 0.0f, lightZFar - lightZNear);
 		mat4 lightVPMatrix = lightProjMat * lightViewMat;
+
+		for (size_t i = 0; i < MAX_NUM_LIGHTS; i++) {
+			gLightUniformData.mLightSizes[i] = 4.0f + sinf(gCurrentTime * 2.0f) * 2.0f;
+		}
 		/************************************************************************/
 		// Scene Update
 		/************************************************************************/
