@@ -59,6 +59,7 @@
     <None Include="..\src\15_Transparency\Shaders\Vulkan\downsample.frag" />
     <None Include="..\src\15_Transparency\Shaders\Vulkan\forward.frag" />
     <None Include="..\src\15_Transparency\Shaders\Vulkan\forward.vert" />
+    <None Include="..\src\15_Transparency\Shaders\Vulkan\frustumCulling.frag" />
     <None Include="..\src\15_Transparency\Shaders\Vulkan\fullscreen.vert" />
     <None Include="..\src\15_Transparency\Shaders\Vulkan\gaussianBlur.frag" />
     <None Include="..\src\15_Transparency\Shaders\Vulkan\generateMips.comp" />

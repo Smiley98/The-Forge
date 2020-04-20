@@ -27,6 +27,7 @@
 
 #include "shading.h"
 
+
 layout(location = 0) in vec4 WorldPosition;
 layout(location = 1) in vec4 NormalOut;
 layout(location = 2) in vec4 UV;
