@@ -181,9 +181,9 @@ typedef struct SkyboxUniformBlock
 
 typedef struct LightUniformBlock
 {
-	mat4 mLightViewProj;
-	vec4 mLightDirection = { -1, -1, -1, 0 };
-	vec4 mLightColor = { 1, 0, 0, 1 };
+	mat4 mSunViewProj;
+	vec4 mSunDirection = { -1, -1, -1, 0 };
+	vec4 mSunColor = { 1, 0, 0, 1 };
 
 	vec4 mLightPositions[MAX_NUM_LIGHTS];
 	vec4 mLightColors[MAX_NUM_LIGHTS];
@@ -686,6 +686,13 @@ class Transparency: public IApp
 	public:
 	bool Init() override
 	{
+		//Light values
+		//Test with (xMax, yMin, zMax)
+		gLightUniformData.mLightPositions[0] = vec4(12.5, 2.0, 5.0, 1.0);
+		gLightUniformData.mLightColors[0] = vec4(1.0, 0.0, 0.0, 1.0);
+		//xyz min = (-12.5, 2.0, -5.0)
+		//xyz max = (12.5, 7.5, 5.0)
+
         // FILE PATHS
         PathHandle programDirectory = fsCopyProgramDirectoryPath();
         if (!fsPlatformUsesBundledResources())
@@ -954,9 +961,9 @@ class Transparency: public IApp
 		/************************************************************************/
 		// Light Matrix Update
 		/************************************************************************/
-		gLightUniformData.mLightViewProj = lightVPMatrix;
-		gLightUniformData.mLightDirection = vec4(lightDir, 0);
-		gLightUniformData.mLightColor = vec4(1, 1, 1, 1);
+		gLightUniformData.mSunViewProj = lightVPMatrix;
+		gLightUniformData.mSunDirection = vec4(lightDir, 0);
+		gLightUniformData.mSunColor = vec4(1, 1, 1, 1);
 		/************************************************************************/
 
 

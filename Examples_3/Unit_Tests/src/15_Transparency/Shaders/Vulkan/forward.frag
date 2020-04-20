@@ -36,11 +36,11 @@ layout(location = 0) out vec4 FinalColor;
 
 vec3 PointLight(uint lightIndex, vec3 worldPos, vec3 normal, vec3 toViewer)
 {
-	//vec3 lightPosition = lightPositions[lightIndex].xyz;
-	//vec3 lightColor = lightColors[lightIndex].xyz;
+	vec3 lightPosition = lightPositions[lightIndex].xyz;
+	vec3 lightColor = lightColors[lightIndex].xyz;
 	//Placeholders for now:
-	vec3 lightPosition = vec3(5.0, 5.0, 1.0);
-	vec3 lightColor = vec3(0.1, 0.7, 0.4);
+	//vec3 lightPosition = vec3(5.0, 5.0, 1.0);
+	//vec3 lightColor = vec3(0.1, 0.7, 0.4);
 
 	vec3 toLight = normalize(lightPosition - worldPos);
 	float diffuseStrength = max(dot(normal, toLight), 0.05);
@@ -49,9 +49,9 @@ vec3 PointLight(uint lightIndex, vec3 worldPos, vec3 normal, vec3 toViewer)
 	vec3 reflected = reflect(-toLight, normal);
 	float specularStrength = pow(max(dot(toViewer, reflected), 0.0), 32);
 	
-	//Attenuating by magnitude cubed works nicely, although sending up light sizes would work equally as well if possible!
+	//Consider sending up light sizes rather than attenuating based on distance.
 	float magnitude = length(lightPosition - worldPos);
-	float attenuation = 1.0 / (magnitude * magnitude * magnitude);
+	float attenuation = 1.0 / (magnitude * magnitude);// * magnitude
 	
 	diffuseStrength *= attenuation;
 	specularStrength *= attenuation;
@@ -65,13 +65,12 @@ void main()
 	vec3 normal = normalize(NormalOut.xyz);
 	vec3 view = normalize(camPosition.xyz - WorldPosition.xyz);
 
-	for (uint i = 0; i < MAX_NUM_LIGHTS; i++) {
-		pointContribution += PointLight(i, WorldPosition.xyz, normal, view);
-	}
-	
-	//Holding off on directional contribution cause its pretty bright.
-	//vec4 directionContribution = Shade(MatID, UV.xy, WorldPosition.xyz, normal);
-	vec4 directionContribution = vec4(0);
+	//for (uint i = 0; i < MAX_NUM_LIGHTS; i++) {
+	//	pointContribution += PointLight(i, WorldPosition.xyz, normal, view);
+	//}
+	pointContribution += PointLight(0, WorldPosition.xyz, normal, view);
+
+	vec4 directionContribution = Shade(MatID, UV.xy, WorldPosition.xyz, normal);
 	
 	FinalColor = vec4(vec3(pointContribution + directionContribution.xyz), directionContribution.w);
 }
