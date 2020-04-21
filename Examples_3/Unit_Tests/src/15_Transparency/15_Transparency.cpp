@@ -306,7 +306,6 @@ Shader* pShaderAOITClear = NULL;
 /************************************************************************/
 // Root signature
 /************************************************************************/
-//RootSignature* pRootSignatureHeatmap = NULL;
 RootSignature* pRootSignatureSkybox = NULL;
 #if USE_SHADOWS != 0
 RootSignature* pRootSignatureGaussianBlur = NULL;
@@ -340,7 +339,6 @@ RootSignature* pRootSignatureAOITClear = NULL;
 #define SHADE_PT 1
 #define SHADE_PT_SHADOW 2
 
-//DescriptorSet* pDescriptorSetHeatmap = { NULL };
 DescriptorSet* pDescriptorSetSkybox[2] = { NULL };
 DescriptorSet* pDescriptorSetGaussianBlur = { NULL };
 DescriptorSet* pDescriptorSetUniforms = { NULL };
@@ -2013,15 +2011,36 @@ class Transparency: public IApp
 		////////////////////////////////////////////////////////
 
 		//Moving present state to later command.
-		barriers1[0] = { pRenderTargetScreen->pTexture, RESOURCE_STATE_PRESENT };
-		cmdResourceBarrier(pCmd, 0, NULL, 1, barriers1);
+		//barriers1[0] = { pRenderTargetScreen->pTexture, RESOURCE_STATE_PRESENT };
+		//cmdResourceBarrier(pCmd, 0, NULL, 1, barriers1);
 
 		cmdEndGpuFrameProfile(pCmd, pGpuProfiler);
 		endCmd(pCmd);
 
-		//beginCmd(pCmd);
-		//
-		//endCmd(pCmd);
+		queueSubmit(pGraphicsQueue, 1, &pCmd, pRenderCompleteFence, 1, &pImageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);
+		getFenceStatus(pRenderer, pRenderCompleteFence, &fenceStatus);
+		if (fenceStatus == FENCE_STATUS_INCOMPLETE)
+			waitForFences(pRenderer, 1, &pRenderCompleteFence);
+
+		beginCmd(pCmd);
+		RenderTarget* rt = pRenderTargetScreen;
+		LoadActionsDesc loadActions = {};
+		loadActions.mLoadActionsColor[0] = LOAD_ACTION_DONTCARE;
+		loadActions.mClearColorValues[0] = rt->mDesc.mClearValue;
+		loadActions.mLoadActionDepth = LOAD_ACTION_DONTCARE;
+
+		cmdBindRenderTargets(pCmd, 1, &rt, NULL, &loadActions, NULL, NULL, -1, -1);
+		cmdSetViewport(pCmd, 0.0f, 0.0f, (float)rt->mDesc.mWidth, (float)rt->mDesc.mHeight, 0.0f, 1.0f);
+		cmdSetScissor(pCmd, 0, 0, rt->mDesc.mWidth, rt->mDesc.mHeight);
+
+		cmdBindPipeline(pCmd, pPipelineHeatmap);
+		//cmdBindDescriptorSet();
+		cmdBindDescriptorSet(pCmd, gFrameIndex, pDescriptorSetSkybox[1]);
+		cmdDraw(pCmd, 3, 0);
+
+		barriers1[0] = { pRenderTargetScreen->pTexture, RESOURCE_STATE_PRESENT };
+		cmdResourceBarrier(pCmd, 0, NULL, 1, barriers1);
+		endCmd(pCmd);
 
 		queueSubmit(pGraphicsQueue, 1, &pCmd, pRenderCompleteFence, 1, &pImageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);
 		queuePresent(pGraphicsQueue, pSwapChain, gFrameIndex, 1, &pRenderCompleteSemaphore);
@@ -2845,7 +2864,6 @@ class Transparency: public IApp
 				params[5].pName = "HeatmapUniform";
 				params[5].ppBuffers = &pBufferHeatmap[i];
 
-
 				//heatmap
 				updateDescriptorSet(pRenderer, (i * 6) + 5, pDescriptorSetUniforms, 6, params);
 
@@ -2861,7 +2879,6 @@ class Transparency: public IApp
 				// View Camera Geom Transparent
 				params[0].ppBuffers = &pBufferTransparentObjectTransforms[i];
 				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_CAMERA, GEOM_TRANSPARENT), pDescriptorSetUniforms, 5, params);
-
 
 #if AOIT_ENABLE
 				if (pRenderer->pActiveGpuSettings->mROVsSupported)
@@ -3297,6 +3314,7 @@ class Transparency: public IApp
 	{
 		for (int i = 0; i < gImageCount; ++i)
 		{
+			removeResource(pBufferHeatmap[i]);
 			removeResource(pBufferMaterials[i]);
 			removeResource(pBufferOpaqueObjectTransforms[i]);
 			removeResource(pBufferTransparentObjectTransforms[i]);
@@ -3899,6 +3917,7 @@ class Transparency: public IApp
 		removePipeline(pRenderer, pPipelinePTCopyShadowDepth);
 #endif
 #endif
+		removePipeline(pRenderer, pPipelineHeatmap);
 		removePipeline(pRenderer, pPipelineForward);
 		removePipeline(pRenderer, pPipelineTransparentForward);
 		removePipeline(pRenderer, pPipelineWBOITShade);
