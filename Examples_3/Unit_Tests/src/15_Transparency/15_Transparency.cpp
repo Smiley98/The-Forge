@@ -334,7 +334,7 @@ RootSignature* pRootSignatureAOITClear = NULL;
 #define VIEW_SHADOW 1
 #define GEOM_OPAQUE 0
 #define GEOM_TRANSPARENT 1
-#define UNIFORM_SET(f,v,g)(((f) * 4) + ((v) * 2 + (g)))
+#define UNIFORM_SET(f,v,g)(((f) * 5) + ((v) * 2 + (g)))
 
 #define SHADE_FORWARD 0
 #define SHADE_PT 1
@@ -2013,16 +2013,15 @@ class Transparency: public IApp
 		////////////////////////////////////////////////////////
 
 		//Moving present state to later command.
-		//barriers1[0] = { pRenderTargetScreen->pTexture, RESOURCE_STATE_PRESENT };
-		//cmdResourceBarrier(pCmd, 0, NULL, 1, barriers1);
+		barriers1[0] = { pRenderTargetScreen->pTexture, RESOURCE_STATE_PRESENT };
+		cmdResourceBarrier(pCmd, 0, NULL, 1, barriers1);
 
 		cmdEndGpuFrameProfile(pCmd, pGpuProfiler);
 		endCmd(pCmd);
 
-		beginCmd(pCmd);
-
-		endCmd(pCmd);
-
+		//beginCmd(pCmd);
+		//
+		//endCmd(pCmd);
 
 		queueSubmit(pGraphicsQueue, 1, &pCmd, pRenderCompleteFence, 1, &pImageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);
 		queuePresent(pGraphicsQueue, pSwapChain, gFrameIndex, 1, &pRenderCompleteSemaphore);
@@ -2519,9 +2518,9 @@ class Transparency: public IApp
 
 		Shader* pShaders[] =
 		{
-			pShaderShadow, pShaderWBOITShade, pShaderWBOITVShade, pShaderForward, pShaderPTShade,
+			pShaderShadow, pShaderWBOITShade, pShaderWBOITVShade, pShaderForward, pShaderPTShade, pShaderHeatmap
 #if PT_USE_CAUSTICS
-			pShaderPTShadow
+			,pShaderPTShadow
 #endif
 		};
 		// Forward shading root signature
@@ -2661,7 +2660,7 @@ class Transparency: public IApp
 		addDescriptorSet(pRenderer, &setDesc, &pDescriptorSetGaussianBlur);
 
 		// Uniforms
-		setDesc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_PER_FRAME, gImageCount * /*4*//*5*/6 };
+		setDesc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_PER_FRAME, gImageCount * 6 };	//Was originally 4, no harm in allocating extra memory?
 		//Why was the original 4? The params array had a length of 5 in PrepareDescriptorSets(). The number dictates max sets though, so 6 should be okay.
 		addDescriptorSet(pRenderer, &setDesc, &pDescriptorSetUniforms);
 		//setDesc = { pRootSignatureHeatmap, DESCRIPTOR_UPDATE_FREQ_PER_FRAME, gImageCount };
@@ -2846,17 +2845,17 @@ class Transparency: public IApp
 				params[5].ppBuffers = &pBufferHeatmap[i];
 
 				// View Shadow Geom Opaque
-				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_SHADOW, GEOM_OPAQUE), pDescriptorSetUniforms, 6, params);
+				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_SHADOW, GEOM_OPAQUE), pDescriptorSetUniforms, 5, params);
 				// View Shadow Geom Transparent
 				params[0].ppBuffers = &pBufferTransparentObjectTransforms[i];
-				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_SHADOW, GEOM_TRANSPARENT), pDescriptorSetUniforms, 6, params);
+				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_SHADOW, GEOM_TRANSPARENT), pDescriptorSetUniforms, 5, params);
 				params[0].ppBuffers = &pBufferOpaqueObjectTransforms[i];
 				params[1].ppBuffers = &pBufferCameraUniform[i];
 				// View Camera Geom Opaque
-				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_CAMERA, GEOM_OPAQUE), pDescriptorSetUniforms, 6, params);
+				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_CAMERA, GEOM_OPAQUE), pDescriptorSetUniforms, 5, params);
 				// View Camera Geom Transparent
 				params[0].ppBuffers = &pBufferTransparentObjectTransforms[i];
-				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_CAMERA, GEOM_TRANSPARENT), pDescriptorSetUniforms, 6, params);
+				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_CAMERA, GEOM_TRANSPARENT), pDescriptorSetUniforms, 5, params);
 
 #if AOIT_ENABLE
 				if (pRenderer->pActiveGpuSettings->mROVsSupported)

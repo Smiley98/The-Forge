@@ -142,6 +142,12 @@
     <None Include="..\src\15_Transparency\Shaders\Vulkan\frustumCulling.frag">
       <Filter>Shaders\Vulkan</Filter>
     </None>
+    <None Include="..\src\15_Transparency\Shaders\Vulkan\heatmap.vert">
+      <Filter>Shaders\Vulkan</Filter>
+    </None>
+    <None Include="..\src\15_Transparency\Shaders\Vulkan\heatmap.frag">
+      <Filter>Shaders\Vulkan</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Shaders">
