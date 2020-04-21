@@ -231,8 +231,12 @@ namespace p2
 					&& isSphereContained(farPlane, lightPosView, lightSize)
 					)
 				{
-					numLightsThisFrustum++;
 					lightIndices[frustIdx][numLightsThisFrustum] = lightIdx;
+					numLightsThisFrustum++;
+				}
+				else
+				{
+					continue;
 				}
 
 				//if too many lights in this frustum then staahp
@@ -245,8 +249,8 @@ namespace p2
 			//report how many lights are contained
 			lightCounts[frustIdx] = numLightsThisFrustum;
 
-			// fill remaining light indices with -1 to indicate no light
-			for (int i = numLightsThisFrustum; i < MAX_LIGHTS_PER_FRUSTUM; i++)
+			// fill last light index with -1 to indicate no more lights
+			if (numLightsThisFrustum != MAX_LIGHTS_PER_FRUSTUM)
 			{
 				lightIndices[frustIdx][numLightsThisFrustum] = -1;
 			}
