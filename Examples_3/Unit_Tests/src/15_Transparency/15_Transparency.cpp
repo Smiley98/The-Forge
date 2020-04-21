@@ -173,6 +173,7 @@ typedef struct ObjectInfoStruct
 typedef struct MaterialUniformBlock
 {
 	Material mMaterials[MAX_NUM_OBJECTS];
+	int lightCounts[1980];
 } MaterialUniformBlock;
 
 typedef struct ObjectInfoUniformBlock
@@ -197,7 +198,8 @@ typedef struct LightUniformBlock
 } LightUniformBlock;
 
 typedef struct HeatmapUniformBlock {
-	int lightCounts[1980];
+	//int lightCounts[1980];
+	vec4 niceMeme = { 69, 420, 1337, 9001 };
 } HeatmapUniformBlock;
 
 typedef struct CameraUniform
@@ -333,7 +335,7 @@ RootSignature* pRootSignatureAOITClear = NULL;
 #define VIEW_SHADOW 1
 #define GEOM_OPAQUE 0
 #define GEOM_TRANSPARENT 1
-#define UNIFORM_SET(f,v,g)(((f) * 5) + ((v) * 2 + (g)))
+#define UNIFORM_SET(f,v,g)(((f) * 4) + ((v) * 2 + (g)))
 
 #define SHADE_FORWARD 0
 #define SHADE_PT 1
@@ -467,7 +469,7 @@ Texture*  pTextures[TEXTURE_COUNT] = {};
 /************************************************************************/
 // Uniform buffers
 /************************************************************************/
-Buffer* pBufferHeatmap[gImageCount] = { NULL };
+//Buffer* pBufferHeatmap[gImageCount] = { NULL };
 Buffer* pBufferMaterials[gImageCount] = { NULL };
 Buffer* pBufferOpaqueObjectTransforms[gImageCount] = { NULL };
 Buffer* pBufferTransparentObjectTransforms[gImageCount] = { NULL };
@@ -502,7 +504,7 @@ uint32_t     gFrameIndex = 0;
 GpuProfiler* pGpuProfiler = NULL;
 float        gCurrentTime = 0.0f;
 
-HeatmapUniformBlock    gHeatmapUniformData;
+//HeatmapUniformBlock    gHeatmapUniformData;
 MaterialUniformBlock   gMaterialUniformData;
 ObjectInfoUniformBlock gObjectInfoUniformData;
 ObjectInfoUniformBlock gTransparentObjectInfoUniformData;
@@ -969,7 +971,7 @@ class Transparency: public IApp
 			// update frustum culling
 			frustumGrid.updateFrustumCulling(gLightUniformData.mLightPositions, gLightUniformData.mLightSizes, MAX_NUM_LIGHTS, viewMat);
 		}
-		memcpy(&gHeatmapUniformData, frustumGrid.lightCounts.data(), sizeof(int) * frustumGrid.lightCounts.size());
+		memcpy(&/*gHeatmapUniformData*/gMaterialUniformData.lightCounts, frustumGrid.lightCounts.data(), sizeof(int) * frustumGrid.lightCounts.size());
 
 		/************************************************************************/
 		// Scene Update
@@ -1894,8 +1896,8 @@ class Transparency: public IApp
 		/************************************************************************/
 		// Update uniform buffers
 		/************************************************************************/
-		BufferUpdateDesc heatmapBufferUpdateDesc = { pBufferHeatmap[gFrameIndex], &gHeatmapUniformData };
-		updateResource(&heatmapBufferUpdateDesc);
+		//BufferUpdateDesc heatmapBufferUpdateDesc = { pBufferHeatmap[gFrameIndex], &gHeatmapUniformData };
+		//updateResource(&heatmapBufferUpdateDesc);
 
 		BufferUpdateDesc materialBufferUpdateDesc = { pBufferMaterials[gFrameIndex], &gMaterialUniformData };
 		updateResource(&materialBufferUpdateDesc);
@@ -2594,7 +2596,7 @@ class Transparency: public IApp
 		setDesc = { pRootSignatureGaussianBlur, DESCRIPTOR_UPDATE_FREQ_NONE, 2 + (3 * 2) };
 		addDescriptorSet(pRenderer, &setDesc, &pDescriptorSetGaussianBlur);
 		// Uniforms
-		setDesc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_PER_FRAME, gImageCount * 5 };
+		setDesc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_PER_FRAME, gImageCount * 4 };
 		addDescriptorSet(pRenderer, &setDesc, &pDescriptorSetUniforms);
 		// Forward
 		setDesc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_NONE, 3 };
@@ -2771,21 +2773,21 @@ class Transparency: public IApp
 				params[3].ppBuffers = &pBufferLightUniform[i];
 				params[4].pName = "WBOITSettings";
 				params[4].ppBuffers = &pBufferWBOITSettings[i];
-				params[5].pName = "HeatmapUniform";
-				params[5].ppBuffers = &pBufferHeatmap[i];
+				//params[5].pName = "HeatmapUniform";
+				//params[5].ppBuffers = &pBufferHeatmap[i];
 
 				// View Shadow Geom Opaque
-				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_SHADOW, GEOM_OPAQUE), pDescriptorSetUniforms, 6, params);
+				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_SHADOW, GEOM_OPAQUE), pDescriptorSetUniforms, 5, params);
 				// View Shadow Geom Transparent
 				params[0].ppBuffers = &pBufferTransparentObjectTransforms[i];
-				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_SHADOW, GEOM_TRANSPARENT), pDescriptorSetUniforms, 6, params);
+				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_SHADOW, GEOM_TRANSPARENT), pDescriptorSetUniforms, 5, params);
 				params[0].ppBuffers = &pBufferOpaqueObjectTransforms[i];
 				params[1].ppBuffers = &pBufferCameraUniform[i];
 				// View Camera Geom Opaque
-				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_CAMERA, GEOM_OPAQUE), pDescriptorSetUniforms, 6, params);
+				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_CAMERA, GEOM_OPAQUE), pDescriptorSetUniforms, 5, params);
 				// View Camera Geom Transparent
 				params[0].ppBuffers = &pBufferTransparentObjectTransforms[i];
-				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_CAMERA, GEOM_TRANSPARENT), pDescriptorSetUniforms, 6, params);
+				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_CAMERA, GEOM_TRANSPARENT), pDescriptorSetUniforms, 5, params);
 
 #if AOIT_ENABLE
 				if (pRenderer->pActiveGpuSettings->mROVsSupported)
@@ -3116,17 +3118,17 @@ class Transparency: public IApp
 
 	void CreateUniformBuffers()
 	{
-		BufferLoadDesc heatmapUBDesc = {};
-		heatmapUBDesc.mDesc.mDescriptors = DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		heatmapUBDesc.mDesc.mMemoryUsage = RESOURCE_MEMORY_USAGE_CPU_TO_GPU;
-		heatmapUBDesc.mDesc.mSize = sizeof(HeatmapUniformBlock);
-		heatmapUBDesc.mDesc.mFlags = BUFFER_CREATION_FLAG_PERSISTENT_MAP_BIT;
-		heatmapUBDesc.pData = NULL;
-		for (int i = 0; i < gImageCount; ++i)
-		{
-			heatmapUBDesc.ppBuffer = &pBufferHeatmap[i];
-			addResource(&heatmapUBDesc);
-		}
+		//BufferLoadDesc heatmapUBDesc = {};
+		//heatmapUBDesc.mDesc.mDescriptors = DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		//heatmapUBDesc.mDesc.mMemoryUsage = RESOURCE_MEMORY_USAGE_CPU_TO_GPU;
+		//heatmapUBDesc.mDesc.mSize = sizeof(HeatmapUniformBlock);
+		//heatmapUBDesc.mDesc.mFlags = BUFFER_CREATION_FLAG_PERSISTENT_MAP_BIT;
+		//heatmapUBDesc.pData = NULL;
+		//for (int i = 0; i < gImageCount; ++i)
+		//{
+		//	heatmapUBDesc.ppBuffer = &pBufferHeatmap[i];
+		//	addResource(&heatmapUBDesc);
+		//}
 
 		BufferLoadDesc materialUBDesc = {};
 		materialUBDesc.mDesc.mDescriptors = DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -3221,7 +3223,7 @@ class Transparency: public IApp
 	{
 		for (int i = 0; i < gImageCount; ++i)
 		{
-			removeResource(pBufferHeatmap[i]);
+			//removeResource(pBufferHeatmap[i]);
 			removeResource(pBufferMaterials[i]);
 			removeResource(pBufferOpaqueObjectTransforms[i]);
 			removeResource(pBufferTransparentObjectTransforms[i]);

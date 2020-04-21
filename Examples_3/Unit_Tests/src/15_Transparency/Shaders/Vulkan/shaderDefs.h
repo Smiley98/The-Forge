@@ -76,12 +76,14 @@ layout(UNIT_CBV_CAMERA) uniform CameraUniform
 layout(UNIT_CBV_MATERIAL) uniform MaterialUniform
 {
 	Material Materials[MAX_NUM_OBJECTS];
-};
-
-layout(UNIT_CBV_HEATMAP) uniform HeatmapUniform
-{
 	int lightCounts[1980];
 };
+
+//layout(UNIT_CBV_HEATMAP) uniform HeatmapUniform
+//{
+//	//int lightCounts[1980];
+//	vec4 niceMeme;
+//};
 
 layout(UNIT_SRV_TEXTURES) uniform texture2D MaterialTextures[MAX_NUM_TEXTURES];
 layout(UNIT_SAMPLER_LINEAR) uniform sampler LinearSampler;
