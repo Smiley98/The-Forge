@@ -63,6 +63,8 @@
     <None Include="..\src\15_Transparency\Shaders\Vulkan\fullscreen.vert" />
     <None Include="..\src\15_Transparency\Shaders\Vulkan\gaussianBlur.frag" />
     <None Include="..\src\15_Transparency\Shaders\Vulkan\generateMips.comp" />
+    <None Include="..\src\15_Transparency\Shaders\Vulkan\heatmap.frag" />
+    <None Include="..\src\15_Transparency\Shaders\Vulkan\heatmap.vert" />
     <None Include="..\src\15_Transparency\Shaders\Vulkan\phenomenologicalTransparency.frag" />
     <None Include="..\src\15_Transparency\Shaders\Vulkan\phenomenologicalTransparencyComposite.frag" />
     <None Include="..\src\15_Transparency\Shaders\Vulkan\shading.h" />
