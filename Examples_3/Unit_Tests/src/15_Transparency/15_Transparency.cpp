@@ -1895,12 +1895,17 @@ class Transparency: public IApp
 		/************************************************************************/
 		// Update uniform buffers
 		/************************************************************************/
+		gHeatmapUniformData.testData = vec4(0.0f, 0.5f, 0.0f, 1.0f);
+		BufferUpdateDesc heatmapBufferUpdateDesc = { pBufferHeatmap[gFrameIndex], &gHeatmapUniformData };
+		updateResource(&heatmapBufferUpdateDesc);
+
 		BufferUpdateDesc materialBufferUpdateDesc = { pBufferMaterials[gFrameIndex], &gMaterialUniformData };
 		updateResource(&materialBufferUpdateDesc);
+
 		BufferUpdateDesc opaqueBufferUpdateDesc = { pBufferOpaqueObjectTransforms[gFrameIndex], &gObjectInfoUniformData };
 		updateResource(&opaqueBufferUpdateDesc);
-		BufferUpdateDesc transparentBufferUpdateDesc = { pBufferTransparentObjectTransforms[gFrameIndex],
-														 &gTransparentObjectInfoUniformData };
+
+		BufferUpdateDesc transparentBufferUpdateDesc = { pBufferTransparentObjectTransforms[gFrameIndex], &gTransparentObjectInfoUniformData };
 		updateResource(&transparentBufferUpdateDesc);
 
 		BufferUpdateDesc cameraCbv = { pBufferCameraUniform[gFrameIndex], &gCameraUniformData };
@@ -1932,97 +1937,8 @@ class Transparency: public IApp
 		/************************************************************************/
 		// Rendering
 		/************************************************************************/
-		// Get command list to store rendering commands for this frame
 		Cmd* pCmd = ppCmds[gFrameIndex];
-
 		pRenderTargetScreen = pSwapChain->ppSwapchainRenderTargets[gFrameIndex];
-		beginCmd(pCmd);
-		cmdBeginGpuFrameProfile(pCmd, pGpuProfiler);
-		TextureBarrier barriers1[] = {
-			{ pRenderTargetScreen->pTexture, RESOURCE_STATE_RENDER_TARGET },
-			{ pRenderTargetDepth->pTexture, RESOURCE_STATE_DEPTH_WRITE },
-		};
-		cmdResourceBarrier(pCmd, 0, NULL, 2, barriers1);
-
-		DrawSkybox(pCmd);
-		ShadowPass(pCmd);
-		StochasticShadowPass(pCmd);
-		OpaquePass(pCmd);
-
-		if (gTransparencyType == TRANSPARENCY_TYPE_ALPHA_BLEND)
-			AlphaBlendTransparentPass(pCmd);
-		else if (gTransparencyType == TRANSPARENCY_TYPE_WEIGHTED_BLENDED_OIT)
-			WeightedBlendedOrderIndependentTransparencyPass(pCmd, false);
-		else if (gTransparencyType == TRANSPARENCY_TYPE_WEIGHTED_BLENDED_OIT_VOLITION)
-			WeightedBlendedOrderIndependentTransparencyPass(pCmd, true);
-		else if (gTransparencyType == TRANSPARENCY_TYPE_PHENOMENOLOGICAL)
-			PhenomenologicalTransparencyPass(pCmd);
-#if AOIT_ENABLE
-		else if (gTransparencyType == TRANSPARENCY_TYPE_ADAPTIVE_OIT)
-			AdaptiveOrderIndependentTransparency(pCmd);
-#endif
-		else
-			ASSERT(false && "Not implemented.");
-
-		////////////////////////////////////////////////////////
-		//  Draw UIs
-		cmdBeginDebugMarker(pCmd, 0, 1, 0, "Draw UI");
-		cmdBindRenderTargets(pCmd, 1, &pRenderTargetScreen, NULL, NULL, NULL, NULL, -1, -1);
-
-		static HiresTimer gTimer;
-		gTimer.GetUSec(true);
-
-		//vec3 camP = pCameraController->getViewPosition();
-		vec3 camP = gCameraUniformData.mPosition.getXYZ();
-		float cx = camP.getX();
-		float cy = camP.getY();
-		float cz = camP.getZ();
-
-		gAppUI.DrawText(
-			pCmd, float2(8.0f, 15.0f), eastl::string().sprintf("CPU Time: %f ms", gCpuTimer.GetUSecAverage() / 1000.0f).c_str(),
-			&gFrameTimeDraw);
-		gAppUI.DrawText(
-			pCmd, float2(8.0f, 40.0f), eastl::string().sprintf("GPU %f ms", (float)pGpuProfiler->mCumulativeTime * 1000.0f).c_str(),
-			&gFrameTimeDraw);
-		gAppUI.DrawText(
-			pCmd, float2(8.0f, 65.0f), eastl::string().sprintf("Frame Time: %f ms", gTimer.GetUSecAverage() / 1000.0f).c_str(),
-			&gFrameTimeDraw);
-		//5, 8, 1
-		gAppUI.DrawText(
-			pCmd, float2(8.0f, 500.0f), eastl::string().sprintf("Camera Position: %f %f %f", cx, cy, cz).c_str(),
-			&gFrameTimeDraw);
-		//gAppUI.DrawText(
-		//	pCmd, float2(8.0f, 500.0f), eastl::string().sprintf("Camera Position: %f %f %f", m1, m2, m3).c_str(),
-		//	&gFrameTimeDraw);
-
-		gAppUI.DrawDebugGpuProfile(pCmd, float2(8.0f, 90.0f), pGpuProfiler, NULL);
-
-		gVirtualJoystick.Draw(pCmd, { 1.0f, 1.0f, 1.0f, 1.0f });
-
-		cmdDrawProfiler();
-
-		gAppUI.Gui(pGuiWindow);
-		gAppUI.Draw(pCmd);
-		cmdBindRenderTargets(pCmd, 0, NULL, NULL, NULL, NULL, NULL, -1, -1);
-
-		cmdEndDebugMarker(pCmd);
-		////////////////////////////////////////////////////////
-
-		//Moving present state to later command.
-		//barriers1[0] = { pRenderTargetScreen->pTexture, RESOURCE_STATE_PRESENT };
-		//cmdResourceBarrier(pCmd, 0, NULL, 1, barriers1);
-
-		cmdEndGpuFrameProfile(pCmd, pGpuProfiler);
-		endCmd(pCmd);
-
-		queueSubmit(pGraphicsQueue, 1, &pCmd, pRenderCompleteFence, 1, &pImageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);
-		getFenceStatus(pRenderer, pRenderCompleteFence, &fenceStatus);
-		if (fenceStatus == FENCE_STATUS_INCOMPLETE)
-			waitForFences(pRenderer, 1, &pRenderCompleteFence);
-
-		gHeatmapUniformData.testData = vec4(0.0f, 1.0f, 0.0f, 1.0f);
-		BufferUpdateDesc heatmapBufferUpdateDesc = { pBufferHeatmap[gFrameIndex], &gHeatmapUniformData };
-		updateResource(&heatmapBufferUpdateDesc);
 
 		beginCmd(pCmd);
 		RenderTarget* rt = pRenderTargetScreen;
@@ -2039,8 +1955,6 @@ class Transparency: public IApp
 		cmdBindDescriptorSet(pCmd, UNIFORM_SET(gFrameIndex, VIEW_CAMERA, GEOM_OPAQUE), pDescriptorSetUniforms);
 		cmdDraw(pCmd, 3, 0);
 
-		barriers1[0] = { pRenderTargetScreen->pTexture, RESOURCE_STATE_PRESENT };
-		cmdResourceBarrier(pCmd, 0, NULL, 1, barriers1);
 		endCmd(pCmd);
 
 		queueSubmit(pGraphicsQueue, 1, &pCmd, pRenderCompleteFence, 1, &pImageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);
