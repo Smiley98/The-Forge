@@ -197,7 +197,7 @@ typedef struct LightUniformBlock
 } LightUniformBlock;
 
 typedef struct HeatmapUniformBlock {
-	vec4 testData = { 0, 1, 0, 1 };
+	int lightCounts[1980];
 } HeatmapUniformBlock;
 
 typedef struct CameraUniform
@@ -2020,8 +2020,8 @@ class Transparency: public IApp
 		if (fenceStatus == FENCE_STATUS_INCOMPLETE)
 			waitForFences(pRenderer, 1, &pRenderCompleteFence);
 
-		gHeatmapUniformData.testData = vec4(0.0f, 1.0f, 0.0f, 1.0f);
-		BufferUpdateDesc heatmapBufferUpdateDesc = { pBufferHeatmap[gFrameIndex], &gHeatmapUniformData };
+		//gHeatmapUniformData.lightCounts = *frustumGrid.lightCounts.data();
+		BufferUpdateDesc heatmapBufferUpdateDesc = { pBufferHeatmap[gFrameIndex], frustumGrid.lightCounts.data() };
 		updateResource(&heatmapBufferUpdateDesc);
 
 		beginCmd(pCmd);

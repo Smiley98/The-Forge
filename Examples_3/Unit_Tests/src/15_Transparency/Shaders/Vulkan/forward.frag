@@ -95,13 +95,15 @@ void main()
 	
 	//#if DRAW_FRUSTUMS
 		int frustumID = getFrustumIndex();
+		vec4 lightCountColor = mix(vec4(0, 1, 0, 1), vec4(1, 0, 0, 1), float(lightCounts[frustumID])/float(MAX_LIGHTS_PER_FRUSTUM));
+		FinalColor = mix(forwardColor, lightCountColor, 0.5);
+		
+		
+		
 		
 		float idNormalized = float(frustumID)/(numColumns * numRows);
 		
 		vec4 frustumIndexColor = vec4(idNormalized, 1 - idNormalized, idNormalized, 1.0);
-	
-		FinalColor = mix(forwardColor, frustumIndexColor, 0.5);
-		
 	//#else
 	//    FinalColor = vec4(vec3(pointContribution + directionContribution.xyz), directionContribution.w);
 	//#endif
