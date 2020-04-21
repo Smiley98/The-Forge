@@ -48,7 +48,7 @@ namespace p2
 		int numFrustums = numColumns * numRows;
 
 		frustumData = eastl::vector<Frustum>(numFrustums);
-		lightIndices = eastl::vector<int[MAX_LIGHTS_PER_FRUSTUM]>(numFrustums);
+		lightIndices = eastl::vector<int>(numFrustums * MAX_LIGHTS_PER_FRUSTUM);
 		lightCounts = eastl::vector<int>(numFrustums);
 
 		// create frustum planes, expressed in view space (before perspective divide)
@@ -231,7 +231,7 @@ namespace p2
 					&& isSphereContained(farPlane, lightPosView, lightSize)
 					)
 				{
-					lightIndices[frustIdx][numLightsThisFrustum] = lightIdx;
+					lightIndices[(frustIdx * MAX_LIGHTS_PER_FRUSTUM) + numLightsThisFrustum] = lightIdx;
 					numLightsThisFrustum++;
 				}
 				else
@@ -252,7 +252,7 @@ namespace p2
 			// fill last light index with -1 to indicate no more lights
 			if (numLightsThisFrustum != MAX_LIGHTS_PER_FRUSTUM)
 			{
-				lightIndices[frustIdx][numLightsThisFrustum] = -1;
+				lightIndices[(frustIdx * MAX_LIGHTS_PER_FRUSTUM) + numLightsThisFrustum] = -1;
 			}
 		}
 	}

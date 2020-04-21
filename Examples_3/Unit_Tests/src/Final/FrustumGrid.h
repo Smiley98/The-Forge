@@ -33,7 +33,7 @@ namespace p2
 	{
 	public:
 		// for each frustum, an array of light indices
-		eastl::vector<int[MAX_LIGHTS_PER_FRUSTUM]> lightIndices;
+		eastl::vector<int> lightIndices;
 		eastl::vector<int> lightCounts;
 
 		FrustumGrid();

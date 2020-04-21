@@ -22,6 +22,8 @@
 * under the License.
 */
 
+#define NUM_UNIFORM_BUFFERS 6
+
 #define MAX_NUM_OBJECTS 128
 //An average of 37 ms/frame with 64 lights, 55ms/frame with 96 lights, 82ms/frame with 128 lights, and 163ms/frame with 256 lights.
 //(No difference between debug and release).
@@ -32,17 +34,17 @@
 #define CUBE_NUM (CUBES_EACH_ROW * CUBES_EACH_COL + 1)
 #define DEBUG_OUTPUT 1       //exclusively used for texture data visulization, such as rendering depth, shadow map etc.
 #if defined(DIRECT3D12) || defined(VULKAN) && !defined(_DURANGO)
-#define AOIT_ENABLE 1
+#define AOIT_ENABLE 0
 #endif
-#define AOIT_NODE_COUNT 4    // 2, 4 or 8. Higher numbers give better results at the cost of performance
+#define AOIT_NODE_COUNT 2    // 2, 4 or 8. Higher numbers give better results at the cost of performance
 #if AOIT_NODE_COUNT == 2
 #define AOIT_RT_COUNT 1
 #else
 #define AOIT_RT_COUNT (AOIT_NODE_COUNT / 4)
 #endif
-#define USE_SHADOWS 1
-#define PT_USE_REFRACTION 1
-#define PT_USE_DIFFUSION 1
+#define USE_SHADOWS 0
+#define PT_USE_REFRACTION 0
+#define PT_USE_DIFFUSION 0
 #define PT_USE_CAUSTICS (0 & USE_SHADOWS)
 
 #define FRAND	(static_cast <float> (rand()) / static_cast <float> (RAND_MAX))
@@ -198,7 +200,7 @@ typedef struct LightUniformBlock
 
 typedef struct HeatmapUniformBlock {
 	//uint lightCounts[1980];
-	int lightIndices[1980 * 64];
+	int lightIndices[1980 * MAX_LIGHTS_PER_FRUSTUM];
 } HeatmapUniformBlock;
 
 typedef struct CameraUniform
@@ -334,7 +336,7 @@ RootSignature* pRootSignatureAOITClear = NULL;
 #define VIEW_SHADOW 1
 #define GEOM_OPAQUE 0
 #define GEOM_TRANSPARENT 1
-#define UNIFORM_SET(f,v,g)(((f) * 5) + ((v) * 2 + (g)))
+#define UNIFORM_SET(f,v,g)(((f) * NUM_UNIFORM_BUFFERS) + ((v) * 2 + (g)))
 
 #define SHADE_FORWARD 0
 #define SHADE_PT 1
@@ -974,10 +976,10 @@ class Transparency: public IApp
 		//memset(gHeatmapUniformData.lightCounts, 0, 1980 * sizeof(int));
 		//memcpy(gHeatmapUniformData.lightCounts, frustumGrid.lightCounts.data(), sizeof(int) * frustumGrid.lightCounts.size());
 
-		for (int i = 0; i < 1980; i++)
-		{
-			memcpy(gHeatmapUniformData.lightIndices + (64*i), frustumGrid.lightIndices[i], sizeof(int) * 64);
-		}
+		//for (int i = 0; i < 1980; i++)
+		//{
+		//	memcpy(gHeatmapUniformData.lightIndices + (i * MAX_LIGHTS_PER_FRUSTUM), frustumGrid.lightIndices[i], sizeof(int) * MAX_LIGHTS_PER_FRUSTUM);
+		//}
 
 
 		/************************************************************************/
@@ -1891,7 +1893,7 @@ class Transparency: public IApp
 		acquireNextImage(pRenderer, pSwapChain, pImageAcquiredSemaphore, NULL, &gFrameIndex);
 
 		Semaphore* pRenderCompleteSemaphore = pRenderCompleteSemaphores[gFrameIndex];
-		Fence*     pRenderCompleteFence = pRenderCompleteFences[gFrameIndex];
+		Fence* pRenderCompleteFence = pRenderCompleteFences[gFrameIndex];
 
 		// Stall if CPU is running "Swap Chain Buffer Count" frames ahead of GPU
 		FenceStatus fenceStatus;
@@ -1904,7 +1906,8 @@ class Transparency: public IApp
 		// Update uniform buffers
 		/************************************************************************/
 		//BufferUpdateDesc heatmapBufferUpdateDesc = { pBufferHeatmap[gFrameIndex], &(gHeatmapUniformData.lightCounts) };
-		BufferUpdateDesc heatmapBufferUpdateDesc = { pBufferHeatmap[gFrameIndex], &(gHeatmapUniformData.lightIndices) };
+		//BufferUpdateDesc heatmapBufferUpdateDesc = { pBufferHeatmap[gFrameIndex], &(gHeatmapUniformData.lightIndices) };
+		BufferUpdateDesc heatmapBufferUpdateDesc = {pBufferHeatmap[gFrameIndex], (frustumGrid.lightIndices.data())};
 		updateResource(&heatmapBufferUpdateDesc);
 		BufferUpdateDesc materialBufferUpdateDesc = { pBufferMaterials[gFrameIndex], &gMaterialUniformData };
 		updateResource(&materialBufferUpdateDesc);
@@ -2500,7 +2503,11 @@ class Transparency: public IApp
 		const char* linearSamplerName = "LinearSampler";
 		const char* shadowSamplerName = USE_SHADOWS ? "VSMSampler" : 0;
 
-		Sampler*    staticSamplers[] = { pSamplerSkybox, pSamplerPoint, pSamplerBilinear, pSamplerShadow };
+		Sampler*    staticSamplers[] = { pSamplerSkybox, pSamplerPoint, pSamplerBilinear
+#if USE_SHADOWS
+			,pSamplerShadow 
+#endif		
+		};
 		const char* staticSamplerNames[] = { skyboxSamplerName, pointSamplerName, linearSamplerName, shadowSamplerName };
 		const uint  numStaticSamplers = sizeof(staticSamplers) / sizeof(staticSamplers[0]);
 
@@ -2550,10 +2557,15 @@ class Transparency: public IApp
 
 		Shader* pShaders[] =
 		{
-			pShaderShadow, pShaderWBOITShade, pShaderWBOITVShade, pShaderForward, pShaderPTShade, pShaderHeatmap
+#if USE_SHADOWS != 0
+			pShaderShadow,
+#endif
+			pShaderWBOITShade, pShaderWBOITVShade, pShaderForward, pShaderPTShade, pShaderHeatmap
 #if PT_USE_CAUSTICS
 			,pShaderPTShadow
 #endif
+
+
 		};
 		// Forward shading root signature
 		RootSignatureDesc forwardRootSignatureDesc = {};
@@ -2687,24 +2699,32 @@ class Transparency: public IApp
 		addDescriptorSet(pRenderer, &setDesc, &pDescriptorSetSkybox[0]);
 		setDesc = { pRootSignatureSkybox, DESCRIPTOR_UPDATE_FREQ_PER_FRAME, gImageCount };
 		addDescriptorSet(pRenderer, &setDesc, &pDescriptorSetSkybox[1]);
+
+#if USE_SHADOWS != 0
 		// Gaussian blur
 		setDesc = { pRootSignatureGaussianBlur, DESCRIPTOR_UPDATE_FREQ_NONE, 2 + (3 * 2) };
 		addDescriptorSet(pRenderer, &setDesc, &pDescriptorSetGaussianBlur);
+#endif
+
 		// Uniforms
-		setDesc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_PER_FRAME, gImageCount * 5 };
+		setDesc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_PER_FRAME, gImageCount * NUM_UNIFORM_BUFFERS };
 		addDescriptorSet(pRenderer, &setDesc, &pDescriptorSetUniforms);
 		// Forward
 		setDesc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_NONE, 3 };
 		addDescriptorSet(pRenderer, &setDesc, &pDescriptorSetShade);
+
+#if PT_USE_DIFFUSION != 0
 		// Gen Mips
 		setDesc = { pRootSignaturePTGenMips, DESCRIPTOR_UPDATE_FREQ_PER_DRAW, (1 << 5) };
 		addDescriptorSet(pRenderer, &setDesc, &pDescriptorSetPTGenMips);
-		// WBOIT Composite
-		setDesc = { pRootSignatureWBOITComposite, DESCRIPTOR_UPDATE_FREQ_NONE, 1 };
-		addDescriptorSet(pRenderer, &setDesc, &pDescriptorSetWBOITComposite);
+
 		// PT Copy Depth
 		setDesc = { pRootSignaturePTCopyDepth, DESCRIPTOR_UPDATE_FREQ_NONE, 1 };
 		addDescriptorSet(pRenderer, &setDesc, &pDescriptorSetPTCopyDepth);
+#endif
+		// WBOIT Composite
+		setDesc = { pRootSignatureWBOITComposite, DESCRIPTOR_UPDATE_FREQ_NONE, 1 };
+		addDescriptorSet(pRenderer, &setDesc, &pDescriptorSetWBOITComposite);
 		// PT Composite
 		setDesc = { pRootSignaturePTComposite, DESCRIPTOR_UPDATE_FREQ_NONE, 1 };
 		addDescriptorSet(pRenderer, &setDesc, &pDescriptorSetPTComposite);
@@ -2785,14 +2805,18 @@ class Transparency: public IApp
 				updateDescriptorSet(pRenderer, i, pDescriptorSetSkybox[1], 1, params);
 			}
 		}
+
+
 		// Gaussian blur
 		{
+#if USE_SHADOWS != 0
 			DescriptorData params[2] = {};
 			params[0].pName = "Source";
 			params[0].ppTextures = &pRenderTargetShadowVariance[0]->pTexture;
 			updateDescriptorSet(pRenderer, 0, pDescriptorSetGaussianBlur, 1, params);
 			params[0].ppTextures = &pRenderTargetShadowVariance[1]->pTexture;
 			updateDescriptorSet(pRenderer, 1, pDescriptorSetGaussianBlur, 1, params);
+#endif
 #if PT_USE_CAUSTICS
 			for (uint32_t w = 0; w < 3; ++w)
 			{
@@ -2834,8 +2858,8 @@ class Transparency: public IApp
 #if PT_USE_DIFFUSION != 0
 			params[updateCount].pName = "DepthTexture";
 			params[updateCount].ppTextures = &pRenderTargetPTDepthCopy->pTexture;
-#endif
 			updateDescriptorSet(pRenderer, SHADE_PT, pDescriptorSetShade, updateCount + 1, params);
+#endif
 #if AOIT_ENABLE
 			if (pRenderer->pActiveGpuSettings->mROVsSupported)
 			{
@@ -2857,7 +2881,7 @@ class Transparency: public IApp
 			for (uint32_t i = 0; i < gImageCount; ++i)
 			{
 				// Opaque objects
-				DescriptorData params[6] = {};	//Added an additional index for the heatmap.
+				DescriptorData params[NUM_UNIFORM_BUFFERS] = {};	//Added an additional index for the heatmap.
 				params[0].pName = "ObjectUniformBlock";
 				params[0].ppBuffers = &pBufferOpaqueObjectTransforms[i];
 				params[1].pName = "CameraUniform";
@@ -2868,21 +2892,35 @@ class Transparency: public IApp
 				params[3].ppBuffers = &pBufferLightUniform[i];
 				params[4].pName = "WBOITSettings";
 				params[4].ppBuffers = &pBufferWBOITSettings[i];
+
+#if NUM_UNIFORM_BUFFERS == 6
 				params[5].pName = "HeatmapUniform";
 				params[5].ppBuffers = &pBufferHeatmap[i];
+#endif
 
 				// View Shadow Geom Opaque
-				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_SHADOW, GEOM_OPAQUE), pDescriptorSetUniforms, 6, params);
+				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_SHADOW, GEOM_OPAQUE), pDescriptorSetUniforms, NUM_UNIFORM_BUFFERS, params);
 				// View Shadow Geom Transparent
 				params[0].ppBuffers = &pBufferTransparentObjectTransforms[i];
-				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_SHADOW, GEOM_TRANSPARENT), pDescriptorSetUniforms, 6, params);
+				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_SHADOW, GEOM_TRANSPARENT), pDescriptorSetUniforms, NUM_UNIFORM_BUFFERS, params);
 				params[0].ppBuffers = &pBufferOpaqueObjectTransforms[i];
 				params[1].ppBuffers = &pBufferCameraUniform[i];
+
+				//(i * 5) + 5
+
+				//params[0].pName = "HeatmapUniform";
+				//params[0].ppBuffers = &pBufferHeatmap[i];
+				//updateDescriptorSet(pRenderer, (i * 5) + ((VIEW_SHADOW) * 2) + 4, pDescriptorSetUniforms, 6, params);
+				updateDescriptorSet(pRenderer, (i * NUM_UNIFORM_BUFFERS) + 5, pDescriptorSetUniforms, 6, params);
+
 				// View Camera Geom Opaque
-				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_CAMERA, GEOM_OPAQUE), pDescriptorSetUniforms, 6, params);
+				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_SHADOW, GEOM_TRANSPARENT), pDescriptorSetUniforms, NUM_UNIFORM_BUFFERS, params);
 				// View Camera Geom Transparent
 				params[0].ppBuffers = &pBufferTransparentObjectTransforms[i];
-				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_CAMERA, GEOM_TRANSPARENT), pDescriptorSetUniforms, 6, params);
+				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_CAMERA, GEOM_TRANSPARENT), pDescriptorSetUniforms, NUM_UNIFORM_BUFFERS, params);
+
+
+
 
 #if AOIT_ENABLE
 				if (pRenderer->pActiveGpuSettings->mROVsSupported)
@@ -2891,6 +2929,8 @@ class Transparency: public IApp
 #endif
 			}
 		}
+
+#if PT_USE_DIFFUSION != 0
 		// Gen Mips
 		{
 			RenderTarget* rt = pRenderTargetPTBackground;
@@ -2906,6 +2946,7 @@ class Transparency: public IApp
 				updateDescriptorSet(pRenderer, i - 1, pDescriptorSetPTGenMips, 2, params);
 			}
 		}
+#endif
 		// WBOIT Composite
 		{
 			DescriptorData compositeParams[2] = {};
@@ -2915,6 +2956,8 @@ class Transparency: public IApp
 			compositeParams[1].ppTextures = &pRenderTargetWBOIT[WBOIT_RT_REVEALAGE]->pTexture;
 			updateDescriptorSet(pRenderer, 0, pDescriptorSetWBOITComposite, 2, compositeParams);
 		}
+
+#if PT_USE_DIFFUSION != 0
 		// PT Copy Depth
 		{
 			DescriptorData copyParams[1] = {};
@@ -2922,6 +2965,7 @@ class Transparency: public IApp
 			copyParams[0].ppTextures = &pRenderTargetDepth->pTexture;
 			updateDescriptorSet(pRenderer, 0, pDescriptorSetPTCopyDepth, 1, copyParams);
 		}
+#endif
 		// PT Composite
 		{
 			uint32_t compositeParamCount = 3;
