@@ -197,7 +197,8 @@ typedef struct LightUniformBlock
 } LightUniformBlock;
 
 typedef struct HeatmapUniformBlock {
-	int lightCounts[1980];
+	//uint lightCounts[1980];
+	int lightIndices[1980 * 64];
 } HeatmapUniformBlock;
 
 typedef struct CameraUniform
@@ -970,8 +971,14 @@ class Transparency: public IApp
 			frustumGrid.updateFrustumCulling(gLightUniformData.mLightPositions, gLightUniformData.mLightSizes, MAX_NUM_LIGHTS, viewMat);
 		}
 		//Update uniform
-		memset(gHeatmapUniformData.lightCounts, 0, 1980 * sizeof(int));
-		memcpy(gHeatmapUniformData.lightCounts, frustumGrid.lightCounts.data(), sizeof(int) * frustumGrid.lightCounts.size());
+		//memset(gHeatmapUniformData.lightCounts, 0, 1980 * sizeof(int));
+		//memcpy(gHeatmapUniformData.lightCounts, frustumGrid.lightCounts.data(), sizeof(int) * frustumGrid.lightCounts.size());
+
+		for (int i = 0; i < 1980; i++)
+		{
+			memcpy(gHeatmapUniformData.lightIndices + (64*i), frustumGrid.lightIndices[i], sizeof(int) * 64);
+		}
+
 
 		/************************************************************************/
 		// Scene Update
@@ -1896,7 +1903,8 @@ class Transparency: public IApp
 		/************************************************************************/
 		// Update uniform buffers
 		/************************************************************************/
-		BufferUpdateDesc heatmapBufferUpdateDesc = { pBufferHeatmap[gFrameIndex], &gHeatmapUniformData };
+		//BufferUpdateDesc heatmapBufferUpdateDesc = { pBufferHeatmap[gFrameIndex], &(gHeatmapUniformData.lightCounts) };
+		BufferUpdateDesc heatmapBufferUpdateDesc = { pBufferHeatmap[gFrameIndex], &(gHeatmapUniformData.lightIndices) };
 		updateResource(&heatmapBufferUpdateDesc);
 		BufferUpdateDesc materialBufferUpdateDesc = { pBufferMaterials[gFrameIndex], &gMaterialUniformData };
 		updateResource(&materialBufferUpdateDesc);

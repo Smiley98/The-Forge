@@ -29,16 +29,16 @@
 
 //#define DRAW_FRUSTUMS true
 //#if DRAW_FRUSTUMS
-int GRID_SIZE = 32;
+uint GRID_SIZE = 32;
 const float screenWidth =  1920.0;
 const float screenHeight = 1080.0;
-highp int numColumns = int(screenWidth / float(GRID_SIZE) + 0.5);	//60
-highp int numRows = int(screenHeight / float(GRID_SIZE) + 0.5);		//34
+highp uint numColumns = uint(screenWidth / float(GRID_SIZE) + 0.5);	//60
+highp uint numRows = uint(screenHeight / float(GRID_SIZE) + 0.5);		//34
 
-int getFrustumIndex()
+uint getFrustumIndex()
 {
-    int col = int(gl_FragCoord.x / GRID_SIZE);
-    int row = int(gl_FragCoord.y / GRID_SIZE);
+    uint col = uint(gl_FragCoord.x / GRID_SIZE);
+    uint row = uint(gl_FragCoord.y / GRID_SIZE);
     return (row * numColumns) + col;
 }
 //#else
@@ -87,15 +87,41 @@ void main()
 	vec4 forwardColor = vec4(vec3(pointContribution + directionContribution.xyz), directionContribution.w);
 	
 	//#if DRAW_FRUSTUMS
-		int frustumID = getFrustumIndex();
-		vec4 lightCountColor = mix(vec4(0, 1, 0, 1), vec4(1, 0, 0, 1), float(lightCounts[frustumID]) / float(MAX_LIGHTS_PER_FRUSTUM));
-		FinalColor = mix(forwardColor, lightCountColor, 0.5);
+	
+	
+		uint frustumID = getFrustumIndex();
+	
+
+		if(frustumID == 1979 || frustumID == 256 || frustumID == 496) 
+		{	
+					FinalColor = vec4(0, 0, 1, 1);
+		} else
+		{
+	//				vec4 lightCountColor = mix(vec4(0, 1, 0, 1), vec4(1, 0, 0, 1), float(lightCounts[frustumID]) / float(MAX_LIGHTS_PER_FRUSTUM));
+	//				FinalColor = mix(forwardColor, lightCountColor, 0.8);
+					//FinalColor = vec4(lightCounts[frustumID], lightCounts[frustumID], lightCounts[frustumID], 1);
+					
+					uint lightCount = 0;
+					for(uint i = 0; i < MAX_LIGHTS_PER_FRUSTUM; i++)
+					{
+						if(lightIndices[(frustumID * 64) + i] > -1)
+						{
+							lightCount++;
+						} else
+						{
+							break;
+						}
+					}
+					
+					FinalColor = vec4(float(lightCount)/64.0, 0, 0, 1);
+		}
+
 		
 		//Sure enough, the window origin is top left.
 		//FinalColor = vec4(gl_FragCoord.x / screenWidth, gl_FragCoord.y / screenHeight, 0.0, 1.0);
 
-		float idNormalized = float(frustumID)/(numColumns * numRows);
-		vec4 frustumIndexColor = vec4(idNormalized, 1 - idNormalized, idNormalized, 1.0);
+		//float idNormalized = float(frustumID)/(numColumns * numRows);
+		//vec4 frustumIndexColor = vec4(idNormalized, 1 - idNormalized, idNormalized, 1.0);
 	//#else
 	//    FinalColor = vec4(vec3(pointContribution + directionContribution.xyz), directionContribution.w);
 	//#endif

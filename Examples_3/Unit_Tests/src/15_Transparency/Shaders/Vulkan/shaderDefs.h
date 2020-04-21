@@ -20,7 +20,7 @@
 #define UNIT_SAMPLER_POINT  UPDATE_FREQ_NONE, binding = 7
 #define UNIT_SAMPLER_VSM    UPDATE_FREQ_NONE, binding = 8
 
-#define MAX_LIGHTS_PER_FRUSTUM 8
+#define MAX_LIGHTS_PER_FRUSTUM 64
 
 struct Material
 {
@@ -82,7 +82,8 @@ layout(UNIT_CBV_MATERIAL) uniform MaterialUniform
 
 layout(UNIT_CBV_HEATMAP) uniform HeatmapUniform
 {
-	int lightCounts[1980];
+	//uint lightCounts[1980];
+	int lightIndices[1980*MAX_LIGHTS_PER_FRUSTUM];
 };
 
 layout(UNIT_SRV_TEXTURES) uniform texture2D MaterialTextures[MAX_NUM_TEXTURES];
