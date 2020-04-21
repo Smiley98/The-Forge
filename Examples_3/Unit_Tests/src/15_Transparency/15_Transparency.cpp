@@ -972,7 +972,7 @@ class Transparency: public IApp
 		//Update uniform
 		memset(gHeatmapUniformData.lightCounts, 0, 1980 * sizeof(int));
 		memcpy(gHeatmapUniformData.lightCounts, frustumGrid.lightCounts.data(), sizeof(int) * frustumGrid.lightCounts.size());
-
+		
 		/************************************************************************/
 		// Scene Update
 		/************************************************************************/
@@ -2301,6 +2301,7 @@ class Transparency: public IApp
 		// Define shader macros
 		char maxNumObjectsMacroBuffer[5] = {}; sprintf(maxNumObjectsMacroBuffer, "%i", MAX_NUM_OBJECTS);
 		char maxNumLightsMacroBuffer[5] = {}; sprintf(maxNumLightsMacroBuffer, "%i", MAX_NUM_LIGHTS);
+		char maxNumLightsPerFrustumMacroBuffer[5] = {}; sprintf(maxNumLightsPerFrustumMacroBuffer, "%i", MAX_LIGHTS_PER_FRUSTUM);
 		char maxNumTexturesMacroBuffer[5] = {}; sprintf(maxNumTexturesMacroBuffer, "%i", TEXTURE_COUNT);
 		char aoitNodeCountMacroBuffer[5] = {}; sprintf(aoitNodeCountMacroBuffer, "%i", AOIT_NODE_COUNT);
 		char useShadowsMacroBuffer[5] = {}; sprintf(useShadowsMacroBuffer, "%i", USE_SHADOWS);
@@ -2310,6 +2311,7 @@ class Transparency: public IApp
 
 		ShaderMacro maxNumObjectsMacro = { "MAX_NUM_OBJECTS", maxNumObjectsMacroBuffer };
 		ShaderMacro maxNumLightsMacro = { "MAX_NUM_LIGHTS", maxNumLightsMacroBuffer };
+		ShaderMacro maxNumLightsPerFrustumMacro = { "MAX_LIGHTS_PER_FRUSTUM", maxNumLightsMacroBuffer };
 		ShaderMacro maxNumTexturesMacro = { "MAX_NUM_TEXTURES", maxNumTexturesMacroBuffer };
 		ShaderMacro aoitNodeCountMacro = { "AOIT_NODE_COUNT", aoitNodeCountMacroBuffer };
 		ShaderMacro useShadowsMacro = { "USE_SHADOWS", useShadowsMacroBuffer };
@@ -2317,8 +2319,8 @@ class Transparency: public IApp
 		ShaderMacro useDiffusionMacro = { "PT_USE_DIFFUSION", useDiffusionMacroBuffer };
 		ShaderMacro useCausticsMacro = { "PT_USE_CAUSTICS", useCausticsMacroBuffer };
 
-		ShaderMacro shaderMacros[] = { maxNumObjectsMacro, maxNumLightsMacro, maxNumTexturesMacro, aoitNodeCountMacro, useShadowsMacro,
-									   useRefractionMacro, useDiffusionMacro,   useCausticsMacro };
+		ShaderMacro shaderMacros[] = { maxNumObjectsMacro, maxNumLightsPerFrustumMacro, maxNumLightsMacro, maxNumTexturesMacro, aoitNodeCountMacro, useShadowsMacro,
+									   useRefractionMacro, useDiffusionMacro, useCausticsMacro };
 		const uint  numShaderMacros = sizeof(shaderMacros) / sizeof(shaderMacros[0]);
 
 		// Skybox shader
