@@ -1,4 +1,6 @@
-#version 450
+#version 450 core
+//#extension GL_GOOGLE_include_directive : require
+//#include "shading.h"
 
 layout(location = 0) out vec4 outColor;
 

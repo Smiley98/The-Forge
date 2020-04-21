@@ -78,7 +78,7 @@ layout(UNIT_CBV_MATERIAL) uniform MaterialUniform
 	Material Materials[MAX_NUM_OBJECTS];
 };
 
-layout(UNIT_CBV_HEATMAP) uniform HeatmapUniformBlock
+layout(UNIT_CBV_HEATMAP) uniform HeatmapUniform
 {
 	vec4 testData;
 };

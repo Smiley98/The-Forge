@@ -334,7 +334,7 @@ RootSignature* pRootSignatureAOITClear = NULL;
 #define VIEW_SHADOW 1
 #define GEOM_OPAQUE 0
 #define GEOM_TRANSPARENT 1
-#define UNIFORM_SET(f,v,g)(((f) * 5) + ((v) * 2 + (g)))
+#define UNIFORM_SET(f,v,g)(((f) * 6) + ((v) * 2 + (g)))
 
 #define SHADE_FORWARD 0
 #define SHADE_PT 1
@@ -2439,6 +2439,7 @@ class Transparency: public IApp
 		removeShader(pRenderer, pShaderPTCopyShadowDepth);
 #endif
 #endif
+		removeShader(pRenderer, pShaderHeatmap);
 		removeShader(pRenderer, pShaderForward);
 		removeShader(pRenderer, pShaderWBOITShade);
 		removeShader(pRenderer, pShaderWBOITComposite);
@@ -2841,8 +2842,12 @@ class Transparency: public IApp
 				params[3].ppBuffers = &pBufferLightUniform[i];
 				params[4].pName = "WBOITSettings";
 				params[4].ppBuffers = &pBufferWBOITSettings[i];
-				params[5].pName = "HeatmapUniformBlock";
+				params[5].pName = "HeatmapUniform";
 				params[5].ppBuffers = &pBufferHeatmap[i];
+
+
+				//heatmap
+				updateDescriptorSet(pRenderer, (i * 6) + 5, pDescriptorSetUniforms, 6, params);
 
 				// View Shadow Geom Opaque
 				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_SHADOW, GEOM_OPAQUE), pDescriptorSetUniforms, 5, params);
@@ -2856,6 +2861,7 @@ class Transparency: public IApp
 				// View Camera Geom Transparent
 				params[0].ppBuffers = &pBufferTransparentObjectTransforms[i];
 				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_CAMERA, GEOM_TRANSPARENT), pDescriptorSetUniforms, 5, params);
+
 
 #if AOIT_ENABLE
 				if (pRenderer->pActiveGpuSettings->mROVsSupported)
