@@ -1,3 +1,8 @@
+
+
+
+
+
 /*
 * Copyright (c) 2018-2019 Confetti Interactive Inc.
 *
@@ -26,6 +31,23 @@
 #extension GL_GOOGLE_include_directive : require
 
 #include "shading.h"
+
+//#define DRAW_FRUSTUMS true
+//#if DRAW_FRUSTUMS
+const float screenWidth = 1920;
+const float screenHeight = 1080;
+int GRID_SIZE = 32;
+highp int numColumns = int(screenWidth / float(GRID_SIZE) + 0.5);
+highp int numRows = int(screenHeight / float(GRID_SIZE) + 0.5);
+
+int getFrustumIndex()
+{
+    int col = int(gl_FragCoord.x/GRID_SIZE);
+    int row = int(gl_FragCoord.y/GRID_SIZE);
+    return (row * numColumns) + col;
+}
+//#else
+//#endif
 
 
 layout(location = 0) in vec4 WorldPosition;
@@ -69,6 +91,18 @@ void main()
 	}
 
 	vec4 directionContribution = Shade(MatID, UV.xy, WorldPosition.xyz, normal);
+	vec4 forwardColor = vec4(vec3(pointContribution + directionContribution.xyz), directionContribution.w);
 	
-	FinalColor = vec4(vec3(pointContribution + directionContribution.xyz), directionContribution.w);
+	//#if DRAW_FRUSTUMS
+		int frustumID = getFrustumIndex();
+		
+		float idNormalized = float(frustumID)/(numColumns * numRows);
+		
+		vec4 frustumIndexColor = vec4(idNormalized, 1 - idNormalized, idNormalized, 1.0);
+	
+		FinalColor = mix(forwardColor, frustumIndexColor, 0.5);
+		
+	//#else
+	//    FinalColor = vec4(vec3(pointContribution + directionContribution.xyz), directionContribution.w);
+	//#endif
 }
