@@ -3567,7 +3567,7 @@ class Transparency: public IApp
 		shadowPipelineDesc.mSampleCount = pRenderTargetShadowVariance[0]->mDesc.mSampleCount;
 		shadowPipelineDesc.mSampleQuality = pRenderTargetShadowVariance[0]->mDesc.mSampleQuality;
 		shadowPipelineDesc.mDepthStencilFormat = TinyImageFormat_D16_UNORM;
-		shadowPipelineDesc.pVertexLayout = &vertexLayoutDefault;
+		shadowPipelineDesc.pVertexLayout = NULL;
 		shadowPipelineDesc.pRasterizerState = pRasterizerStateCullFront;
 		shadowPipelineDesc.pDepthState = pDepthStateEnable;
 		shadowPipelineDesc.pBlendState = NULL;
