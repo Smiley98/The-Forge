@@ -182,7 +182,7 @@ namespace p2
 
 	//is sphere at least partially contained on the positive side of the plane? 
 	//Returns true if sphere is intersecting with or on the positive side of the plane. Returns false if the sphere is entirely on the negative side of the plane
-	inline bool isSphereContained(Plane plane, vec3 spherePos, float sphereRadius)
+	inline bool isSphereContained(const Plane& plane, const vec3& spherePos, float sphereRadius)
 	{
 		// signed distance check. ez. dot product
 		float distFromPlane = dot(plane.normal, spherePos) - plane.normalOffset; 		
@@ -213,14 +213,13 @@ namespace p2
 		for (int frustIdx = 0; frustIdx < frustumData.size(); frustIdx++)
 		{
 			//does the light fit in this frustum?
-			Frustum frust = frustumData[frustIdx];
-
+			const Frustum& frust = frustumData[frustIdx];
 
 			int numLightsThisFrustum = 0;
 			//for each light... 
 			for (int lightIdx = 0; lightIdx < numLights; lightIdx++)
 			{
-				vec3 lightPosView = lightPositionsView[lightIdx];
+				const vec3& lightPosView = lightPositionsView[lightIdx];
 				float lightSize = lightSizes[lightIdx];
 
 				//The light must be at least partially contained in all 6 planes of the frustum to count. Else it can be culled
