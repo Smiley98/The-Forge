@@ -29,7 +29,7 @@ namespace p2
 	//}
 
 	Vector4  FrustumGrid::toClipSpace(Vector2 screenSpacePosition, int screenWidth, int screenHeight)
-	{
+	{	//This converts to normalized device coordinates. Clip space would involve multiplying by proj[3][3] then proj.
 		Vector4 clippy = { (screenSpacePosition[0] / screenWidth) * 2 - 1.0f,	((screenHeight - screenSpacePosition[1]) / screenHeight) * 2 - 1.0f , 1, 1 };
 		return clippy;
 	}
@@ -51,7 +51,6 @@ namespace p2
 		lightIndices = eastl::vector<int[MAX_LIGHTS_PER_FRUSTUM]>(numFrustums);
 		lightCounts = eastl::vector<int>(numFrustums);
 
-
 		// create frustum planes, expressed in view space (before perspective divide)
 		for (int col = 0; col < numColumns; col++)
 		{
@@ -69,11 +68,9 @@ namespace p2
 				Vector4 cornerBotLeftClip = toClipSpace(cornerBotLeftScreen, cameraWidth, cameraHeight);
 				Vector4 cornerBotRightClip = toClipSpace(cornerBotRightScreen, cameraWidth, cameraHeight);
 
-
 				// view space
 				Vector3 cornerTopLeft = (clipToViewSpace * cornerTopLeftClip).getXYZ();
 				cornerTopLeft /= cornerTopLeft.getW(); // lol because Vector3 is actually a Vector4 in denial
-
 
 				Vector3 cornerTopRight = (clipToViewSpace * cornerTopRightClip).getXYZ();
 				cornerTopRight /= cornerTopRight.getW();
@@ -92,8 +89,6 @@ namespace p2
 				//Vector4 cornerTopRight = { (col + 1) * (float)GRID_SIZE / cameraWidth,	row * (float)GRID_SIZE / cameraHeight,			1, 1 };
 				//Vector4 cornerBotLeft = { col * (float)GRID_SIZE / cameraWidth,			(row + 1) * (float)GRID_SIZE / cameraHeight,		1, 1 };
 				//Vector4 cornerBotRight = { (col + 1) * (float)GRID_SIZE / cameraWidth,	(row + 1) * (float)GRID_SIZE / cameraHeight,		1,1 };
-
-
 
 				// left plane normal
 				Vector3 normal = normalize(cross(cornerTopLeft, cornerBotLeft));

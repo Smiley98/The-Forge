@@ -16,8 +16,8 @@ namespace p2
 	//stored in constant-normal form
 	struct Plane
 	{
-		vec3 normal;   // Plane normal.
-		float normalOffset;   // Distance along the plane normal to translate from the origin
+		vec3 normal;			// Plane normal.
+		float normalOffset;		// Distance along the plane normal to translate from the origin.
 	};
 
 	struct Frustum //actually missing near and far, but those can be shared
@@ -29,19 +29,12 @@ namespace p2
 		Plane bottom;
 	};
 
-
 	class FrustumGrid
 	{
 	public:
 		// for each frustum, an array of light indices
 		eastl::vector<int[MAX_LIGHTS_PER_FRUSTUM]> lightIndices;
 		eastl::vector<int> lightCounts;
-
-		//Buffer* frustumBuffer;
-		//BufferLoadDesc frustumBufferLoadDesc;
-
-
-
 
 		FrustumGrid();
 		~FrustumGrid();

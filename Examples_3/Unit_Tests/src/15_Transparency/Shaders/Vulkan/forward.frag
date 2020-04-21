@@ -1,8 +1,3 @@
-
-
-
-
-
 /*
 * Copyright (c) 2018-2019 Confetti Interactive Inc.
 *
@@ -34,21 +29,20 @@
 
 //#define DRAW_FRUSTUMS true
 //#if DRAW_FRUSTUMS
-const float screenWidth = 1920;
-const float screenHeight = 1080;
 int GRID_SIZE = 32;
-highp int numColumns = int(screenWidth / float(GRID_SIZE) + 0.5);
-highp int numRows = int(screenHeight / float(GRID_SIZE) + 0.5);
+const float screenWidth =  1920.0;
+const float screenHeight = 1080.0;
+highp int numColumns = int(screenWidth / float(GRID_SIZE) + 0.5);	//60
+highp int numRows = int(screenHeight / float(GRID_SIZE) + 0.5);		//34
 
 int getFrustumIndex()
 {
-    int col = int(gl_FragCoord.x/GRID_SIZE);
-    int row = int(gl_FragCoord.y/GRID_SIZE);
+    int col = int(gl_FragCoord.x / GRID_SIZE);
+    int row = int(gl_FragCoord.y / GRID_SIZE);
     return (row * numColumns) + col;
 }
 //#else
 //#endif
-
 
 layout(location = 0) in vec4 WorldPosition;
 layout(location = 1) in vec4 NormalOut;
@@ -70,9 +64,8 @@ vec3 PointLight(uint lightIndex, vec3 worldPos, vec3 normal, vec3 toViewer)
 	vec3 reflected = reflect(-toLight, normal);
 	float specularStrength = pow(max(dot(toViewer, reflected), 0.0), 32);
 	
-	//Consider sending up light sizes rather than attenuating based on distance.
 	float magnitude = length(lightPosition - worldPos);
-	float attenuation = lightSize / (magnitude * magnitude);// * magnitude
+	float attenuation = lightSize / (magnitude * magnitude);
 	
 	diffuseStrength *= attenuation;
 	specularStrength *= attenuation;
@@ -95,14 +88,13 @@ void main()
 	
 	//#if DRAW_FRUSTUMS
 		int frustumID = getFrustumIndex();
-		vec4 lightCountColor = mix(vec4(0, 1, 0, 1), vec4(1, 0, 0, 1), float(lightCounts[frustumID])/float(MAX_LIGHTS_PER_FRUSTUM));
+		vec4 lightCountColor = mix(vec4(0, 1, 0, 1), vec4(1, 0, 0, 1), float(lightCounts[frustumID]) / float(MAX_LIGHTS_PER_FRUSTUM));
 		FinalColor = mix(forwardColor, lightCountColor, 0.5);
 		
-		
-		
-		
+		//Sure enough, the window origin is top left.
+		//FinalColor = vec4(gl_FragCoord.x / screenWidth, gl_FragCoord.y / screenHeight, 0.0, 1.0);
+
 		float idNormalized = float(frustumID)/(numColumns * numRows);
-		
 		vec4 frustumIndexColor = vec4(idNormalized, 1 - idNormalized, idNormalized, 1.0);
 	//#else
 	//    FinalColor = vec4(vec3(pointContribution + directionContribution.xyz), directionContribution.w);

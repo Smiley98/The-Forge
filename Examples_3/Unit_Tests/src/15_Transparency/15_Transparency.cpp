@@ -969,8 +969,9 @@ class Transparency: public IApp
 			// update frustum culling
 			frustumGrid.updateFrustumCulling(gLightUniformData.mLightPositions, gLightUniformData.mLightSizes, MAX_NUM_LIGHTS, viewMat);
 		}
-
-
+		//Update uniform
+		memset(gHeatmapUniformData.lightCounts, 0, 1980 * sizeof(int));
+		memcpy(gHeatmapUniformData.lightCounts, frustumGrid.lightCounts.data(), sizeof(int) * frustumGrid.lightCounts.size());
 
 		/************************************************************************/
 		// Scene Update
@@ -1895,6 +1896,8 @@ class Transparency: public IApp
 		/************************************************************************/
 		// Update uniform buffers
 		/************************************************************************/
+		BufferUpdateDesc heatmapBufferUpdateDesc = { pBufferHeatmap[gFrameIndex], &gHeatmapUniformData };
+		updateResource(&heatmapBufferUpdateDesc);
 		BufferUpdateDesc materialBufferUpdateDesc = { pBufferMaterials[gFrameIndex], &gMaterialUniformData };
 		updateResource(&materialBufferUpdateDesc);
 		BufferUpdateDesc opaqueBufferUpdateDesc = { pBufferOpaqueObjectTransforms[gFrameIndex], &gObjectInfoUniformData };
@@ -2016,7 +2019,7 @@ class Transparency: public IApp
 		endCmd(pCmd);
 
 		queueSubmit(pGraphicsQueue, 1, &pCmd, pRenderCompleteFence, 1, &pImageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);
-		getFenceStatus(pRenderer, pRenderCompleteFence, &fenceStatus);
+		/*getFenceStatus(pRenderer, pRenderCompleteFence, &fenceStatus);
 		if (fenceStatus == FENCE_STATUS_INCOMPLETE)
 			waitForFences(pRenderer, 1, &pRenderCompleteFence);
 
@@ -2043,7 +2046,7 @@ class Transparency: public IApp
 		cmdResourceBarrier(pCmd, 0, NULL, 1, barriers1);
 		endCmd(pCmd);
 
-		queueSubmit(pGraphicsQueue, 1, &pCmd, pRenderCompleteFence, 1, &pImageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);
+		queueSubmit(pGraphicsQueue, 1, &pCmd, pRenderCompleteFence, 1, &pImageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);*/
 		queuePresent(pGraphicsQueue, pSwapChain, gFrameIndex, 1, &pRenderCompleteSemaphore);
 		flipProfiler();
 	}
@@ -2294,7 +2297,7 @@ class Transparency: public IApp
 	}
 
 	void CreateShaders()
-	{	// MAX_NUM_LIGHTS
+	{
 		// Define shader macros
 		char maxNumObjectsMacroBuffer[5] = {}; sprintf(maxNumObjectsMacroBuffer, "%i", MAX_NUM_OBJECTS);
 		char maxNumLightsMacroBuffer[5] = {}; sprintf(maxNumLightsMacroBuffer, "%i", MAX_NUM_LIGHTS);
