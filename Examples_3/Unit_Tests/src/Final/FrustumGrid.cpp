@@ -29,7 +29,7 @@ namespace p2
 	//}
 
 	Vector4  FrustumGrid::toClipSpace(Vector2 screenSpacePosition, int screenWidth, int screenHeight)
-	{	//This converts to normalized device coordinates. Clip space would involve multiplying by proj[3][3] then proj.
+	{
 		Vector4 clippy = { (screenSpacePosition[0] / screenWidth) * 2 - 1.0f,	((screenHeight - screenSpacePosition[1]) / screenHeight) * 2 - 1.0f , 1, 1 };
 		return clippy;
 	}
