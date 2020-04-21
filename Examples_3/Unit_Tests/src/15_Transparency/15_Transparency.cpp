@@ -971,7 +971,10 @@ class Transparency: public IApp
 			// update frustum culling
 			frustumGrid.updateFrustumCulling(gLightUniformData.mLightPositions, gLightUniformData.mLightSizes, MAX_NUM_LIGHTS, viewMat);
 		}
-		memcpy(&/*gHeatmapUniformData*/gMaterialUniformData.lightCounts, frustumGrid.lightCounts.data(), sizeof(int) * frustumGrid.lightCounts.size());
+		for (size_t i = 0; i < frustumGrid.lightCounts.size(); i++) {
+			gMaterialUniformData.lightCounts[i] = frustumGrid.lightCounts[i];
+		}
+		//memcpy(/*gHeatmapUniformData*/gMaterialUniformData.lightCounts, frustumGrid.lightCounts.data(), sizeof(int) * frustumGrid.lightCounts.size());
 
 		/************************************************************************/
 		// Scene Update
