@@ -197,7 +197,7 @@ typedef struct LightUniformBlock
 } LightUniformBlock;
 
 typedef struct HeatmapUniformBlock {
-	vec4 testData = { 0, 1, 0, 1 };
+	int lightCounts[1980];
 } HeatmapUniformBlock;
 
 typedef struct CameraUniform
@@ -969,8 +969,7 @@ class Transparency: public IApp
 			// update frustum culling
 			frustumGrid.updateFrustumCulling(gLightUniformData.mLightPositions, gLightUniformData.mLightSizes, MAX_NUM_LIGHTS, viewMat);
 		}
-
-
+		memcpy(&gHeatmapUniformData, frustumGrid.lightCounts.data(), sizeof(int) * frustumGrid.lightCounts.size());
 
 		/************************************************************************/
 		// Scene Update
@@ -1895,7 +1894,6 @@ class Transparency: public IApp
 		/************************************************************************/
 		// Update uniform buffers
 		/************************************************************************/
-		gHeatmapUniformData.testData = vec4(0.0f, 0.5f, 0.0f, 1.0f);
 		BufferUpdateDesc heatmapBufferUpdateDesc = { pBufferHeatmap[gFrameIndex], &gHeatmapUniformData };
 		updateResource(&heatmapBufferUpdateDesc);
 
@@ -2212,6 +2210,7 @@ class Transparency: public IApp
 		// Define shader macros
 		char maxNumObjectsMacroBuffer[5] = {}; sprintf(maxNumObjectsMacroBuffer, "%i", MAX_NUM_OBJECTS);
 		char maxNumLightsMacroBuffer[5] = {}; sprintf(maxNumLightsMacroBuffer, "%i", MAX_NUM_LIGHTS);
+		char maxNumLightsPerFrustumMacroBuffer[5] = {}; sprintf(maxNumLightsPerFrustumMacroBuffer, "%i", MAX_LIGHTS_PER_FRUSTUM);
 		char maxNumTexturesMacroBuffer[5] = {}; sprintf(maxNumTexturesMacroBuffer, "%i", TEXTURE_COUNT);
 		char aoitNodeCountMacroBuffer[5] = {}; sprintf(aoitNodeCountMacroBuffer, "%i", AOIT_NODE_COUNT);
 		char useShadowsMacroBuffer[5] = {}; sprintf(useShadowsMacroBuffer, "%i", USE_SHADOWS);
@@ -2221,6 +2220,7 @@ class Transparency: public IApp
 
 		ShaderMacro maxNumObjectsMacro = { "MAX_NUM_OBJECTS", maxNumObjectsMacroBuffer };
 		ShaderMacro maxNumLightsMacro = { "MAX_NUM_LIGHTS", maxNumLightsMacroBuffer };
+		ShaderMacro maxNumLightsPerFrustumMacro = { "MAX_LIGHTS_PER_FRUSTUM", maxNumLightsPerFrustumMacroBuffer };
 		ShaderMacro maxNumTexturesMacro = { "MAX_NUM_TEXTURES", maxNumTexturesMacroBuffer };
 		ShaderMacro aoitNodeCountMacro = { "AOIT_NODE_COUNT", aoitNodeCountMacroBuffer };
 		ShaderMacro useShadowsMacro = { "USE_SHADOWS", useShadowsMacroBuffer };
@@ -2228,7 +2228,7 @@ class Transparency: public IApp
 		ShaderMacro useDiffusionMacro = { "PT_USE_DIFFUSION", useDiffusionMacroBuffer };
 		ShaderMacro useCausticsMacro = { "PT_USE_CAUSTICS", useCausticsMacroBuffer };
 
-		ShaderMacro shaderMacros[] = { maxNumObjectsMacro, maxNumLightsMacro, maxNumTexturesMacro, aoitNodeCountMacro, useShadowsMacro,
+		ShaderMacro shaderMacros[] = { maxNumObjectsMacro, maxNumLightsMacro, maxNumLightsPerFrustumMacro, maxNumTexturesMacro, aoitNodeCountMacro, useShadowsMacro,
 									   useRefractionMacro, useDiffusionMacro,   useCausticsMacro };
 		const uint  numShaderMacros = sizeof(shaderMacros) / sizeof(shaderMacros[0]);
 
