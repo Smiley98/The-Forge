@@ -192,15 +192,6 @@
     <ClInclude Include="..\..\..\..\..\Common_3\OS\FileSystem\MemoryStream.h">
       <Filter>OS\FileSystem</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Middleware_3\ECS\BaseComponent.h">
-      <Filter>OS\Middleware_3\ECS</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Middleware_3\ECS\ComponentRepresentation.h">
-      <Filter>OS\Middleware_3\ECS</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Middleware_3\ECS\EntityManager.h">
-      <Filter>OS\Middleware_3\ECS</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\..\..\Common_3\OS\Windows\WindowsBase.cpp">
@@ -346,15 +337,6 @@
     </ClCompile>
     <ClCompile Include="..\..\..\..\..\Common_3\OS\FileSystem\MemoryStream.cpp">
       <Filter>OS\FileSystem</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\..\Middleware_3\ECS\BaseComponent.cpp">
-      <Filter>OS\Middleware_3\ECS</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\..\Middleware_3\ECS\ComponentRepresentation.cpp">
-      <Filter>OS\Middleware_3\ECS</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\..\Middleware_3\ECS\EntityManager.cpp">
-      <Filter>OS\Middleware_3\ECS</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

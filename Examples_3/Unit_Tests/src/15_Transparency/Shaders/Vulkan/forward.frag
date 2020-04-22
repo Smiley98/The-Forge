@@ -92,29 +92,29 @@ void main()
 		uint frustumID = getFrustumIndex();
 	
 
-		if(frustumID == 1979 || frustumID == 256 || frustumID == 496) 
-		{	
-					FinalColor = vec4(0, 0, 1, 1);
-		} else
-		{
-	//				vec4 lightCountColor = mix(vec4(0, 1, 0, 1), vec4(1, 0, 0, 1), float(lightCounts[frustumID]) / float(MAX_LIGHTS_PER_FRUSTUM));
-	//				FinalColor = mix(forwardColor, lightCountColor, 0.8);
-					//FinalColor = vec4(lightCounts[frustumID], lightCounts[frustumID], lightCounts[frustumID], 1);
-					
-					uint lightCount = 0;
-					for(uint i = 0; i < MAX_LIGHTS_PER_FRUSTUM; i++)
-					{
-						if(lightIndices[(frustumID * 64) + i] > -1)
-						{
-							lightCount++;
-						} else
-						{
-							break;
-						}
-					}
-					
-					FinalColor = vec4(float(lightCount)/64.0, 0, 0, 1);
-		}
+		//if(frustumID == 1979 || frustumID == 256 || frustumID == 496) 
+		//{	
+		//			FinalColor = vec4(0, 0, 1, 1);
+		//} else
+		//{
+	//	//			vec4 lightCountColor = mix(vec4(0, 1, 0, 1), vec4(1, 0, 0, 1), float(lightCounts[frustumID]) / float(MAX_LIGHTS_PER_FRUSTUM));
+	//	//			FinalColor = mix(forwardColor, lightCountColor, 0.8);
+		//			//FinalColor = vec4(lightCounts[frustumID], lightCounts[frustumID], lightCounts[frustumID], 1);
+		//			
+		//			uint lightCount = 0;
+		//			for(uint i = 0; i < MAX_LIGHTS_PER_FRUSTUM; i++)
+		//			{
+		//				if(lightIndices[(frustumID * 64) + i] > -1)
+		//				{
+		//					lightCount++;
+		//				} else
+		//				{
+		//					break;
+		//				}
+		//			}
+		//			
+		//			FinalColor = vec4(float(lightCount)/64.0, 0, 0, 1);
+		//}
 
 		
 		//Sure enough, the window origin is top left.
@@ -123,6 +123,6 @@ void main()
 		//float idNormalized = float(frustumID)/(numColumns * numRows);
 		//vec4 frustumIndexColor = vec4(idNormalized, 1 - idNormalized, idNormalized, 1.0);
 	//#else
-	//    FinalColor = vec4(vec3(pointContribution + directionContribution.xyz), directionContribution.w);
+	    FinalColor = vec4(vec3(pointContribution + directionContribution.xyz), directionContribution.w);
 	//#endif
 }

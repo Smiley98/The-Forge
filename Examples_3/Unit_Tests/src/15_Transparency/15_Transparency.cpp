@@ -39,7 +39,7 @@
 #define CUBE_NUM (CUBES_EACH_ROW * CUBES_EACH_COL + 1)
 #define DEBUG_OUTPUT 1       //exclusively used for texture data visulization, such as rendering depth, shadow map etc.
 #if defined(DIRECT3D12) || defined(VULKAN) && !defined(_DURANGO)
-#define AOIT_ENABLE 1
+#define AOIT_ENABLE 0
 #endif
 #define AOIT_NODE_COUNT 4    // 2, 4 or 8. Higher numbers give better results at the cost of performance
 #if AOIT_NODE_COUNT == 2
@@ -47,9 +47,9 @@
 #else
 #define AOIT_RT_COUNT (AOIT_NODE_COUNT / 4)
 #endif
-#define USE_SHADOWS 1
-#define PT_USE_REFRACTION 1
-#define PT_USE_DIFFUSION 1
+#define USE_SHADOWS 0
+#define PT_USE_REFRACTION 0
+#define PT_USE_DIFFUSION 0
 #define PT_USE_CAUSTICS (0 & USE_SHADOWS)
 
 #define FRAND	(static_cast <float> (rand()) / static_cast <float> (RAND_MAX))
@@ -543,12 +543,12 @@ Fence*     pRenderCompleteFences[gImageCount] = { NULL };
 Semaphore* pImageAcquiredSemaphore = NULL;
 Semaphore* pRenderCompleteSemaphores[gImageCount] = { NULL };
 
-uint32_t gTransparencyType = TRANSPARENCY_TYPE_PHENOMENOLOGICAL;
+uint32_t gTransparencyType = TRANSPARENCY_TYPE_ALPHA_BLEND;
 
-
+#if FORWARDPLUS != 0
 // forward+
 p2::FrustumGrid frustumGrid;
-
+#endif
 
 
 void AddObject(
@@ -958,6 +958,7 @@ class Transparency: public IApp
 			gLightUniformData.mLightSizes[i] = 4.0f + sinf(gCurrentTime * 2.0f) * 2.0f;
 		}
 
+#if FORWARDPLUS != 0
 		/************************************************************************/
 		// Forward+ Update
 		/************************************************************************/
@@ -981,7 +982,7 @@ class Transparency: public IApp
 		//{
 		//	memcpy(gHeatmapUniformData.lightIndices + (i * MAX_LIGHTS_PER_FRUSTUM), frustumGrid.lightIndices[i], sizeof(int) * MAX_LIGHTS_PER_FRUSTUM);
 		//}
-
+#endif
 
 		/************************************************************************/
 		// Scene Update
