@@ -547,7 +547,36 @@ uint32_t gTransparencyType = TRANSPARENCY_TYPE_PHENOMENOLOGICAL;
 // forward+
 p2::FrustumGrid frustumGrid;
 
-
+namespace keys {
+	enum {
+		A = 0x41,
+		B = 0x42,
+		C = 0x43,
+		D = 0x44,
+		E = 0x45,
+		F = 0x46,
+		G = 0x47,
+		H = 0x48,
+		I = 0x49,
+		J = 0x4A,
+		K = 0x4B,
+		L = 0x4C,
+		M = 0x4D,
+		N = 0x4E,
+		O = 0x4F,
+		P = 0x50,
+		Q = 0x51,
+		R = 0x52,
+		S = 0x53,
+		T = 0x54,
+		U = 0x55,
+		V = 0x56,
+		W = 0x57,
+		X = 0x58,
+		Y = 0x59,
+		Z = 0x5A
+	};
+}
 
 void AddObject(
 	MeshResource mesh, vec3 position, vec4 color, vec3 translucency = vec3(0.0f), float eta = 1.0f, float collimation = 0.0f,
@@ -967,11 +996,14 @@ class Transparency: public IApp
 				frustumGrid.computeTiles(zNear, zFar, horizontal_fov, mSettings.mWidth, mSettings.mHeight);
 				initialized = true;
 			}
+			static bool grid = false;
+			if (GetAsyncKeyState(keys::G))
+				grid = !grid;
 
 			// update frustum culling
-			frustumGrid.updateFrustumCulling(gLightUniformData.mLightPositions, gLightUniformData.mLightSizes, MAX_NUM_LIGHTS, viewMat);
+			if(grid)
+				frustumGrid.updateFrustumCulling(gLightUniformData.mLightPositions, gLightUniformData.mLightSizes, MAX_NUM_LIGHTS, viewMat);
 		}
-
 
 		const size_t size = frustumGrid.lightCounts.size();
 		for (size_t i = 0; i < size; i++) {
@@ -1643,8 +1675,14 @@ class Transparency: public IApp
 	{
 		////////////////////////////////////////////////////////
 		//  Draw UIs
+		beginCmd(pCmd);
 		cmdBeginDebugMarker(pCmd, 0, 1, 0, "Draw UI");
-		cmdBindRenderTargets(pCmd, 1, &pRenderTargetScreen, NULL, NULL, NULL, NULL, -1, -1);
+
+		//Add load actions if I want to clear the colour (currently the sponza pass takes care of that).
+		cmdBindRenderTargets(pCmd, 1, &pRenderTargetScreen, NULL, /*&loadActions*/NULL, NULL, NULL, -1, -1);
+
+		cmdSetViewport(pCmd, 0.0f, 0.0f, (float)pRenderTargetScreen->mDesc.mWidth, (float)pRenderTargetScreen->mDesc.mHeight, 0.0f, 1.0f);
+		cmdSetScissor(pCmd, 0, 0, pRenderTargetScreen->mDesc.mWidth, pRenderTargetScreen->mDesc.mHeight);
 
 		static HiresTimer gTimer;
 		gTimer.GetUSec(true);
@@ -1678,7 +1716,7 @@ class Transparency: public IApp
 		endCmd(pCmd);
 	}
 
-	void HeatmapPass(Cmd* pCmd)
+	void HeatmapPass(Cmd* pCmd, bool splitscreen)
 	{
 		beginCmd(pCmd);
 		LoadActionsDesc loadActions = {};
@@ -1687,7 +1725,13 @@ class Transparency: public IApp
 		loadActions.mLoadActionDepth = LOAD_ACTION_DONTCARE;
 
 		cmdBindRenderTargets(pCmd, 1, &pRenderTargetScreen, NULL, &loadActions, NULL, NULL, -1, -1);
-		cmdSetViewport(pCmd, 0.0f, 0.0f, (float)pRenderTargetScreen->mDesc.mWidth, (float)pRenderTargetScreen->mDesc.mHeight, 0.0f, 1.0f);
+		if (splitscreen) {
+			const float halfWidth = (float)pRenderTargetScreen->mDesc.mWidth * 0.5f;
+			const float halfHeight = (float)pRenderTargetScreen->mDesc.mHeight * 0.5f;
+			cmdSetViewport(pCmd, halfWidth, 0.0f, halfWidth, halfHeight, 0.0f, 1.0f);
+		}
+		else
+			cmdSetViewport(pCmd, 0.0f, 0.0f, (float)pRenderTargetScreen->mDesc.mWidth, (float)pRenderTargetScreen->mDesc.mHeight, 0.0f, 1.0f);
 		cmdSetScissor(pCmd, 0, 0, pRenderTargetScreen->mDesc.mWidth, pRenderTargetScreen->mDesc.mHeight);
 
 		cmdBindPipeline(pCmd, pPipelineHeatmap);
@@ -1988,6 +2032,15 @@ class Transparency: public IApp
 			waitForFences(pRenderer, 1, &pRenderCompleteFence);
 
 		gCpuTimer.GetUSec(true);
+		static bool splitscreen = true;
+		if (GetAsyncKeyState(keys::F))	//f for fullscreen
+			splitscreen = !splitscreen;
+		static bool ui = true;
+		if (GetAsyncKeyState(keys::U))	//u for ui
+			ui = !ui;
+		static bool heatmap = true;
+		if (GetAsyncKeyState(keys::H))	//h for heatmap
+			heatmap = !heatmap;
 #pragma region UniformBuffers
 		/************************************************************************/
 		// Update uniform buffers
@@ -2039,18 +2092,23 @@ class Transparency: public IApp
 		SponzaPass(pCmd);
 		queueSubmit(pGraphicsQueue, 1, &pCmd, pRenderCompleteFence, 1, &pImageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);
 
-		/*getFenceStatus(pRenderer, pRenderCompleteFence, &fenceStatus);
-		if (fenceStatus == FENCE_STATUS_INCOMPLETE)
-			waitForFences(pRenderer, 1, &pRenderCompleteFence);
-		UIPass(pCmd);
-		queueSubmit(pGraphicsQueue, 1, &pCmd, pRenderCompleteFence, 1, &pImageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);
+		if (ui)
+		{
+			getFenceStatus(pRenderer, pRenderCompleteFence, &fenceStatus);
+			if (fenceStatus == FENCE_STATUS_INCOMPLETE)
+				waitForFences(pRenderer, 1, &pRenderCompleteFence);
+			UIPass(pCmd);
+			queueSubmit(pGraphicsQueue, 1, &pCmd, pRenderCompleteFence, 1, &pImageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);
+		}
 
-		getFenceStatus(pRenderer, pRenderCompleteFence, &fenceStatus);
-		if (fenceStatus == FENCE_STATUS_INCOMPLETE)
-			waitForFences(pRenderer, 1, &pRenderCompleteFence);
-
-		HeatmapPass(pCmd);
-		queueSubmit(pGraphicsQueue, 1, &pCmd, pRenderCompleteFence, 1, &pImageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);*/
+		if (heatmap)
+		{
+			getFenceStatus(pRenderer, pRenderCompleteFence, &fenceStatus);
+			if (fenceStatus == FENCE_STATUS_INCOMPLETE)
+				waitForFences(pRenderer, 1, &pRenderCompleteFence);
+			HeatmapPass(pCmd, splitscreen);
+			queueSubmit(pGraphicsQueue, 1, &pCmd, pRenderCompleteFence, 1, &pImageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);
+		}
 
 		queuePresent(pGraphicsQueue, pSwapChain, gFrameIndex, 1, &pRenderCompleteSemaphore);
 		flipProfiler();
