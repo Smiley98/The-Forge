@@ -975,7 +975,10 @@ class Transparency: public IApp
 
 		const size_t size = frustumGrid.lightCounts.size();
 		for (size_t i = 0; i < size; i++) {
-			gMaterialUniformData.lightCounts[i].setX(frustumGrid.lightCounts[i]);
+			vec4 lightCount = { frustumGrid.lightCounts[i], 0, 0, 1 };
+			gMaterialUniformData.lightCounts[i] = lightCount;
+			//volatile int dog = 5;
+			//gMaterialUniformData.lightCounts[i] = gMaterialUniformData.lightCounts[i].setX(frustumGrid.lightCounts[i]);
 		}
 
 		//memcpy(/*gHeatmapUniformData*/gMaterialUniformData.lightCounts, frustumGrid.lightCounts.data(), sizeof(int) * frustumGrid.lightCounts.size());
