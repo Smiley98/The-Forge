@@ -1610,6 +1610,93 @@ class Transparency: public IApp
 		cmdEndDebugMarker(pCmd);
 	}
 
+	void SponzaPass(Cmd* pCmd)
+	{
+		beginCmd(pCmd);
+		cmdBeginGpuFrameProfile(pCmd, pGpuProfiler);
+
+		DrawSkybox(pCmd);
+		ShadowPass(pCmd);
+		StochasticShadowPass(pCmd);
+		OpaquePass(pCmd);
+
+		if (gTransparencyType == TRANSPARENCY_TYPE_ALPHA_BLEND)
+			AlphaBlendTransparentPass(pCmd);
+		else if (gTransparencyType == TRANSPARENCY_TYPE_WEIGHTED_BLENDED_OIT)
+			WeightedBlendedOrderIndependentTransparencyPass(pCmd, false);
+		else if (gTransparencyType == TRANSPARENCY_TYPE_WEIGHTED_BLENDED_OIT_VOLITION)
+			WeightedBlendedOrderIndependentTransparencyPass(pCmd, true);
+		else if (gTransparencyType == TRANSPARENCY_TYPE_PHENOMENOLOGICAL)
+			PhenomenologicalTransparencyPass(pCmd);
+#if AOIT_ENABLE
+		else if (gTransparencyType == TRANSPARENCY_TYPE_ADAPTIVE_OIT)
+			AdaptiveOrderIndependentTransparency(pCmd);
+#endif
+		else
+			ASSERT(false && "Not implemented.");
+
+		cmdEndGpuFrameProfile(pCmd, pGpuProfiler);
+		endCmd(pCmd);
+	}
+
+	void UIPass(Cmd* pCmd)
+	{
+		////////////////////////////////////////////////////////
+		//  Draw UIs
+		cmdBeginDebugMarker(pCmd, 0, 1, 0, "Draw UI");
+		cmdBindRenderTargets(pCmd, 1, &pRenderTargetScreen, NULL, NULL, NULL, NULL, -1, -1);
+
+		static HiresTimer gTimer;
+		gTimer.GetUSec(true);
+
+		//vec3 camP = pCameraController->getViewPosition();
+		vec3 camP = gCameraUniformData.mPosition.getXYZ();
+		float cx = camP.getX();
+		float cy = camP.getY();
+		float cz = camP.getZ();
+
+		gAppUI.DrawText(
+			pCmd, float2(8.0f, 15.0f), eastl::string().sprintf("CPU Time: %f ms", gCpuTimer.GetUSecAverage() / 1000.0f).c_str(),
+			&gFrameTimeDraw);
+		gAppUI.DrawText(
+			pCmd, float2(8.0f, 40.0f), eastl::string().sprintf("GPU %f ms", (float)pGpuProfiler->mCumulativeTime * 1000.0f).c_str(),
+			&gFrameTimeDraw);
+		gAppUI.DrawText(
+			pCmd, float2(8.0f, 65.0f), eastl::string().sprintf("Frame Time: %f ms", gTimer.GetUSecAverage() / 1000.0f).c_str(),
+			&gFrameTimeDraw);
+		gAppUI.DrawText(
+			pCmd, float2(8.0f, 500.0f), eastl::string().sprintf("Camera Position: %f %f %f", cx, cy, cz).c_str(),
+			&gFrameTimeDraw);
+
+		gAppUI.DrawDebugGpuProfile(pCmd, float2(8.0f, 90.0f), pGpuProfiler, NULL);
+		gVirtualJoystick.Draw(pCmd, { 1.0f, 1.0f, 1.0f, 1.0f });
+		cmdDrawProfiler();
+		gAppUI.Gui(pGuiWindow);
+		gAppUI.Draw(pCmd);
+
+		cmdEndDebugMarker(pCmd);
+		endCmd(pCmd);
+	}
+
+	void HeatmapPass(Cmd* pCmd)
+	{
+		beginCmd(pCmd);
+		LoadActionsDesc loadActions = {};
+		loadActions.mLoadActionsColor[0] = LOAD_ACTION_DONTCARE;
+		loadActions.mClearColorValues[0] = pRenderTargetScreen->mDesc.mClearValue;
+		loadActions.mLoadActionDepth = LOAD_ACTION_DONTCARE;
+
+		cmdBindRenderTargets(pCmd, 1, &pRenderTargetScreen, NULL, &loadActions, NULL, NULL, -1, -1);
+		cmdSetViewport(pCmd, 0.0f, 0.0f, (float)pRenderTargetScreen->mDesc.mWidth, (float)pRenderTargetScreen->mDesc.mHeight, 0.0f, 1.0f);
+		cmdSetScissor(pCmd, 0, 0, pRenderTargetScreen->mDesc.mWidth, pRenderTargetScreen->mDesc.mHeight);
+
+		cmdBindPipeline(pCmd, pPipelineHeatmap);
+		cmdBindDescriptorSet(pCmd, UNIFORM_SET(gFrameIndex, VIEW_CAMERA, GEOM_OPAQUE), pDescriptorSetUniforms);
+		cmdDraw(pCmd, 3, 0);
+
+		endCmd(pCmd);
+	}
+
 	void AlphaBlendTransparentPass(Cmd* pCmd)
 	{
 		LoadActionsDesc loadActions = {};
@@ -1901,12 +1988,10 @@ class Transparency: public IApp
 			waitForFences(pRenderer, 1, &pRenderCompleteFence);
 
 		gCpuTimer.GetUSec(true);
+#pragma region UniformBuffers
 		/************************************************************************/
 		// Update uniform buffers
 		/************************************************************************/
-		//BufferUpdateDesc heatmapBufferUpdateDesc = { pBufferHeatmap[gFrameIndex], &gHeatmapUniformData };
-		//updateResource(&heatmapBufferUpdateDesc);
-
 		BufferUpdateDesc materialBufferUpdateDesc = { pBufferMaterials[gFrameIndex], &gMaterialUniformData };
 		updateResource(&materialBufferUpdateDesc);
 
@@ -1927,6 +2012,8 @@ class Transparency: public IApp
 
 		BufferUpdateDesc lightBufferCbv = { pBufferLightUniform[gFrameIndex], &gLightUniformData };
 		updateResource(&lightBufferCbv);
+#pragma endregion
+#pragma region TransparencySettings
 		/************************************************************************/
 		// Update transparency settings
 		/************************************************************************/
@@ -1942,138 +2029,29 @@ class Transparency: public IApp
 			wboitSettingsUpdateDesc.mSize = sizeof(WBOITVolitionSettings);
 			updateResource(&wboitSettingsUpdateDesc);
 		}
+#pragma endregion
 		/************************************************************************/
 		// Rendering
 		/************************************************************************/
 		Cmd* pCmd = ppCmds[gFrameIndex];
 		pRenderTargetScreen = pSwapChain->ppSwapchainRenderTargets[gFrameIndex];
 
-		beginCmd(pCmd);
-		cmdBeginGpuFrameProfile(pCmd, pGpuProfiler);
-
-		DrawSkybox(pCmd);
-		ShadowPass(pCmd);
-		StochasticShadowPass(pCmd);
-		OpaquePass(pCmd);
-
-		if (gTransparencyType == TRANSPARENCY_TYPE_ALPHA_BLEND)
-			AlphaBlendTransparentPass(pCmd);
-		else if (gTransparencyType == TRANSPARENCY_TYPE_WEIGHTED_BLENDED_OIT)
-			WeightedBlendedOrderIndependentTransparencyPass(pCmd, false);
-		else if (gTransparencyType == TRANSPARENCY_TYPE_WEIGHTED_BLENDED_OIT_VOLITION)
-			WeightedBlendedOrderIndependentTransparencyPass(pCmd, true);
-		else if (gTransparencyType == TRANSPARENCY_TYPE_PHENOMENOLOGICAL)
-			PhenomenologicalTransparencyPass(pCmd);
-#if AOIT_ENABLE
-		else if (gTransparencyType == TRANSPARENCY_TYPE_ADAPTIVE_OIT)
-			AdaptiveOrderIndependentTransparency(pCmd);
-#endif
-		else
-			ASSERT(false && "Not implemented.");
-
-		cmdBindRenderTargets(pCmd, 1, &pRenderTargetScreen, NULL, NULL, NULL, NULL, -1, -1);
-		////////////////////////////////////////////////////////
-		//  Draw UIs
-		/*cmdBeginDebugMarker(pCmd, 0, 1, 0, "Draw UI");
-
-		static HiresTimer gTimer;
-		gTimer.GetUSec(true);
-
-		//vec3 camP = pCameraController->getViewPosition();
-		vec3 camP = gCameraUniformData.mPosition.getXYZ();
-		float cx = camP.getX();
-		float cy = camP.getY();
-		float cz = camP.getZ();
-
-		gAppUI.DrawText(
-			pCmd, float2(8.0f, 15.0f), eastl::string().sprintf("CPU Time: %f ms", gCpuTimer.GetUSecAverage() / 1000.0f).c_str(),
-			&gFrameTimeDraw);
-		gAppUI.DrawText(
-			pCmd, float2(8.0f, 40.0f), eastl::string().sprintf("GPU %f ms", (float)pGpuProfiler->mCumulativeTime * 1000.0f).c_str(),
-			&gFrameTimeDraw);
-		gAppUI.DrawText(
-			pCmd, float2(8.0f, 65.0f), eastl::string().sprintf("Frame Time: %f ms", gTimer.GetUSecAverage() / 1000.0f).c_str(),
-			&gFrameTimeDraw);
-		gAppUI.DrawText(
-			pCmd, float2(8.0f, 500.0f), eastl::string().sprintf("Camera Position: %f %f %f", cx, cy, cz).c_str(),
-			&gFrameTimeDraw);
-
-		gAppUI.DrawDebugGpuProfile(pCmd, float2(8.0f, 90.0f), pGpuProfiler, NULL);
-		gVirtualJoystick.Draw(pCmd, { 1.0f, 1.0f, 1.0f, 1.0f });
-		cmdDrawProfiler();
-		gAppUI.Gui(pGuiWindow);
-		gAppUI.Draw(pCmd);
-
-		cmdEndDebugMarker(pCmd);*/
-		cmdEndGpuFrameProfile(pCmd, pGpuProfiler);
-		endCmd(pCmd);
-
+		SponzaPass(pCmd);
 		queueSubmit(pGraphicsQueue, 1, &pCmd, pRenderCompleteFence, 1, &pImageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);
 
 		/*getFenceStatus(pRenderer, pRenderCompleteFence, &fenceStatus);
 		if (fenceStatus == FENCE_STATUS_INCOMPLETE)
 			waitForFences(pRenderer, 1, &pRenderCompleteFence);
+		UIPass(pCmd);
+		queueSubmit(pGraphicsQueue, 1, &pCmd, pRenderCompleteFence, 1, &pImageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);
 
-		////////////////////////////////////////////////////////
-		//  Draw UIs
-		cmdBeginDebugMarker(pCmd, 0, 1, 0, "Draw UI");
-		cmdBindRenderTargets(pCmd, 1, &pRenderTargetScreen, NULL, NULL, NULL, NULL, -1, -1);
-
-		static HiresTimer gTimer;
-		gTimer.GetUSec(true);
-
-		//vec3 camP = pCameraController->getViewPosition();
-		vec3 camP = gCameraUniformData.mPosition.getXYZ();
-		float cx = camP.getX();
-		float cy = camP.getY();
-		float cz = camP.getZ();
-
-		gAppUI.DrawText(
-			pCmd, float2(8.0f, 15.0f), eastl::string().sprintf("CPU Time: %f ms", gCpuTimer.GetUSecAverage() / 1000.0f).c_str(),
-			&gFrameTimeDraw);
-		gAppUI.DrawText(
-			pCmd, float2(8.0f, 40.0f), eastl::string().sprintf("GPU %f ms", (float)pGpuProfiler->mCumulativeTime * 1000.0f).c_str(),
-			&gFrameTimeDraw);
-		gAppUI.DrawText(
-			pCmd, float2(8.0f, 65.0f), eastl::string().sprintf("Frame Time: %f ms", gTimer.GetUSecAverage() / 1000.0f).c_str(),
-			&gFrameTimeDraw);
-		gAppUI.DrawText(
-			pCmd, float2(8.0f, 500.0f), eastl::string().sprintf("Camera Position: %f %f %f", cx, cy, cz).c_str(),
-			&gFrameTimeDraw);
-
-		gAppUI.DrawDebugGpuProfile(pCmd, float2(8.0f, 90.0f), pGpuProfiler, NULL);
-		gVirtualJoystick.Draw(pCmd, { 1.0f, 1.0f, 1.0f, 1.0f });
-		cmdDrawProfiler();
-		gAppUI.Gui(pGuiWindow);
-		gAppUI.Draw(pCmd);
-
-		cmdEndDebugMarker(pCmd);
-		endCmd(pCmd);
-
-		queueSubmit(pGraphicsQueue, 1, &pCmd, pRenderCompleteFence, 1, &pImageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);*/
-
-		/*getFenceStatus(pRenderer, pRenderCompleteFence, &fenceStatus);
+		getFenceStatus(pRenderer, pRenderCompleteFence, &fenceStatus);
 		if (fenceStatus == FENCE_STATUS_INCOMPLETE)
 			waitForFences(pRenderer, 1, &pRenderCompleteFence);
 
-		beginCmd(pCmd);
-		RenderTarget* rt = pRenderTargetScreen;
-		LoadActionsDesc loadActions = {};
-		loadActions.mLoadActionsColor[0] = LOAD_ACTION_DONTCARE;
-		loadActions.mClearColorValues[0] = rt->mDesc.mClearValue;
-		loadActions.mLoadActionDepth = LOAD_ACTION_DONTCARE;
-
-		cmdBindRenderTargets(pCmd, 1, &rt, NULL, &loadActions, NULL, NULL, -1, -1);
-		cmdSetViewport(pCmd, 0.0f, 0.0f, (float)rt->mDesc.mWidth, (float)rt->mDesc.mHeight, 0.0f, 1.0f);
-		cmdSetScissor(pCmd, 0, 0, rt->mDesc.mWidth, rt->mDesc.mHeight);
-
-		cmdBindPipeline(pCmd, pPipelineHeatmap);
-		cmdBindDescriptorSet(pCmd, UNIFORM_SET(gFrameIndex, VIEW_CAMERA, GEOM_OPAQUE), pDescriptorSetUniforms);
-		cmdDraw(pCmd, 3, 0);
-
-		endCmd(pCmd);
-
+		HeatmapPass(pCmd);
 		queueSubmit(pGraphicsQueue, 1, &pCmd, pRenderCompleteFence, 1, &pImageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);*/
+
 		queuePresent(pGraphicsQueue, pSwapChain, gFrameIndex, 1, &pRenderCompleteSemaphore);
 		flipProfiler();
 	}
