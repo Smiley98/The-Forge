@@ -73,10 +73,10 @@ layout(UNIT_CBV_CAMERA) uniform CameraUniform
 	vec4 camPosition;
 };
 
-layout(UNIT_CBV_MATERIAL) uniform MaterialUniform
+layout(std140, UNIT_CBV_MATERIAL) uniform MaterialUniform
 {
 	Material Materials[MAX_NUM_OBJECTS];
-	int lightCounts[1980];
+	vec4 lightCounts[1980];
 };
 
 //layout(UNIT_CBV_HEATMAP) uniform HeatmapUniform

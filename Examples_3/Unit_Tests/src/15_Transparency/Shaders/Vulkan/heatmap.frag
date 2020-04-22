@@ -20,7 +20,7 @@ layout(location = 0) out vec4 FinalColor;
 
 void main() {
     uint frustumIndex = getFrustumIndex();
-	vec4 lightCountColor = mix(vec4(0, 1, 0, 1), vec4(1, 0, 0, 1), float(lightCounts[frustumIndex]) / float(MAX_LIGHTS_PER_FRUSTUM));
+	vec4 lightCountColor = mix(vec4(0, 1, 0, 1), vec4(1, 0, 0, 1), float(lightCounts[frustumIndex].x) / float(MAX_LIGHTS_PER_FRUSTUM));
 	FinalColor = lightCountColor;
 }
 

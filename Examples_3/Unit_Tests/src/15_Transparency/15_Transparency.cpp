@@ -173,7 +173,7 @@ typedef struct ObjectInfoStruct
 typedef struct MaterialUniformBlock
 {
 	Material mMaterials[MAX_NUM_OBJECTS];
-	int lightCounts[1980];
+	vec4 lightCounts[1980];	//Added this array.
 } MaterialUniformBlock;
 
 typedef struct ObjectInfoUniformBlock
@@ -971,9 +971,13 @@ class Transparency: public IApp
 			// update frustum culling
 			frustumGrid.updateFrustumCulling(gLightUniformData.mLightPositions, gLightUniformData.mLightSizes, MAX_NUM_LIGHTS, viewMat);
 		}
-		for (size_t i = 0; i < frustumGrid.lightCounts.size(); i++) {
-			gMaterialUniformData.lightCounts[i] = frustumGrid.lightCounts[i];
+
+
+		const size_t size = frustumGrid.lightCounts.size();
+		for (size_t i = 0; i < size; i++) {
+			gMaterialUniformData.lightCounts[i].setX(frustumGrid.lightCounts[i]);
 		}
+
 		//memcpy(/*gHeatmapUniformData*/gMaterialUniformData.lightCounts, frustumGrid.lightCounts.data(), sizeof(int) * frustumGrid.lightCounts.size());
 
 		/************************************************************************/
