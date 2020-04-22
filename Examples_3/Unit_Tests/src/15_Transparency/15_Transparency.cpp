@@ -21,8 +21,13 @@
 * specific language governing permissions and limitations
 * under the License.
 */
+#define FORWARDPLUS 0
 
+#if FORWARDPLUS != 0
 #define NUM_UNIFORM_BUFFERS 6
+#else
+#define NUM_UNIFORM_BUFFERS 4
+#endif
 
 #define MAX_NUM_OBJECTS 128
 //An average of 37 ms/frame with 64 lights, 55ms/frame with 96 lights, 82ms/frame with 128 lights, and 163ms/frame with 256 lights.
@@ -34,17 +39,17 @@
 #define CUBE_NUM (CUBES_EACH_ROW * CUBES_EACH_COL + 1)
 #define DEBUG_OUTPUT 1       //exclusively used for texture data visulization, such as rendering depth, shadow map etc.
 #if defined(DIRECT3D12) || defined(VULKAN) && !defined(_DURANGO)
-#define AOIT_ENABLE 0
+#define AOIT_ENABLE 1
 #endif
-#define AOIT_NODE_COUNT 2    // 2, 4 or 8. Higher numbers give better results at the cost of performance
+#define AOIT_NODE_COUNT 4    // 2, 4 or 8. Higher numbers give better results at the cost of performance
 #if AOIT_NODE_COUNT == 2
 #define AOIT_RT_COUNT 1
 #else
 #define AOIT_RT_COUNT (AOIT_NODE_COUNT / 4)
 #endif
-#define USE_SHADOWS 0
-#define PT_USE_REFRACTION 0
-#define PT_USE_DIFFUSION 0
+#define USE_SHADOWS 1
+#define PT_USE_REFRACTION 1
+#define PT_USE_DIFFUSION 1
 #define PT_USE_CAUSTICS (0 & USE_SHADOWS)
 
 #define FRAND	(static_cast <float> (rand()) / static_cast <float> (RAND_MAX))
@@ -197,11 +202,6 @@ typedef struct LightUniformBlock
 	vec4 mLightColors[MAX_NUM_LIGHTS];
 	float mLightSizes[MAX_NUM_LIGHTS];
 } LightUniformBlock;
-
-typedef struct HeatmapUniformBlock {
-	//uint lightCounts[1980];
-	int lightIndices[1980 * MAX_LIGHTS_PER_FRUSTUM];
-} HeatmapUniformBlock;
 
 typedef struct CameraUniform
 {
@@ -470,7 +470,9 @@ Texture*  pTextures[TEXTURE_COUNT] = {};
 /************************************************************************/
 // Uniform buffers
 /************************************************************************/
+#if FORWARDPLUS != 0
 Buffer* pBufferHeatmap[gImageCount] = { NULL };
+#endif
 Buffer* pBufferMaterials[gImageCount] = { NULL };
 Buffer* pBufferOpaqueObjectTransforms[gImageCount] = { NULL };
 Buffer* pBufferTransparentObjectTransforms[gImageCount] = { NULL };
@@ -505,7 +507,6 @@ uint32_t     gFrameIndex = 0;
 GpuProfiler* pGpuProfiler = NULL;
 float        gCurrentTime = 0.0f;
 
-HeatmapUniformBlock    gHeatmapUniformData;
 MaterialUniformBlock   gMaterialUniformData;
 ObjectInfoUniformBlock gObjectInfoUniformData;
 ObjectInfoUniformBlock gTransparentObjectInfoUniformData;
@@ -1905,10 +1906,14 @@ class Transparency: public IApp
 		/************************************************************************/
 		// Update uniform buffers
 		/************************************************************************/
+
+#if FORWARDPLUS != 0
 		//BufferUpdateDesc heatmapBufferUpdateDesc = { pBufferHeatmap[gFrameIndex], &(gHeatmapUniformData.lightCounts) };
 		//BufferUpdateDesc heatmapBufferUpdateDesc = { pBufferHeatmap[gFrameIndex], &(gHeatmapUniformData.lightIndices) };
-		BufferUpdateDesc heatmapBufferUpdateDesc = {pBufferHeatmap[gFrameIndex], (frustumGrid.lightIndices.data())};
-		updateResource(&heatmapBufferUpdateDesc);
+		//BufferUpdateDesc heatmapBufferUpdateDesc = {pBufferHeatmap[gFrameIndex], (frustumGrid.lightIndices.data())};
+		//updateResource(&heatmapBufferUpdateDesc);
+#endif
+
 		BufferUpdateDesc materialBufferUpdateDesc = { pBufferMaterials[gFrameIndex], &gMaterialUniformData };
 		updateResource(&materialBufferUpdateDesc);
 		BufferUpdateDesc opaqueBufferUpdateDesc = { pBufferOpaqueObjectTransforms[gFrameIndex], &gObjectInfoUniformData };
@@ -2890,12 +2895,13 @@ class Transparency: public IApp
 				params[2].ppBuffers = &pBufferMaterials[i];
 				params[3].pName = "LightUniformBlock";
 				params[3].ppBuffers = &pBufferLightUniform[i];
+#if NUM_UNIFORM_BUFFERS > 4
 				params[4].pName = "WBOITSettings";
 				params[4].ppBuffers = &pBufferWBOITSettings[i];
-
-#if NUM_UNIFORM_BUFFERS == 6
+#if FORWARDPLUS != 0
 				params[5].pName = "HeatmapUniform";
 				params[5].ppBuffers = &pBufferHeatmap[i];
+#endif
 #endif
 
 				// View Shadow Geom Opaque
@@ -2911,7 +2917,7 @@ class Transparency: public IApp
 				//params[0].pName = "HeatmapUniform";
 				//params[0].ppBuffers = &pBufferHeatmap[i];
 				//updateDescriptorSet(pRenderer, (i * 5) + ((VIEW_SHADOW) * 2) + 4, pDescriptorSetUniforms, 6, params);
-				updateDescriptorSet(pRenderer, (i * NUM_UNIFORM_BUFFERS) + 5, pDescriptorSetUniforms, 6, params);
+				//updateDescriptorSet(pRenderer, (i * NUM_UNIFORM_BUFFERS) + 5, pDescriptorSetUniforms, 6, params);
 
 				// View Camera Geom Opaque
 				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_SHADOW, GEOM_TRANSPARENT), pDescriptorSetUniforms, NUM_UNIFORM_BUFFERS, params);
@@ -3257,17 +3263,17 @@ class Transparency: public IApp
 
 	void CreateUniformBuffers()
 	{
-		BufferLoadDesc heatmapUBDesc = {};
-		heatmapUBDesc.mDesc.mDescriptors = DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		heatmapUBDesc.mDesc.mMemoryUsage = RESOURCE_MEMORY_USAGE_CPU_TO_GPU;
-		heatmapUBDesc.mDesc.mSize = sizeof(HeatmapUniformBlock);
-		heatmapUBDesc.mDesc.mFlags = BUFFER_CREATION_FLAG_PERSISTENT_MAP_BIT;
-		heatmapUBDesc.pData = NULL;
-		for (int i = 0; i < gImageCount; ++i)
-		{
-			heatmapUBDesc.ppBuffer = &pBufferHeatmap[i];
-			addResource(&heatmapUBDesc);
-		}
+		//BufferLoadDesc heatmapUBDesc = {};
+		//heatmapUBDesc.mDesc.mDescriptors = DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		//heatmapUBDesc.mDesc.mMemoryUsage = RESOURCE_MEMORY_USAGE_CPU_TO_GPU;
+		//heatmapUBDesc.mDesc.mSize = sizeof(HeatmapUniformBlock);
+		//heatmapUBDesc.mDesc.mFlags = BUFFER_CREATION_FLAG_PERSISTENT_MAP_BIT;
+		//heatmapUBDesc.pData = NULL;
+		//for (int i = 0; i < gImageCount; ++i)
+		//{
+		//	heatmapUBDesc.ppBuffer = &pBufferHeatmap[i];
+		//	addResource(&heatmapUBDesc);
+		//}
 
 		BufferLoadDesc materialUBDesc = {};
 		materialUBDesc.mDesc.mDescriptors = DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -3362,7 +3368,9 @@ class Transparency: public IApp
 	{
 		for (int i = 0; i < gImageCount; ++i)
 		{
+#if FORWARDPLUS != 0
 			removeResource(pBufferHeatmap[i]);
+#endif
 			removeResource(pBufferMaterials[i]);
 			removeResource(pBufferOpaqueObjectTransforms[i]);
 			removeResource(pBufferTransparentObjectTransforms[i]);
