@@ -52,9 +52,6 @@ layout(UNIT_CBV_OBJECT) uniform ObjectUniformBlock
 
 layout(UNIT_CBV_LIGHT) uniform LightUniformBlock
 {
-	//mat4 lightViewProj;
-	//vec4 lightDirection;
-	//vec4 lightColor;
 	mat4 sunViewProj;
 	vec4 sunDirection;
 	vec4 sunColor;
@@ -72,9 +69,11 @@ layout(UNIT_CBV_CAMERA) uniform CameraUniform
 	vec4 camPosition;
 };
 
-layout(UNIT_CBV_MATERIAL) uniform MaterialUniform
+layout(std140, UNIT_CBV_MATERIAL) uniform MaterialUniform
 {
 	Material Materials[MAX_NUM_OBJECTS];
+	vec4 lightCounts[1980];
+	float heatmapScalar;
 };
 
 layout(UNIT_SRV_TEXTURES) uniform texture2D MaterialTextures[MAX_NUM_TEXTURES];

@@ -27,6 +27,7 @@
 
 #include "shading.h"
 
+
 layout(location = 0) in vec4 WorldPosition;
 layout(location = 1) in vec4 NormalOut;
 layout(location = 2) in vec4 UV;
@@ -57,6 +58,19 @@ vec3 PointLight(uint lightIndex, vec3 worldPos, vec3 normal, vec3 toViewer)
 	return (diffuseStrength + specularStrength) * lightColor;
 }
 
+uint MAX_LIGHTS_PER_FRUSTUM  = 64;
+uint GRID_SIZE = 32;
+const float screenWidth =  1920.0;
+const float screenHeight = 1080.0;
+highp uint numColumns = uint(screenWidth / float(GRID_SIZE) + 0.5);	    //60
+highp uint numRows = uint(screenHeight / float(GRID_SIZE) + 0.5);		//34
+uint getFrustumIndex()
+{
+    uint col = uint(gl_FragCoord.x / GRID_SIZE);
+    uint row = uint(gl_FragCoord.y / GRID_SIZE);
+    return (row * numColumns) + col;
+}
+
 void main()
 {
 	vec3 pointContribution = vec3(0.0, 0.0, 0.0);
@@ -66,8 +80,12 @@ void main()
 	for (uint i = 0; i < MAX_NUM_LIGHTS; i++) {
 		pointContribution += PointLight(i, WorldPosition.xyz, normal, view);
 	}
-
 	vec4 directionContribution = Shade(MatID, UV.xy, WorldPosition.xyz, normal);
-	
-	FinalColor = vec4(vec3(pointContribution + directionContribution.xyz), directionContribution.w);
+	vec4 sponzaColor = vec4(vec3(pointContribution + directionContribution.xyz), directionContribution.w);
+
+	uint frustumIndex = getFrustumIndex();
+	vec4 heatmapColor = mix(vec4(0, 1, 0, 1), vec4(1, 0, 0, 1), float(lightCounts[frustumIndex].x) / float(MAX_LIGHTS_PER_FRUSTUM));
+
+	vec4 finalColor = mix(sponzaColor, heatmapColor, heatmapScalar);
+	FinalColor = finalColor;
 }

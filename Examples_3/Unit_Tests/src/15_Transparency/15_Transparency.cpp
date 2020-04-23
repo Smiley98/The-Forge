@@ -73,8 +73,7 @@
 #include "../../../../Common_3/OS/Interfaces/IMemory.h"
 
 //Forward+
-//#include "../../src/Final/FrustumGrid.h"
-//#include <random>//Idk why including this breaks... Forcing c++ >= 11 doesn't fix this :(
+#include "../../src/15_Transparency/FrustumGrid.h"
 
 namespace eastl
 {
@@ -173,6 +172,8 @@ typedef struct ObjectInfoStruct
 typedef struct MaterialUniformBlock
 {
 	Material mMaterials[MAX_NUM_OBJECTS];
+	vec4 lightCounts[1980];
+	float heatmapScalar;
 } MaterialUniformBlock;
 
 typedef struct ObjectInfoUniformBlock
@@ -533,9 +534,8 @@ Semaphore* pRenderCompleteSemaphores[gImageCount] = { NULL };
 
 uint32_t gTransparencyType = TRANSPARENCY_TYPE_PHENOMENOLOGICAL;
 
-
 // forward+
-//p2::FrustumGrid frustumGrid;
+p2::FrustumGrid frustumGrid;
 
 namespace keys {
 	enum {
@@ -963,9 +963,40 @@ class Transparency: public IApp
 			static bool initialized = false;
 			if (!initialized)
 			{
-				//frustumGrid.updateTiles(zNear, zFar, horizontal_fov, mSettings.mWidth, mSettings.mHeight);
+				frustumGrid.computeTiles(zNear, zFar, horizontal_fov, mSettings.mWidth, mSettings.mHeight);
 				initialized = true;
 			}
+
+			static bool grid = false;
+			static bool gDown = false;
+			if (GetAsyncKeyState(keys::G))
+				gDown = true;
+			if (!GetAsyncKeyState(keys::G)) {
+				if (gDown)
+					grid = !grid;
+				gDown = false;
+			}
+			if (grid) {
+				frustumGrid.updateFrustumCulling(gLightUniformData.mLightPositions, gLightUniformData.mLightSizes, MAX_NUM_LIGHTS, viewMat);
+				for (size_t i = 0; i < frustumGrid.lightCounts.size(); i++) {
+					vec4 count = vec4{ (float)frustumGrid.lightCounts[i], 0.0f, 0.0f, 0.0f };
+					gMaterialUniformData.lightCounts[i] = count;
+				}
+			}
+
+			static bool heatmap = false;
+			static bool hDown = false;
+			if (GetAsyncKeyState(keys::H))
+				hDown = true;
+			if (!GetAsyncKeyState(keys::H)) {
+				if (hDown)
+					heatmap = !heatmap;
+				hDown = false;
+			}
+			if (heatmap)
+				gMaterialUniformData.heatmapScalar = 0.75f;
+			else
+				gMaterialUniformData.heatmapScalar = 0.0f;
 		}
 
 		/************************************************************************/
@@ -1976,17 +2007,24 @@ class Transparency: public IApp
 		else
 			ASSERT(false && "Not implemented.");
 
+		static HiresTimer gTimer;
+		gTimer.GetUSec(true);
+
 		static bool ui = true;
-		if (GetAsyncKeyState(keys::U)) ui = !ui;
+		static bool uDown = false;
+		if (GetAsyncKeyState(keys::U))
+			uDown = true;
+		if (!GetAsyncKeyState(keys::U)) {
+			if (uDown)
+				ui = !ui;
+			uDown = false;
+		}
 		if (ui)
 		{
 			////////////////////////////////////////////////////////
-		//  Draw UIs
+			//  Draw UIs
 			cmdBeginDebugMarker(pCmd, 0, 1, 0, "Draw UI");
 			cmdBindRenderTargets(pCmd, 1, &pRenderTargetScreen, NULL, NULL, NULL, NULL, -1, -1);
-
-			static HiresTimer gTimer;
-			gTimer.GetUSec(true);
 
 			gAppUI.DrawText(
 				pCmd, float2(8.0f, 15.0f), eastl::string().sprintf("CPU Time: %f ms", gCpuTimer.GetUSecAverage() / 1000.0f).c_str(),
