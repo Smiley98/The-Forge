@@ -102,18 +102,49 @@ void main()
 					//FinalColor = vec4(lightCounts[frustumID], lightCounts[frustumID], lightCounts[frustumID], 1);
 					
 					uint lightCount = 0;
+					
+					int zeroCounted = 0;
 					for(uint i = 0; i < MAX_LIGHTS_PER_FRUSTUM; i++)
 					{
-						if(lightIndices[(frustumID * 64) + i] > -1)
+						// need to unpack in chunks because data has a stride of 16
+						//int[4] datum = lightIndices[((frustumID * 64) + i];
+						
+						uint idx = ((frustumID * MAX_LIGHTS_PER_FRUSTUM) + i);
+						//idx = ((frustumID * MAX_LIGHTS_PER_FRUSTUM) + i);
+						//idx = frustumID;
+					bool shouldBreak = false;
+						
+						for(int j = 0; j < 4; j++)
 						{
-							lightCount++;
-						} else
+								if(lightIndices[idx].data[j] > -1)
+								{
+									lightCount++;
+									
+									if(lightIndices[idx].data[j] == 0)
+									{
+										if(zeroCounted != 0) // avoid counting 0 twice, in case memory is actually uninitialized...?
+										{
+											shouldBreak = true;
+											break;
+										}
+										
+										zeroCounted = 1;
+									}
+									
+								} else
+								{
+									shouldBreak = true;
+									break;
+								}
+						}
+						
+						if(shouldBreak)
 						{
 							break;
 						}
 					}
 					
-					FinalColor = vec4(float(lightCount)/64.0, 0, 0, 1);
+					FinalColor = vec4(float(lightCount)/float(MAX_LIGHTS_PER_FRUSTUM), 0, 0, 1);
 		}
 
 		

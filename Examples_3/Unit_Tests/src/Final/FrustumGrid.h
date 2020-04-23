@@ -4,7 +4,7 @@
 #include "../../Common_3/Renderer/ResourceLoader.h"
 #include "../../Common_3/ThirdParty/OpenSource/EASTL/vector.h"
 
-#define MAX_LIGHTS_PER_FRUSTUM 64
+#define MAX_LIGHTS_PER_FRUSTUM 16
 
 struct Buffer;
 struct LightUniformBlock;
@@ -29,11 +29,21 @@ namespace p2
 		Plane bottom;
 	};
 
+	struct BadMeme
+	{
+		int a;
+		int padding[3];
+		//int b;
+		//int c;
+		//int d;
+	};
+
 	class FrustumGrid
 	{
 	public:
 		// for each frustum, an array of light indices
-		eastl::vector<int[MAX_LIGHTS_PER_FRUSTUM]> lightIndices;
+		//eastl::vector<int> lightIndices;
+		BadMeme lightIndices[1980 * MAX_LIGHTS_PER_FRUSTUM];
 		eastl::vector<int> lightCounts;
 
 		FrustumGrid();
@@ -41,7 +51,7 @@ namespace p2
 
 		// updated once for camera changes
 		void computeTiles(float zNear = 1.0f, float zFar = 4000.0f, float horizontal_fov = 3.14159 / 2.0f, int cameraWidth = 1920, int cameraHeight = 1080);
-		
+
 		// every frame, perform light-frustum culling and update lightCounts and lightIndices
 		void updateFrustumCulling(const vec4* lightPositions, const float* lightSizes, int numLights, const mat4& viewMatrix);
 
@@ -50,7 +60,7 @@ namespace p2
 	private:
 		Vector4 toClipSpace(Vector2 screenSpacePosition, int screenWidth, int screenHeight);
 		//Vector4 toViewSpace(Vector2 screenSpacePosition, int screenWidth, int screenHeight);
-		
+
 		eastl::vector<Frustum> frustumData;
 		int numRows;
 		int numColumns;

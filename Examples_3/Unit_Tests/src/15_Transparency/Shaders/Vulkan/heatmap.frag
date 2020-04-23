@@ -13,7 +13,7 @@ layout(location = 0) out vec4 FinalColor;
 
 void main()
 {
-	FinalColor = vec4(lightIndices[0]);
+	//FinalColor = vec4(lightIndices[0]);
 }
 
 //#version 450 core

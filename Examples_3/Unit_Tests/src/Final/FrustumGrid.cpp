@@ -13,21 +13,6 @@ namespace p2
 	{
 	}
 
-	//FrustumGrid* p2::FrustumGrid::instance()
-	//{
-	//	if (myInstance == nullptr)
-	//	{
-	//		myInstance = new FrustumGrid();
-	//	}
-	//	return FrustumGrid::myInstance;
-	//}
-
-	//Vector4  FrustumGrid::toViewSpace(Vector2 screenSpacePosition, int screenWidth, int screenHeight)
-	//{
-	//	Vector3 ret = (clipToViewSpace * toClipSpace(screenSpacePosition, screenWidth, screenHeight)).getXYZ();
-	//	ret /= ret.getW(); // lol because Vector3 is actually a Vector4 in denial
-	//}
-
 	Vector4  FrustumGrid::toClipSpace(Vector2 screenSpacePosition, int screenWidth, int screenHeight)
 	{
 		Vector4 clippy = { (screenSpacePosition[0] / screenWidth) * 2 - 1.0f,	((screenHeight - screenSpacePosition[1]) / screenHeight) * 2 - 1.0f , 1, 1 };
@@ -48,7 +33,7 @@ namespace p2
 		int numFrustums = numColumns * numRows;
 
 		frustumData = eastl::vector<Frustum>(numFrustums);
-		lightIndices = eastl::vector<int[MAX_LIGHTS_PER_FRUSTUM]>(numFrustums);
+		//lightIndices = eastl::vector<int[4]>(numFrustums * MAX_LIGHTS_PER_FRUSTUM);
 		lightCounts = eastl::vector<int>(numFrustums);
 
 		// create frustum planes, expressed in view space (before perspective divide)
@@ -81,15 +66,6 @@ namespace p2
 				Vector3 cornerBotRight = (clipToViewSpace * cornerBotRightClip).getXYZ();
 				cornerBotRight /= cornerBotRight.getW();
 
-				//Vector4 cornerTopLeft = { col * (float)GRID_SIZE / cameraWidth,			row * (float)GRID_SIZE / cameraHeight,			1, 1 };
-				//
-				//// view space
-				//cornerTopLeft = cornerTopLeft * clipToViewSpace;
-				//
-				//Vector4 cornerTopRight = { (col + 1) * (float)GRID_SIZE / cameraWidth,	row * (float)GRID_SIZE / cameraHeight,			1, 1 };
-				//Vector4 cornerBotLeft = { col * (float)GRID_SIZE / cameraWidth,			(row + 1) * (float)GRID_SIZE / cameraHeight,		1, 1 };
-				//Vector4 cornerBotRight = { (col + 1) * (float)GRID_SIZE / cameraWidth,	(row + 1) * (float)GRID_SIZE / cameraHeight,		1,1 };
-
 				// left plane normal
 				Vector3 normal = normalize(cross(cornerTopLeft, cornerBotLeft));
 				vec3 nLeft = { normal.getX(), normal.getY(), normal.getZ() };
@@ -120,59 +96,6 @@ namespace p2
 				frustumData[frustumIndex] = subfrustum;
 			}
 		}
-
-		//frustumBufferLoadDesc = {};
-		//frustumBufferLoadDesc.mDesc.mDescriptors = DESCRIPTOR_TYPE_BUFFER; // only need to read from it
-		//frustumBufferLoadDesc.mDesc.mMemoryUsage = RESOURCE_MEMORY_USAGE_GPU_ONLY;
-		//frustumBufferLoadDesc.mDesc.mSize = sizeof(Frustum) * frustumData.size();
-		//frustumBufferLoadDesc.mDesc.mStructStride = sizeof(Frustum);
-		//frustumBufferLoadDesc.pData = frustumData.data();
-		//frustumBufferLoadDesc.ppBuffer = &frustumBuffer;
-		//addResource(&frustumBufferLoadDesc); // to the GPU!
-
-
-		//frustumBufferUpdateDesc = { frustumBuffer, tempVertexBuffer.data() };
-		//particleBufferUpdateDesc.mSize = sizeof(Vertex) * 6 * pParticleSystem->mLifeParticleCount;
-		//updateResource(&particleBufferUpdateDesc);
-
-
-		//pCameraController->update(deltaTime);
-		//mat4        viewMat = pCameraController->getViewMatrix();
-		//const float aspectInverse = (float)mSettings.mHeight / (float)mSettings.mWidth;
-		//const float horizontal_fov = PI / 2.0f;
-		//mat4        projMat = mat4::perspective(horizontal_fov, aspectInverse, zNear, zFar);    //view matrix
-		//vec3        camPos = pCameraController->getViewPosition();
-		//mat4        vpMatrix = projMat * viewMat;
-		///************************************************************************/
-		//// Light Update
-		///************************************************************************/
-		//const float lightZNear = -100.0f;
-		//const float lightZFar = 100.0f;
-		//vec3 lightPos = vec3(gLightCpuSettings.mLightPosition.x, gLightCpuSettings.mLightPosition.y, gLightCpuSettings.mLightPosition.z);
-		//vec3 lightDir = normalize(gObjectsCenter - lightPos);
-		//pLightView->moveTo(lightDir * lightZNear);
-		//pLightView->lookAt(gObjectsCenter);
-		//mat4 lightViewMat = pLightView->getViewMatrix();
-		//mat4 lightProjMat = mat4::orthographic(-50.0f, 50.0f, -50.0f, 50.0f, 0.0f, lightZFar - lightZNear);
-		//mat4 lightVPMatrix = lightProjMat * lightViewMat;
-		///************************************************************************/
-		//// Scene Update
-		///************************************************************************/
-		//UpdateScene(deltaTime, viewMat, camPos);
-		///************************************************************************/
-		//// Update Cameras
-		///************************************************************************/
-		//gCameraUniformData.mViewProject = vpMatrix;
-		//gCameraUniformData.mViewMat = viewMat;
-		//gCameraUniformData.mClipInfo = vec4(zNear * zFar, zNear - zFar, zFar, 0.0f);
-		//gCameraUniformData.mPosition = vec4(pCameraController->getViewPosition(), 1);
-
-		//gCameraLightUniformData.mViewProject = lightVPMatrix;
-		//gCameraLightUniformData.mViewMat = lightViewMat;
-		//gCameraLightUniformData.mClipInfo = vec4(lightZNear * lightZFar, lightZNear - lightZFar, lightZFar, 0.0f);
-		//gCameraLightUniformData.mPosition = vec4(lightPos, 1);
-
-
 	}
 
 	inline int FrustumGrid::toFrustumIndex(int column, int row)
@@ -231,7 +154,7 @@ namespace p2
 					&& isSphereContained(farPlane, lightPosView, lightSize)
 					)
 				{
-					lightIndices[frustIdx][numLightsThisFrustum] = lightIdx;
+					lightIndices[(frustIdx * MAX_LIGHTS_PER_FRUSTUM + numLightsThisFrustum)].a = lightIdx;
 					numLightsThisFrustum++;
 				}
 				else
@@ -247,12 +170,12 @@ namespace p2
 			}
 
 			//report how many lights are contained
-			lightCounts[frustIdx] = numLightsThisFrustum;
+			//lightCounts[frustIdx] = numLightsThisFrustum;
 
 			// fill last light index with -1 to indicate no more lights
 			if (numLightsThisFrustum != MAX_LIGHTS_PER_FRUSTUM)
 			{
-				lightIndices[frustIdx][numLightsThisFrustum] = -1;
+				lightIndices[(frustIdx * MAX_LIGHTS_PER_FRUSTUM + numLightsThisFrustum)].a = -1;
 			}
 		}
 	}

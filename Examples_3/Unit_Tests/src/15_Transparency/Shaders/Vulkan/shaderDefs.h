@@ -20,7 +20,7 @@
 #define UNIT_SAMPLER_POINT  UPDATE_FREQ_NONE, binding = 7
 #define UNIT_SAMPLER_VSM    UPDATE_FREQ_NONE, binding = 8
 
-#define MAX_LIGHTS_PER_FRUSTUM 64
+#define MAX_LIGHTS_PER_FRUSTUM 16
 
 struct Material
 {
@@ -80,10 +80,28 @@ layout(UNIT_CBV_MATERIAL) uniform MaterialUniform
 	Material Materials[MAX_NUM_OBJECTS];
 };
 
+struct BadMeme
+{
+int data[4];
+//int e;
+//int f;
+//int g;
+//int h;
+//
+//int a2;
+//int b2;
+//int c2;
+//int d2;
+//int e2;
+//int f2;
+//int g2;
+//int h2;
+};
+
 layout(UNIT_CBV_HEATMAP) uniform HeatmapUniform
 {
 	//uint lightCounts[1980];
-	int lightIndices[1980*MAX_LIGHTS_PER_FRUSTUM];
+	BadMeme lightIndices[1980*MAX_LIGHTS_PER_FRUSTUM];
 };
 
 layout(UNIT_SRV_TEXTURES) uniform texture2D MaterialTextures[MAX_NUM_TEXTURES];

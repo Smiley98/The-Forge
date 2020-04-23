@@ -21,6 +21,7 @@
 * specific language governing permissions and limitations
 * under the License.
 */
+#define NUM_UNIFORM_BUFFERS 6
 
 #define MAX_NUM_OBJECTS 128
 //An average of 37 ms/frame with 64 lights, 55ms/frame with 96 lights, 82ms/frame with 128 lights, and 163ms/frame with 256 lights.
@@ -198,7 +199,7 @@ typedef struct LightUniformBlock
 
 typedef struct HeatmapUniformBlock {
 	//uint lightCounts[1980];
-	int lightIndices[1980 * 64];
+	int lightIndices[1980 * MAX_LIGHTS_PER_FRUSTUM * 4]; // lol
 } HeatmapUniformBlock;
 
 typedef struct CameraUniform
@@ -334,7 +335,7 @@ RootSignature* pRootSignatureAOITClear = NULL;
 #define VIEW_SHADOW 1
 #define GEOM_OPAQUE 0
 #define GEOM_TRANSPARENT 1
-#define UNIFORM_SET(f,v,g)(((f) * 5) + ((v) * 2 + (g)))
+#define UNIFORM_SET(f,v,g)(((f) * NUM_UNIFORM_BUFFERS) + ((v) * 2 + (g)))
 
 #define SHADE_FORWARD 0
 #define SHADE_PT 1
@@ -503,7 +504,6 @@ uint32_t     gFrameIndex = 0;
 GpuProfiler* pGpuProfiler = NULL;
 float        gCurrentTime = 0.0f;
 
-HeatmapUniformBlock    gHeatmapUniformData;
 MaterialUniformBlock   gMaterialUniformData;
 ObjectInfoUniformBlock gObjectInfoUniformData;
 ObjectInfoUniformBlock gTransparentObjectInfoUniformData;
@@ -974,10 +974,15 @@ class Transparency: public IApp
 		//memset(gHeatmapUniformData.lightCounts, 0, 1980 * sizeof(int));
 		//memcpy(gHeatmapUniformData.lightCounts, frustumGrid.lightCounts.data(), sizeof(int) * frustumGrid.lightCounts.size());
 
-		for (int i = 0; i < 1980; i++)
-		{
-			memcpy(gHeatmapUniformData.lightIndices + (64*i), frustumGrid.lightIndices[i], sizeof(int) * 64);
-		}
+		//for (int i = 0; i < 1980; i++)
+		//{
+		//	memcpy(gHeatmapUniformData.lightIndices + (64*i), frustumGrid.lightIndices[i], sizeof(int) * 64);
+		//
+		//	MAX_LIGHTS_PER_FRUSTUM
+		//}
+		//
+
+
 
 
 		/************************************************************************/
@@ -1903,8 +1908,8 @@ class Transparency: public IApp
 		/************************************************************************/
 		// Update uniform buffers
 		/************************************************************************/
-		//BufferUpdateDesc heatmapBufferUpdateDesc = { pBufferHeatmap[gFrameIndex], &(gHeatmapUniformData.lightCounts) };
-		BufferUpdateDesc heatmapBufferUpdateDesc = { pBufferHeatmap[gFrameIndex], &(gHeatmapUniformData.lightIndices) };
+		//BufferUpdateDesc heatmapBufferUpdateDesc = { pBufferHeatmap[gFrameIndex], &(gHeatmapUniformData.) };
+		BufferUpdateDesc heatmapBufferUpdateDesc = { pBufferHeatmap[gFrameIndex], &(frustumGrid.lightIndices) };
 		updateResource(&heatmapBufferUpdateDesc);
 		BufferUpdateDesc materialBufferUpdateDesc = { pBufferMaterials[gFrameIndex], &gMaterialUniformData };
 		updateResource(&materialBufferUpdateDesc);
@@ -2691,7 +2696,7 @@ class Transparency: public IApp
 		setDesc = { pRootSignatureGaussianBlur, DESCRIPTOR_UPDATE_FREQ_NONE, 2 + (3 * 2) };
 		addDescriptorSet(pRenderer, &setDesc, &pDescriptorSetGaussianBlur);
 		// Uniforms
-		setDesc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_PER_FRAME, gImageCount * 5 };
+		setDesc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_PER_FRAME, gImageCount * NUM_UNIFORM_BUFFERS };
 		addDescriptorSet(pRenderer, &setDesc, &pDescriptorSetUniforms);
 		// Forward
 		setDesc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_NONE, 3 };
@@ -2857,7 +2862,7 @@ class Transparency: public IApp
 			for (uint32_t i = 0; i < gImageCount; ++i)
 			{
 				// Opaque objects
-				DescriptorData params[6] = {};	//Added an additional index for the heatmap.
+				DescriptorData params[NUM_UNIFORM_BUFFERS] = {};	//Added an additional index for the heatmap.
 				params[0].pName = "ObjectUniformBlock";
 				params[0].ppBuffers = &pBufferOpaqueObjectTransforms[i];
 				params[1].pName = "CameraUniform";
@@ -2872,17 +2877,17 @@ class Transparency: public IApp
 				params[5].ppBuffers = &pBufferHeatmap[i];
 
 				// View Shadow Geom Opaque
-				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_SHADOW, GEOM_OPAQUE), pDescriptorSetUniforms, 6, params);
+				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_SHADOW, GEOM_OPAQUE), pDescriptorSetUniforms, NUM_UNIFORM_BUFFERS, params);
 				// View Shadow Geom Transparent
 				params[0].ppBuffers = &pBufferTransparentObjectTransforms[i];
-				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_SHADOW, GEOM_TRANSPARENT), pDescriptorSetUniforms, 6, params);
+				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_SHADOW, GEOM_TRANSPARENT), pDescriptorSetUniforms, NUM_UNIFORM_BUFFERS, params);
 				params[0].ppBuffers = &pBufferOpaqueObjectTransforms[i];
 				params[1].ppBuffers = &pBufferCameraUniform[i];
 				// View Camera Geom Opaque
-				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_CAMERA, GEOM_OPAQUE), pDescriptorSetUniforms, 6, params);
+				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_CAMERA, GEOM_OPAQUE), pDescriptorSetUniforms, NUM_UNIFORM_BUFFERS, params);
 				// View Camera Geom Transparent
 				params[0].ppBuffers = &pBufferTransparentObjectTransforms[i];
-				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_CAMERA, GEOM_TRANSPARENT), pDescriptorSetUniforms, 6, params);
+				updateDescriptorSet(pRenderer, UNIFORM_SET(i, VIEW_CAMERA, GEOM_TRANSPARENT), pDescriptorSetUniforms, NUM_UNIFORM_BUFFERS, params);
 
 #if AOIT_ENABLE
 				if (pRenderer->pActiveGpuSettings->mROVsSupported)
