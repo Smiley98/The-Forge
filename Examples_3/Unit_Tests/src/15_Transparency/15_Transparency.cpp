@@ -26,7 +26,8 @@
 #define MAX_NUM_OBJECTS 4
 //An average of 37 ms/frame with 64 lights, 55ms/frame with 96 lights, 82ms/frame with 128 lights, and 163ms/frame with 256 lights.
 //(No difference between debug and release).
-#define MAX_NUM_LIGHTS 64
+//Max of 1363 lights with forward and forward+ before we run out of memory!
+#define MAX_NUM_LIGHTS 1363
 #define MAX_NUM_PARTICLES 1
 //#define MAX_NUM_PARTICLES 2048    // Per system
 #define CUBES_EACH_ROW 5
@@ -1034,7 +1035,7 @@ class Transparency: public IApp
 		mat4 lightVPMatrix = lightProjMat * lightViewMat;
 
 		for (size_t i = 0; i < MAX_NUM_LIGHTS; i++) {
-			gLightUniformData.mLightSizes[i] = 4.0f + sinf(gCurrentTime * 2.0f) * 2.0f;
+			gLightUniformData.mLightSizes[i] = 1.0f + sinf(gCurrentTime * 2.0f) * 0.25f;//4.0f + sinf(gCurrentTime * 2.0f) * 2.0f;
 		}
 		/************************************************************************/
 		// Scene Update

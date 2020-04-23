@@ -47,7 +47,8 @@ vec4 Shade(uint matID, vec2 uv, vec3 worldPos, vec3 normal)
 	vec3 viewVec = normalize(worldPos - camPosition.xyz);
 	vec3 diffuse = theColor * matColor.xyz * nDotl;
 	vec3 specular = theColor * pow(clamp(dot(reflect(-theDirection, normal), viewVec), 0.0f, 1.0f), SPECULAR_EXP);
-	vec3 finalColor = clamp(diffuse + specular * 0.5f, 0.0f, 1.0f);
+	//vec3 ambient = vec3(0.1, 0.1, 0.1);
+	vec3 finalColor = clamp(diffuse + specular, 0.0f, 1.0f);
 
 #if USE_SHADOWS != 0
 	vec4 shadowMapPos = theProjection * vec4(worldPos, 1.0f);
@@ -58,6 +59,9 @@ vec4 Shade(uint matID, vec2 uv, vec3 worldPos, vec3 normal)
 		shadowMapPos.z > 0.0f)
 	{
 		vec3 lighting = ShadowContribution(shadowMapPos.xy, shadowMapPos.z);
+#if USE_LIGHT_INDICES != 0
+		//lighting += vec3(1.0);//Visuals look muddy when shadows aren't black (just gonna have to have a dark, high-contrast scene).
+#endif
 		finalColor *= lighting;
 	}
 #endif

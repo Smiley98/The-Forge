@@ -10,7 +10,6 @@
 #else
 	#define MAX_LIGHTS_PER_FRUSTUM 64
 #endif
-//#define MAX_LIGHTS_PER_FRUSTUM 8
 
 struct Buffer;
 struct LightUniformBlock;
