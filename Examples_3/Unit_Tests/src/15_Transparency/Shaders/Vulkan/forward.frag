@@ -77,15 +77,17 @@ void main()
 	vec3 view = normalize(camPosition.xyz - WorldPosition.xyz);
 
 	uint frustumIndex = getFrustumIndex();
-	//for (uint i = 0; i < MAX_LIGHTS_PER_FRUSTUM; i++) {
-	//	int lightIndex = int(lightIndices[frustumIndex * MAX_LIGHTS_PER_FRUSTUM + i].x);
-    //    if(lightIndex == -1) continue;
-	//	pointContribution += PointLight(lightIndex, WorldPosition.xyz, normal, view);
-    //}
-
+#if USE_LIGHT_INDICES != 0
+	for (uint i = 0; i < MAX_LIGHTS_PER_FRUSTUM; i++) {
+		int lightIndex = int(lightIndices[frustumIndex * MAX_LIGHTS_PER_FRUSTUM + i].x);
+        if(lightIndex == -1) continue;
+		pointContribution += PointLight(lightIndex, WorldPosition.xyz, normal, view);
+    }
+#else
 	for (uint i = 0; i < MAX_NUM_LIGHTS; i++) {
 		pointContribution += PointLight(i, WorldPosition.xyz, normal, view);
 	}
+#endif
 
 	vec4 directionContribution = Shade(MatID, UV.xy, WorldPosition.xyz, normal);
 	vec4 sponzaColor = vec4(vec3(pointContribution + directionContribution.xyz), directionContribution.w);

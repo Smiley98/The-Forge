@@ -4,7 +4,13 @@
 #include "../../Common_3/Renderer/ResourceLoader.h"
 #include "../../Common_3/ThirdParty/OpenSource/EASTL/vector.h"
 
-#define MAX_LIGHTS_PER_FRUSTUM 2
+#define USE_LIGHT_INDICES 1
+#if USE_LIGHT_INDICES
+	#define MAX_LIGHTS_PER_FRUSTUM 1
+#else
+	#define MAX_LIGHTS_PER_FRUSTUM 64
+#endif
+//#define MAX_LIGHTS_PER_FRUSTUM 8
 
 struct Buffer;
 struct LightUniformBlock;

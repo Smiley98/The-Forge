@@ -22,9 +22,8 @@
 * under the License.
 */
 
-#define LIGHT_INDICES 0
 //#define MAX_NUM_OBJECTS 128
-#define MAX_NUM_OBJECTS 8
+#define MAX_NUM_OBJECTS 4
 //An average of 37 ms/frame with 64 lights, 55ms/frame with 96 lights, 82ms/frame with 128 lights, and 163ms/frame with 256 lights.
 //(No difference between debug and release).
 #define MAX_NUM_LIGHTS 64
@@ -176,11 +175,11 @@ typedef struct MaterialUniformBlock
 {
 	Material mMaterials[MAX_NUM_OBJECTS];
 	//1980 is the tile, each tile has up to 64 indices cause there's up to 64 lights per tile.
-	//Tile 0 is 0, tile 1 is 1980, tile 2 is 3960. 126,720 indices total.
-	//506,880 bytes -> 495kb -> 5mb, should be fine!
-#if LIGHT_INDICES
+	//506,880 bytes -> 495kb -> 5mb, should be fine (but its not)!
+#if USE_LIGHT_INDICES
 	vec4 lightIndices[1980 * MAX_LIGHTS_PER_FRUSTUM];
 #endif
+	//vec4 questionableMemes[1980] = { vec4{5.5f} };
 	vec4 lightCounts[1980];
 	float heatmapScalar;
 } MaterialUniformBlock;
@@ -987,7 +986,7 @@ class Transparency: public IApp
 			}
 			if (grid) {
 				frustumGrid.updateFrustumCulling(gLightUniformData.mLightPositions, gLightUniformData.mLightSizes, MAX_NUM_LIGHTS, viewMat);
-#if LIGHT_INDICES
+#if USE_LIGHT_INDICES
 				//Loops 1980 times (loops once per tile).
 				for (size_t i = 0; i < 1980; i++) {
 
@@ -2320,13 +2319,14 @@ class Transparency: public IApp
 	}
 
 	void CreateShaders()
-	{	// MAX_NUM_LIGHTS
+	{
 		// Define shader macros
 		char maxNumObjectsMacroBuffer[5] = {}; sprintf(maxNumObjectsMacroBuffer, "%i", MAX_NUM_OBJECTS);
 		char maxNumLightsMacroBuffer[5] = {}; sprintf(maxNumLightsMacroBuffer, "%i", MAX_NUM_LIGHTS);
 		char maxNumLightsPerFrustumMacroBuffer[5] = {}; sprintf(maxNumLightsPerFrustumMacroBuffer, "%i", MAX_LIGHTS_PER_FRUSTUM);
 		char maxNumTexturesMacroBuffer[5] = {}; sprintf(maxNumTexturesMacroBuffer, "%i", TEXTURE_COUNT);
 		char aoitNodeCountMacroBuffer[5] = {}; sprintf(aoitNodeCountMacroBuffer, "%i", AOIT_NODE_COUNT);
+		char useLightIndicesMacroBuffer[5] = {}; sprintf(useLightIndicesMacroBuffer, "%i", USE_LIGHT_INDICES);
 		char useShadowsMacroBuffer[5] = {}; sprintf(useShadowsMacroBuffer, "%i", USE_SHADOWS);
 		char useRefractionMacroBuffer[5] = {}; sprintf(useRefractionMacroBuffer, "%i", PT_USE_REFRACTION);
 		char useDiffusionMacroBuffer[5] = {}; sprintf(useDiffusionMacroBuffer, "%i", PT_USE_DIFFUSION);
@@ -2337,13 +2337,14 @@ class Transparency: public IApp
 		ShaderMacro maxNumLightsPerFrustumMacro = { "MAX_LIGHTS_PER_FRUSTUM", maxNumLightsPerFrustumMacroBuffer };
 		ShaderMacro maxNumTexturesMacro = { "MAX_NUM_TEXTURES", maxNumTexturesMacroBuffer };
 		ShaderMacro aoitNodeCountMacro = { "AOIT_NODE_COUNT", aoitNodeCountMacroBuffer };
+		ShaderMacro useLightIndicesMacro = { "USE_LIGHT_INDICES", useLightIndicesMacroBuffer };
 		ShaderMacro useShadowsMacro = { "USE_SHADOWS", useShadowsMacroBuffer };
 		ShaderMacro useRefractionMacro = { "PT_USE_REFRACTION", useRefractionMacroBuffer };
 		ShaderMacro useDiffusionMacro = { "PT_USE_DIFFUSION", useDiffusionMacroBuffer };
 		ShaderMacro useCausticsMacro = { "PT_USE_CAUSTICS", useCausticsMacroBuffer };
 
-		ShaderMacro shaderMacros[] = { maxNumObjectsMacro, maxNumLightsMacro, maxNumLightsPerFrustumMacro, maxNumTexturesMacro, aoitNodeCountMacro, useShadowsMacro,
-									   useRefractionMacro, useDiffusionMacro,   useCausticsMacro };
+		ShaderMacro shaderMacros[] = { maxNumObjectsMacro, maxNumLightsMacro, maxNumLightsPerFrustumMacro, maxNumTexturesMacro, aoitNodeCountMacro,
+			useLightIndicesMacro, useShadowsMacro, useRefractionMacro, useDiffusionMacro,   useCausticsMacro };
 		const uint  numShaderMacros = sizeof(shaderMacros) / sizeof(shaderMacros[0]);
 
 		// Skybox shader

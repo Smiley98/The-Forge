@@ -72,7 +72,10 @@ layout(UNIT_CBV_CAMERA) uniform CameraUniform
 layout(std140, UNIT_CBV_MATERIAL) uniform MaterialUniform
 {
 	Material Materials[MAX_NUM_OBJECTS];
-	//vec4 lightIndices[1980 * MAX_LIGHTS_PER_FRUSTUM];
+#if USE_LIGHT_INDICES != 0
+	vec4 lightIndices[1980 * MAX_LIGHTS_PER_FRUSTUM];
+#endif
+	//vec4 questionableMemes[1980];
 	vec4 lightCounts[1980];
 	float heatmapScalar;
 };
