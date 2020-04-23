@@ -58,7 +58,6 @@ vec3 PointLight(uint lightIndex, vec3 worldPos, vec3 normal, vec3 toViewer)
 	return (diffuseStrength + specularStrength) * lightColor;
 }
 
-uint MAX_LIGHTS_PER_FRUSTUM  = 64;
 uint GRID_SIZE = 32;
 const float screenWidth =  1920.0;
 const float screenHeight = 1080.0;
@@ -77,13 +76,20 @@ void main()
 	vec3 normal = normalize(NormalOut.xyz);
 	vec3 view = normalize(camPosition.xyz - WorldPosition.xyz);
 
+	uint frustumIndex = getFrustumIndex();
+	//for (uint i = 0; i < MAX_LIGHTS_PER_FRUSTUM; i++) {
+	//	int lightIndex = int(lightIndices[frustumIndex * MAX_LIGHTS_PER_FRUSTUM + i].x);
+    //    if(lightIndex == -1) continue;
+	//	pointContribution += PointLight(lightIndex, WorldPosition.xyz, normal, view);
+    //}
+
 	for (uint i = 0; i < MAX_NUM_LIGHTS; i++) {
 		pointContribution += PointLight(i, WorldPosition.xyz, normal, view);
 	}
+
 	vec4 directionContribution = Shade(MatID, UV.xy, WorldPosition.xyz, normal);
 	vec4 sponzaColor = vec4(vec3(pointContribution + directionContribution.xyz), directionContribution.w);
 
-	uint frustumIndex = getFrustumIndex();
 	vec4 heatmapColor = mix(vec4(0, 1, 0, 1), vec4(1, 0, 0, 1), float(lightCounts[frustumIndex].x) / float(MAX_LIGHTS_PER_FRUSTUM));
 
 	vec4 finalColor = mix(sponzaColor, heatmapColor, heatmapScalar);

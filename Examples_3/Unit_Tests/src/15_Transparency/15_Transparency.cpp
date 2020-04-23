@@ -22,11 +22,14 @@
 * under the License.
 */
 
-#define MAX_NUM_OBJECTS 128
+#define LIGHT_INDICES 0
+//#define MAX_NUM_OBJECTS 128
+#define MAX_NUM_OBJECTS 8
 //An average of 37 ms/frame with 64 lights, 55ms/frame with 96 lights, 82ms/frame with 128 lights, and 163ms/frame with 256 lights.
 //(No difference between debug and release).
 #define MAX_NUM_LIGHTS 64
-#define MAX_NUM_PARTICLES 2048    // Per system
+#define MAX_NUM_PARTICLES 1
+//#define MAX_NUM_PARTICLES 2048    // Per system
 #define CUBES_EACH_ROW 5
 #define CUBES_EACH_COL 5
 #define CUBE_NUM (CUBES_EACH_ROW * CUBES_EACH_COL + 1)
@@ -174,7 +177,10 @@ typedef struct MaterialUniformBlock
 	Material mMaterials[MAX_NUM_OBJECTS];
 	//1980 is the tile, each tile has up to 64 indices cause there's up to 64 lights per tile.
 	//Tile 0 is 0, tile 1 is 1980, tile 2 is 3960. 126,720 indices total.
-	vec4 lightIndices[1980 * MAX_LIGHTS_PER_FRUSTUM];//506,880 bytes -> 495kb -> 5mb, should be fine!
+	//506,880 bytes -> 495kb -> 5mb, should be fine!
+#if LIGHT_INDICES
+	vec4 lightIndices[1980 * MAX_LIGHTS_PER_FRUSTUM];
+#endif
 	vec4 lightCounts[1980];
 	float heatmapScalar;
 } MaterialUniformBlock;
@@ -981,18 +987,19 @@ class Transparency: public IApp
 			}
 			if (grid) {
 				frustumGrid.updateFrustumCulling(gLightUniformData.mLightPositions, gLightUniformData.mLightSizes, MAX_NUM_LIGHTS, viewMat);
-
+#if LIGHT_INDICES
 				//Loops 1980 times (loops once per tile).
 				for (size_t i = 0; i < 1980; i++) {
 
 					//1. Format the light indices as a vector.
 					vec4 indices[MAX_LIGHTS_PER_FRUSTUM];
 					for (size_t j = 0; j < MAX_LIGHTS_PER_FRUSTUM; j++)
-						indices[j] = vec4{ (float)frustumGrid.lightIndices[i][j], 0.0f, 0.0f, 0.0f };
+						indices[j] = vec4{ (float)frustumGrid.lightIndices[i][j], 0.0f, 0.0f, 0.0f };//Could also make all vector components the index.
 
 					//2. Write the indices to the uniform block as a vector.
 					memcpy(gMaterialUniformData.lightIndices + i * MAX_LIGHTS_PER_FRUSTUM, indices, MAX_LIGHTS_PER_FRUSTUM * sizeof(vec4));
 				}
+#endif
 				for (size_t i = 0; i < 1980; i++) {
 					vec4 count = vec4{ (float)frustumGrid.lightCounts[i], 0.0f, 0.0f, 0.0f };
 					gMaterialUniformData.lightCounts[i] = count;
@@ -2317,6 +2324,7 @@ class Transparency: public IApp
 		// Define shader macros
 		char maxNumObjectsMacroBuffer[5] = {}; sprintf(maxNumObjectsMacroBuffer, "%i", MAX_NUM_OBJECTS);
 		char maxNumLightsMacroBuffer[5] = {}; sprintf(maxNumLightsMacroBuffer, "%i", MAX_NUM_LIGHTS);
+		char maxNumLightsPerFrustumMacroBuffer[5] = {}; sprintf(maxNumLightsPerFrustumMacroBuffer, "%i", MAX_LIGHTS_PER_FRUSTUM);
 		char maxNumTexturesMacroBuffer[5] = {}; sprintf(maxNumTexturesMacroBuffer, "%i", TEXTURE_COUNT);
 		char aoitNodeCountMacroBuffer[5] = {}; sprintf(aoitNodeCountMacroBuffer, "%i", AOIT_NODE_COUNT);
 		char useShadowsMacroBuffer[5] = {}; sprintf(useShadowsMacroBuffer, "%i", USE_SHADOWS);
@@ -2326,6 +2334,7 @@ class Transparency: public IApp
 
 		ShaderMacro maxNumObjectsMacro = { "MAX_NUM_OBJECTS", maxNumObjectsMacroBuffer };
 		ShaderMacro maxNumLightsMacro = { "MAX_NUM_LIGHTS", maxNumLightsMacroBuffer };
+		ShaderMacro maxNumLightsPerFrustumMacro = { "MAX_LIGHTS_PER_FRUSTUM", maxNumLightsPerFrustumMacroBuffer };
 		ShaderMacro maxNumTexturesMacro = { "MAX_NUM_TEXTURES", maxNumTexturesMacroBuffer };
 		ShaderMacro aoitNodeCountMacro = { "AOIT_NODE_COUNT", aoitNodeCountMacroBuffer };
 		ShaderMacro useShadowsMacro = { "USE_SHADOWS", useShadowsMacroBuffer };
@@ -2333,7 +2342,7 @@ class Transparency: public IApp
 		ShaderMacro useDiffusionMacro = { "PT_USE_DIFFUSION", useDiffusionMacroBuffer };
 		ShaderMacro useCausticsMacro = { "PT_USE_CAUSTICS", useCausticsMacroBuffer };
 
-		ShaderMacro shaderMacros[] = { maxNumObjectsMacro, maxNumLightsMacro, maxNumTexturesMacro, aoitNodeCountMacro, useShadowsMacro,
+		ShaderMacro shaderMacros[] = { maxNumObjectsMacro, maxNumLightsMacro, maxNumLightsPerFrustumMacro, maxNumTexturesMacro, aoitNodeCountMacro, useShadowsMacro,
 									   useRefractionMacro, useDiffusionMacro,   useCausticsMacro };
 		const uint  numShaderMacros = sizeof(shaderMacros) / sizeof(shaderMacros[0]);
 
