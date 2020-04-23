@@ -172,6 +172,9 @@ typedef struct ObjectInfoStruct
 typedef struct MaterialUniformBlock
 {
 	Material mMaterials[MAX_NUM_OBJECTS];
+	//1980 is the tile, each tile has up to 64 indices cause there's up to 64 lights per tile.
+	//Tile 0 is 0, tile 1 is 1980, tile 2 is 3960. 126,720 indices total.
+	vec4 lightIndices[1980 * MAX_LIGHTS_PER_FRUSTUM];//506,880 bytes -> 495kb -> 5mb, should be fine!
 	vec4 lightCounts[1980];
 	float heatmapScalar;
 } MaterialUniformBlock;
@@ -978,7 +981,19 @@ class Transparency: public IApp
 			}
 			if (grid) {
 				frustumGrid.updateFrustumCulling(gLightUniformData.mLightPositions, gLightUniformData.mLightSizes, MAX_NUM_LIGHTS, viewMat);
-				for (size_t i = 0; i < frustumGrid.lightCounts.size(); i++) {
+
+				//Loops 1980 times (loops once per tile).
+				for (size_t i = 0; i < 1980; i++) {
+
+					//1. Format the light indices as a vector.
+					vec4 indices[MAX_LIGHTS_PER_FRUSTUM];
+					for (size_t j = 0; j < MAX_LIGHTS_PER_FRUSTUM; j++)
+						indices[j] = vec4{ (float)frustumGrid.lightIndices[i][j], 0.0f, 0.0f, 0.0f };
+
+					//2. Write the indices to the uniform block as a vector.
+					memcpy(gMaterialUniformData.lightIndices + i * MAX_LIGHTS_PER_FRUSTUM, indices, MAX_LIGHTS_PER_FRUSTUM * sizeof(vec4));
+				}
+				for (size_t i = 0; i < 1980; i++) {
 					vec4 count = vec4{ (float)frustumGrid.lightCounts[i], 0.0f, 0.0f, 0.0f };
 					gMaterialUniformData.lightCounts[i] = count;
 				}
