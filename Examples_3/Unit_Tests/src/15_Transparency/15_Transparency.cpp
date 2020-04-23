@@ -537,7 +537,36 @@ uint32_t gTransparencyType = TRANSPARENCY_TYPE_PHENOMENOLOGICAL;
 // forward+
 //p2::FrustumGrid frustumGrid;
 
-
+namespace keys {
+	enum {
+		A = 0x41,
+		B = 0x42,
+		C = 0x43,
+		D = 0x44,
+		E = 0x45,
+		F = 0x46,
+		G = 0x47,
+		H = 0x48,
+		I = 0x49,
+		J = 0x4A,
+		K = 0x4B,
+		L = 0x4C,
+		M = 0x4D,
+		N = 0x4E,
+		O = 0x4F,
+		P = 0x50,
+		Q = 0x51,
+		R = 0x52,
+		S = 0x53,
+		T = 0x54,
+		U = 0x55,
+		V = 0x56,
+		W = 0x57,
+		X = 0x58,
+		Y = 0x59,
+		Z = 0x5A
+	};
+}
 
 void AddObject(
 	MeshResource mesh, vec3 position, vec4 color, vec3 translucency = vec3(0.0f), float eta = 1.0f, float collimation = 0.0f,
@@ -1947,50 +1976,33 @@ class Transparency: public IApp
 		else
 			ASSERT(false && "Not implemented.");
 
-		////////////////////////////////////////////////////////
+		static bool ui = true;
+		if (GetAsyncKeyState(keys::U)) ui = !ui;
+		if (ui)
+		{
+			////////////////////////////////////////////////////////
 		//  Draw UIs
-		cmdBeginDebugMarker(pCmd, 0, 1, 0, "Draw UI");
-		cmdBindRenderTargets(pCmd, 1, &pRenderTargetScreen, NULL, NULL, NULL, NULL, -1, -1);
+			cmdBeginDebugMarker(pCmd, 0, 1, 0, "Draw UI");
+			cmdBindRenderTargets(pCmd, 1, &pRenderTargetScreen, NULL, NULL, NULL, NULL, -1, -1);
 
-		static HiresTimer gTimer;
-		gTimer.GetUSec(true);
+			static HiresTimer gTimer;
+			gTimer.GetUSec(true);
 
-		//vec3 camP = pCameraController->getViewPosition();
-		vec3 camP = gCameraUniformData.mPosition.getXYZ();
-		float cx = camP.getX();
-		float cy = camP.getY();
-		float cz = camP.getZ();
-
-		gAppUI.DrawText(
-			pCmd, float2(8.0f, 15.0f), eastl::string().sprintf("CPU Time: %f ms", gCpuTimer.GetUSecAverage() / 1000.0f).c_str(),
-			&gFrameTimeDraw);
-		gAppUI.DrawText(
-			pCmd, float2(8.0f, 40.0f), eastl::string().sprintf("GPU %f ms", (float)pGpuProfiler->mCumulativeTime * 1000.0f).c_str(),
-			&gFrameTimeDraw);
-		gAppUI.DrawText(
-			pCmd, float2(8.0f, 65.0f), eastl::string().sprintf("Frame Time: %f ms", gTimer.GetUSecAverage() / 1000.0f).c_str(),
-			&gFrameTimeDraw);
-		//5, 8, 1
-		gAppUI.DrawText(
-			pCmd, float2(8.0f, 500.0f), eastl::string().sprintf("Camera Position: %f %f %f", cx, cy, cz).c_str(),
-			&gFrameTimeDraw);
-		//gAppUI.DrawText(
-		//	pCmd, float2(8.0f, 500.0f), eastl::string().sprintf("Camera Position: %f %f %f", m1, m2, m3).c_str(),
-		//	&gFrameTimeDraw);
-
-		gAppUI.DrawDebugGpuProfile(pCmd, float2(8.0f, 90.0f), pGpuProfiler, NULL);
-
-		gVirtualJoystick.Draw(pCmd, { 1.0f, 1.0f, 1.0f, 1.0f });
-
-		cmdDrawProfiler();
-
-		gAppUI.Gui(pGuiWindow);
-		gAppUI.Draw(pCmd);
-		cmdBindRenderTargets(pCmd, 0, NULL, NULL, NULL, NULL, NULL, -1, -1);
-
-		cmdEndDebugMarker(pCmd);
-		////////////////////////////////////////////////////////
-
+			gAppUI.DrawText(
+				pCmd, float2(8.0f, 15.0f), eastl::string().sprintf("CPU Time: %f ms", gCpuTimer.GetUSecAverage() / 1000.0f).c_str(),
+				&gFrameTimeDraw);
+			gAppUI.DrawText(
+				pCmd, float2(8.0f, 40.0f), eastl::string().sprintf("GPU %f ms", (float)pGpuProfiler->mCumulativeTime * 1000.0f).c_str(),
+				&gFrameTimeDraw);
+			gAppUI.DrawText(
+				pCmd, float2(8.0f, 65.0f), eastl::string().sprintf("Frame Time: %f ms", gTimer.GetUSecAverage() / 1000.0f).c_str(),
+				&gFrameTimeDraw);
+			gAppUI.Draw(pCmd);
+			cmdBindRenderTargets(pCmd, 0, NULL, NULL, NULL, NULL, NULL, -1, -1);
+			cmdEndDebugMarker(pCmd);
+			////////////////////////////////////////////////////////
+		}
+		
 		barriers1[0] = { pRenderTargetScreen->pTexture, RESOURCE_STATE_PRESENT };
 		cmdResourceBarrier(pCmd, 0, NULL, 1, barriers1);
 
