@@ -21,17 +21,6 @@ layout(location = 0) out vec4 FinalColor;
 void main() {
     uint frustumIndex = getFrustumIndex();
 	vec4 lightCountColor = mix(vec4(0, 1, 0, 1), vec4(1, 0, 0, 1), float(lightCounts[frustumIndex].x) / float(MAX_LIGHTS_PER_FRUSTUM));
+    //vec4 lightCountColor = vec4(0, 1, 0, 0);
 	FinalColor = lightCountColor;
 }
-
-//#version 450 core
-//#extension GL_GOOGLE_include_directive : require
-//
-//#include "shading.h"
-//
-//layout(location = 0) out vec4 outColor;
-//
-//void main()
-//{
-//	outColor = vec4(1.0, testData.y, 0.0, 1.0);
-//}

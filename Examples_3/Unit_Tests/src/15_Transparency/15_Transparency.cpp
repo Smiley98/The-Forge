@@ -173,7 +173,10 @@ typedef struct ObjectInfoStruct
 typedef struct MaterialUniformBlock
 {
 	Material mMaterials[MAX_NUM_OBJECTS];
-	vec4 lightCounts[1980];	//Added this array.
+	vec4 lightCounts[1980];
+	float heatmapScalar = 0.0f;
+	//float screenWidth = 1920.0f;
+	//float screenHeight = 1080.0f;
 } MaterialUniformBlock;
 
 typedef struct ObjectInfoUniformBlock
@@ -967,7 +970,6 @@ class Transparency: public IApp
 		vec3        camPos = pCameraController->getViewPosition();
 		mat4        vpMatrix = projMat * viewMat;
 
-
 		/************************************************************************/
 		// Light Update
 		/************************************************************************/
@@ -996,6 +998,7 @@ class Transparency: public IApp
 				frustumGrid.computeTiles(zNear, zFar, horizontal_fov, mSettings.mWidth, mSettings.mHeight);
 				initialized = true;
 			}
+
 			static bool grid = false;
 			if (GetAsyncKeyState(keys::G))
 				grid = !grid;
@@ -1003,12 +1006,21 @@ class Transparency: public IApp
 			// update frustum culling
 			if(grid)
 				frustumGrid.updateFrustumCulling(gLightUniformData.mLightPositions, gLightUniformData.mLightSizes, MAX_NUM_LIGHTS, viewMat);
-		}
 
-		const size_t size = frustumGrid.lightCounts.size();
-		for (size_t i = 0; i < size; i++) {
-			vec4 lightCount = { (float)frustumGrid.lightCounts[i], 0, 0, 1 };
-			gMaterialUniformData.lightCounts[i] = lightCount;
+			static bool heatmap = true;
+			if (GetAsyncKeyState(keys::H))
+				heatmap = !heatmap;
+
+			if (heatmap)
+				gMaterialUniformData.heatmapScalar = 0.75f;
+			else
+				gMaterialUniformData.heatmapScalar = 0.0f;
+
+			const size_t size = frustumGrid.lightCounts.size();
+			for (size_t i = 0; i < size; i++) {
+				vec4 lightCount = { (float)frustumGrid.lightCounts[i], 0, 0, 1 };
+				gMaterialUniformData.lightCounts[i] = lightCount;
+			}
 		}
 
 		//memcpy(/*gHeatmapUniformData*/gMaterialUniformData.lightCounts, frustumGrid.lightCounts.data(), sizeof(int) * frustumGrid.lightCounts.size());
@@ -1702,21 +1714,21 @@ class Transparency: public IApp
 		gAppUI.DrawText(
 			pCmd, float2(8.0f, 65.0f), eastl::string().sprintf("Frame Time: %f ms", gTimer.GetUSecAverage() / 1000.0f).c_str(),
 			&gFrameTimeDraw);
-		gAppUI.DrawText(
-			pCmd, float2(8.0f, 500.0f), eastl::string().sprintf("Camera Position: %f %f %f", cx, cy, cz).c_str(),
-			&gFrameTimeDraw);
+		//gAppUI.DrawText(
+		//	pCmd, float2(8.0f, 500.0f), eastl::string().sprintf("Camera Position: %f %f %f", cx, cy, cz).c_str(),
+		//	&gFrameTimeDraw);
 
-		gAppUI.DrawDebugGpuProfile(pCmd, float2(8.0f, 90.0f), pGpuProfiler, NULL);
-		gVirtualJoystick.Draw(pCmd, { 1.0f, 1.0f, 1.0f, 1.0f });
-		cmdDrawProfiler();
-		gAppUI.Gui(pGuiWindow);
+		//gAppUI.DrawDebugGpuProfile(pCmd, float2(8.0f, 90.0f), pGpuProfiler, NULL);
+		//gVirtualJoystick.Draw(pCmd, { 1.0f, 1.0f, 1.0f, 1.0f });
+		//cmdDrawProfiler();
+		//gAppUI.Gui(pGuiWindow);
 		gAppUI.Draw(pCmd);
 
 		cmdEndDebugMarker(pCmd);
 		endCmd(pCmd);
 	}
 
-	void HeatmapPass(Cmd* pCmd, bool splitscreen)
+	void HeatmapPass(Cmd* pCmd/*, bool splitscreen*/)
 	{
 		beginCmd(pCmd);
 		LoadActionsDesc loadActions = {};
@@ -1725,13 +1737,16 @@ class Transparency: public IApp
 		loadActions.mLoadActionDepth = LOAD_ACTION_DONTCARE;
 
 		cmdBindRenderTargets(pCmd, 1, &pRenderTargetScreen, NULL, &loadActions, NULL, NULL, -1, -1);
-		if (splitscreen) {
-			const float halfWidth = (float)pRenderTargetScreen->mDesc.mWidth * 0.5f;
-			const float halfHeight = (float)pRenderTargetScreen->mDesc.mHeight * 0.5f;
-			cmdSetViewport(pCmd, halfWidth, 0.0f, halfWidth, halfHeight, 0.0f, 1.0f);
-		}
-		else
-			cmdSetViewport(pCmd, 0.0f, 0.0f, (float)pRenderTargetScreen->mDesc.mWidth, (float)pRenderTargetScreen->mDesc.mHeight, 0.0f, 1.0f);
+		//if (splitscreen) {
+		//	const float halfWidth = (float)pRenderTargetScreen->mDesc.mWidth * 0.5f;
+		//	const float halfHeight = (float)pRenderTargetScreen->mDesc.mHeight * 0.5f;
+		//	//Nope :(
+		//	//cmdSetViewport(pCmd, halfWidth, halfHeight, (float)pRenderTargetScreen->mDesc.mWidth, (float)pRenderTargetScreen->mDesc.mHeight, 0.0f, 1.0f);
+		//	cmdSetViewport(pCmd, halfWidth, 0.0f, halfWidth, halfHeight, 0.0f, 1.0f);
+		//}
+		//else
+		//	cmdSetViewport(pCmd, 0.0f, 0.0f, (float)pRenderTargetScreen->mDesc.mWidth, (float)pRenderTargetScreen->mDesc.mHeight, 0.0f, 1.0f);
+		cmdSetViewport(pCmd, 0.0f, 0.0f, (float)pRenderTargetScreen->mDesc.mWidth, (float)pRenderTargetScreen->mDesc.mHeight, 0.0f, 1.0f);
 		cmdSetScissor(pCmd, 0, 0, pRenderTargetScreen->mDesc.mWidth, pRenderTargetScreen->mDesc.mHeight);
 
 		cmdBindPipeline(pCmd, pPipelineHeatmap);
@@ -2032,15 +2047,15 @@ class Transparency: public IApp
 			waitForFences(pRenderer, 1, &pRenderCompleteFence);
 
 		gCpuTimer.GetUSec(true);
-		static bool splitscreen = true;
-		if (GetAsyncKeyState(keys::F))	//f for fullscreen
-			splitscreen = !splitscreen;
+		//static bool splitscreen = true;
+		//if (GetAsyncKeyState(keys::F))	//f for fullscreen
+		//	splitscreen = !splitscreen;
 		static bool ui = true;
 		if (GetAsyncKeyState(keys::U))	//u for ui
 			ui = !ui;
-		static bool heatmap = true;
-		if (GetAsyncKeyState(keys::H))	//h for heatmap
-			heatmap = !heatmap;
+		//static bool heatmap = true;
+		//if (GetAsyncKeyState(keys::H))	//h for heatmap
+		//	heatmap = !heatmap;
 #pragma region UniformBuffers
 		/************************************************************************/
 		// Update uniform buffers
@@ -2101,14 +2116,14 @@ class Transparency: public IApp
 			queueSubmit(pGraphicsQueue, 1, &pCmd, pRenderCompleteFence, 1, &pImageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);
 		}
 
-		if (heatmap)
-		{
-			getFenceStatus(pRenderer, pRenderCompleteFence, &fenceStatus);
-			if (fenceStatus == FENCE_STATUS_INCOMPLETE)
-				waitForFences(pRenderer, 1, &pRenderCompleteFence);
-			HeatmapPass(pCmd, splitscreen);
-			queueSubmit(pGraphicsQueue, 1, &pCmd, pRenderCompleteFence, 1, &pImageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);
-		}
+		//if (heatmap)
+		//{
+		//	getFenceStatus(pRenderer, pRenderCompleteFence, &fenceStatus);
+		//	if (fenceStatus == FENCE_STATUS_INCOMPLETE)
+		//		waitForFences(pRenderer, 1, &pRenderCompleteFence);
+		//	HeatmapPass(pCmd/*, splitscreen*/);
+		//	queueSubmit(pGraphicsQueue, 1, &pCmd, pRenderCompleteFence, 1, &pImageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);
+		//}
 
 		queuePresent(pGraphicsQueue, pSwapChain, gFrameIndex, 1, &pRenderCompleteSemaphore);
 		flipProfiler();

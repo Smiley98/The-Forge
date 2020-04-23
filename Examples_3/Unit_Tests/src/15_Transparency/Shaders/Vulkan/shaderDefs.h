@@ -77,6 +77,9 @@ layout(std140, UNIT_CBV_MATERIAL) uniform MaterialUniform
 {
 	Material Materials[MAX_NUM_OBJECTS];
 	vec4 lightCounts[1980];
+	float heatmapScalar;
+	//float screenWidth;
+	//float screenHeight;
 };
 
 //layout(UNIT_CBV_HEATMAP) uniform HeatmapUniform
