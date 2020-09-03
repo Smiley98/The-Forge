@@ -73,7 +73,7 @@ struct RaymarchingUniformBlock {
 	mat4 inverseWorldMatrices[MAX_PLANETS];
 	mat4 invView;
 	vec4 res;
-	float scalings[MAX_PLANETS];
+	float scalings[MAX_PLANETS];	//This was broken cause float arrays are padded as vec4s so I should change to vec4 in shader and use .x
 
 	//mat4 invView;
 	//

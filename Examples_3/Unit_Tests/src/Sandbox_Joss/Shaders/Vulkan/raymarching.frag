@@ -7,38 +7,7 @@ layout (std140, UPDATE_FREQ_PER_FRAME, binding=0) uniform uniformBlock {
     mat4 inverseWorldMatrices[MAX_PLANETS];
     mat4 invView;
     vec4 resolution;
-    float scalings[MAX_PLANETS];
-
-    //mat4 invView;
-    //
-    ////Inverse transformation matrices.
-    //mat4 invSun;
-    //mat4 invMerc;
-    //mat4 invVenus;
-    //mat4 invEarth;
-    //mat4 invMars;
-    //mat4 invJup;
-    //mat4 invSat;
-    //mat4 invUr;
-    //mat4 invNept;
-    //mat4 invPlu;
-    //mat4 invMoon;
-    //
-    ////Uniform scaling floats.
-    //float sSun;
-    //float sMerc;
-    //float sVenus;
-    //float sEarth;
-    //float sMars;
-    //float sJup;
-    //float sSat;
-    //float sUr;
-    //float sNept;
-    //float sPlu;
-    //float sMoon;
-    //
-    ////Screen resolution.
-    //vec2 resolution;
+    vec4 scalings[MAX_PLANETS];
 } u_input;
 
 #define AA 1   // make this 1 is your machine is too slow
@@ -214,69 +183,6 @@ vec2 marchPlanet(vec4 pos, mat4 transform, float scale, float colour) {
 
 vec2 map( in vec3 pos )
 {
-    //What this is essentially doing is using lequal as our depth function.
-    //We find the geometry that intersects first with the ray, and keep storing the minimum till we've finished iterating.
-    //vec2 res = opU( vec2( sdPlane(     pos), 1.0 ),
-	//                vec2( sdSphere(    pos-vec3( 0.0,0.25, 0.0), 0.25 ), 46.9 ) );
-    //res = opU( res, vec2( sdBox(       pos-vec3( 1.0,0.25, 0.0), vec3(0.25) ), 3.0 ) );
-    //res = opU( res, vec2( udRoundBox(  pos-vec3( 1.0,0.25, 1.0), vec3(0.15), 0.1 ), 41.0 ) );
-	//res = opU( res, vec2( sdTorus(     pos-vec3( 0.0,0.25, 1.0), vec2(0.20,0.05) ), 25.0 ) );
-    //res = opU( res, vec2( sdCapsule(   pos,vec3(-1.3,0.10,-0.1), vec3(-0.8,0.50,0.2), 0.1  ), 31.9 ) );
-	//res = opU( res, vec2( sdTriPrism(  pos-vec3(-1.0,0.25,-1.0), vec2(0.25,0.05) ),43.5 ) );
-	//res = opU( res, vec2( sdCylinder(  pos-vec3( 1.0,0.30,-1.0), vec2(0.1,0.2) ), 8.0 ) );
-	//res = opU( res, vec2( sdCone(      pos-vec3( 0.0,0.50,-1.0), vec3(0.8,0.6,0.3) ), 55.0 ) );
-	//res = opU( res, vec2( sdTorus82(   pos-vec3( 0.0,0.25, 2.0), vec2(0.20,0.05) ),50.0 ) );
-	//res = opU( res, vec2( sdTorus88(   pos-vec3(-1.0,0.25, 2.0), vec2(0.20,0.05) ),43.0 ) );
-	//res = opU( res, vec2( sdCylinder6( pos-vec3( 1.0,0.30, 2.0), vec2(0.1,0.2) ), 12.0 ) );
-	//res = opU( res, vec2( sdHexPrism(  pos-vec3(-1.0,0.20, 1.0), vec2(0.25,0.05) ),17.0 ) );
-	//res = opU( res, vec2( sdPryamid4(  pos-vec3(-1.0,0.15,-2.0), vec3(0.8,0.6,0.25) ),37.0 ) );
-    //res = opU( res, vec2( opS( udRoundBox(  pos-vec3(-2.0,0.2, 1.0), vec3(0.15),0.05),
-	//                           sdSphere(    pos-vec3(-2.0,0.2, 1.0), 0.25)), 13.0 ) );
-    //res = opU( res, vec2( opS( sdTorus82(  pos-vec3(-2.0,0.2, 0.0), vec2(0.20,0.1)),
-	//                           sdCylinder(  opRep( vec3(atan(pos.x+2.0,pos.z)/6.2831, pos.y, 0.02+0.5*length(pos-vec3(-2.0,0.2, 0.0))), vec3(0.05,1.0,0.05)), vec2(0.02,0.6))), 51.0 ) );
-	//res = opU( res, vec2( 0.5*sdSphere(    pos-vec3(-2.0,0.25,-1.0), 0.2 ) + 0.03*sin(50.0*pos.x)*sin(50.0*pos.y)*sin(50.0*pos.z), 65.0 ) );
-	//res = opU( res, vec2( 0.5*sdTorus( opTwist(pos-vec3(-2.0,0.25, 2.0)),vec2(0.20,0.05)), 46.7 ) );
-    //res = opU( res, vec2( sdConeSection( pos-vec3( 0.0,0.35,-2.0), 0.15, 0.2, 0.1 ), 13.67 ) );
-    //res = opU( res, vec2( sdEllipsoid( pos-vec3( 1.0,0.35,-2.0), vec3(0.15, 0.2, 0.05) ), 43.17 ) );
-
-    //vec2 sun = marchPlanet(pos4, u_input.invSun, u_input.sSun, 46.9);
-    //res = opU(res, sun);
-    
-    //vec2 mercury = marchPlanet(pos4, u_input.invMerc, u_input.sMerc, 46.9);
-    //res = opU(res, mercury);
-    
-    //vec2 venus = marchPlanet(pos4, u_input.invVenus, u_input.sVenus, 46.9);
-    //res = opU(res, venus);
-    
-    //vec2 earth = marchPlanet(pos4, u_input.invEarth, u_input.sEarth, 46.9);
-    //res = opU(res, earth);
-    //
-    //vec2 mars = marchPlanet(pos4, u_input.invMars, u_input.sMars, 46.9);
-    //res = opU(res, mars);
-    //
-    //vec2 jupiter = marchPlanet(pos4, u_input.invJup, u_input.sJup, 46.9);
-    //res = opU(res, jupiter);
-    //
-    //vec2 saturn = marchPlanet(pos4, u_input.invSat, u_input.sSat, 46.9);
-    //res = opU(res, saturn);
-    //
-    //vec2 uranus = marchPlanet(pos4, u_input.invUr, sUr, 46.9);
-    //res = opU(res, uranus);
-    //
-    //vec2 neptune = marchPlanet(pos4, u_input.invNept, u_input.sNept, 46.9);
-    //res = opU(res, neptune);
-    //
-    //vec2 pluto = marchPlanet(pos4, u_input.invPlu, u_input.sPlu, 46.9);
-    //res = opU(res, pluto);
-    //
-    //vec2 moon = marchPlanet(pos4, u_input.invMoon, u_input.sMoon, 46.9);
-    //res = opU(res, moon);
-   
-    //Not sure why this isn't working.
-    //for (int i = 0; i <  MAX_PLANETS; i++) {
-    //    res = opU(res, marchPlanet(pos4, u_input.inverseWorldMatrices[i], u_input.scalings[i], 46.9));
-    //}
-
     vec2 res;
     vec4 pos4 = vec4(pos, 1.0);
 
@@ -284,37 +190,37 @@ vec2 map( in vec3 pos )
     vec2 plane = vec2( distPlane, 1.0 );
     res = plane;
 
-    vec2 sun = marchPlanet(pos4, u_input.inverseWorldMatrices[0], u_input.scalings[0], 46.9);
+    vec2 sun = marchPlanet(pos4, u_input.inverseWorldMatrices[0], u_input.scalings[0].x, 46.9);
     res = opU(res, sun);
     
-    vec2 mercury = marchPlanet(pos4, u_input.inverseWorldMatrices[1], u_input.scalings[1], 46.9);
+    vec2 mercury = marchPlanet(pos4, u_input.inverseWorldMatrices[1], u_input.scalings[1].x, 46.9);
     res = opU(res, mercury);
     
-    vec2 venus = marchPlanet(pos4, u_input.inverseWorldMatrices[2], u_input.scalings[2], 46.9);
+    vec2 venus = marchPlanet(pos4, u_input.inverseWorldMatrices[2], u_input.scalings[2].x, 46.9);
     res = opU(res, venus);
     
-    vec2 earth = marchPlanet(pos4, u_input.inverseWorldMatrices[3], u_input.scalings[3], 46.9);
+    vec2 earth = marchPlanet(pos4, u_input.inverseWorldMatrices[3], u_input.scalings[3].x, 46.9);
     res = opU(res, earth);
 
-    vec2 mars = marchPlanet(pos4, u_input.inverseWorldMatrices[4], u_input.scalings[4], 46.9);
+    vec2 mars = marchPlanet(pos4, u_input.inverseWorldMatrices[4], u_input.scalings[4].x, 46.9);
     res = opU(res, mars);
 
-    vec2 jupiter = marchPlanet(pos4, u_input.inverseWorldMatrices[5], u_input.scalings[5], 46.9);
+    vec2 jupiter = marchPlanet(pos4, u_input.inverseWorldMatrices[5], u_input.scalings[5].x, 46.9);
     res = opU(res, jupiter);
 
-    vec2 saturn = marchPlanet(pos4, u_input.inverseWorldMatrices[6], u_input.scalings[6], 46.9);
+    vec2 saturn = marchPlanet(pos4, u_input.inverseWorldMatrices[6], u_input.scalings[6].x, 46.9);
     res = opU(res, saturn);
 
-    vec2 uranus = marchPlanet(pos4, u_input.inverseWorldMatrices[7], u_input.scalings[7], 46.9);
+    vec2 uranus = marchPlanet(pos4, u_input.inverseWorldMatrices[7], u_input.scalings[7].x, 46.9);
     res = opU(res, uranus);
 
-    vec2 neptune = marchPlanet(pos4, u_input.inverseWorldMatrices[8], u_input.scalings[8], 46.9);
+    vec2 neptune = marchPlanet(pos4, u_input.inverseWorldMatrices[8], u_input.scalings[8].x, 46.9);
     res = opU(res, neptune);
 
-    vec2 pluto = marchPlanet(pos4, u_input.inverseWorldMatrices[9], u_input.scalings[9], 46.9);
+    vec2 pluto = marchPlanet(pos4, u_input.inverseWorldMatrices[9], u_input.scalings[9].x, 46.9);
     res = opU(res, pluto);
 
-    vec2 moon = marchPlanet(pos4, u_input.inverseWorldMatrices[10], u_input.scalings[10], 46.9);
+    vec2 moon = marchPlanet(pos4, u_input.inverseWorldMatrices[10], u_input.scalings[10].x, 46.9);
     res = opU(res, moon);
 
     return res;

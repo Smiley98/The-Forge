@@ -74,37 +74,6 @@ struct RaymarchingUniformBlock {
 	mat4 invView;
 	vec4 res;
 	float scalings[MAX_PLANETS];
-
-	//mat4 invView;
-	//
-	////Inverse transformation matrices.
-	//mat4 invSun;
-	//mat4 invMerc;
-	//mat4 invVenus;
-	//mat4 invEarth;
-	//mat4 invMars;
-	//mat4 invJup;
-	//mat4 invSat;
-	//mat4 invUr;
-	//mat4 invNept;
-	//mat4 invPlu;
-	//mat4 invMoon;
-	//
-	////Uniform scaling floats.
-	//float sSun;
-	//float sMerc;
-	//float sVenus;
-	//float sEarth;
-	//float sMars;
-	//float sJup;
-	//float sSat;
-	//float sUr;
-	//float sNept;
-	//float sPlu;
-	//float sMoon;
-	//
-	////Screen resolution.
-	//vec2 resolution;
 };
 
 const uint32_t gImageCount = 3;

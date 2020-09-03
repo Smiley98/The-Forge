@@ -21,11 +21,6 @@ namespace p2 {
 
 		void Change(SceneType sceneType);
 
-		//Honestly these shouldn't exist. There's shouldn't be any reason to externally get/set a scene.
-		//Scenes should be well-defined upon initialization.
-		//const Scene& GetScene(SceneType sceneType);
-		//const Scene& GetSceneActive();
-
 	private:
 		SceneManager();
 
