@@ -1,5 +1,31 @@
 #version 450 core
-#define MAX_PLANETS 1
+
+/*
+ * Copyright (c) 2018-2019 Confetti Interactive Inc.
+ * 
+ * This file is part of The-Forge
+ * (see https://github.com/ConfettiFX/The-Forge).
+ * 
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+*/
+
+
+#define MAX_PLANETS 20
 
 layout(location = 0) in vec4 vs_in_position;
 
@@ -16,6 +42,7 @@ layout (std140, UPDATE_FREQ_PER_FRAME, binding=0) uniform uniformBlock{
 out gl_PerVertex
 {
   vec4 gl_Position;
+
 };
 
 layout(location = 0) out INVOCATION
@@ -27,12 +54,12 @@ layout(location = 0) out INVOCATION
 
 void main(void)
 {
-    //viewProject should be uploaded such that there isn't a translation.
-    gl_Position = viewProject * vec4(vs_in_position.xyz, 1.0);
-    
-    //We use vertex positions as our texture coordinates since the texture is a cube not a 2d texture.
-    vs_out.texcoord = vs_in_position;
-
-    //Indicate which side of the skybox cube we're intersecting.
-    vs_out.side = int(vs_in_position.w);
+  vec4 p = vec4(vs_in_position.xyz,1.0);
+  mat4 m = viewProject;
+  m[3] = vec4(0.0, 0.0, 0.0, 1.0);
+  p = m * p;
+  gl_Position = vec4(p.x, p.y, p.w, p.w);
+  vs_out.texcoord = vs_in_position;
+  vs_out.side = int(vs_in_position.w);
 }
+

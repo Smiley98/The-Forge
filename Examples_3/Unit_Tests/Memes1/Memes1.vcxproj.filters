@@ -15,6 +15,25 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\01_Transformations\01_Transformations.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="..\src\01_Transformations\Shaders\Vulkan\basic.frag">
+      <Filter>Shaders\Vulkan</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\src\01_Transformations\Shaders\Vulkan\basic.vert">
+      <Filter>Shaders\Vulkan</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\src\01_Transformations\Shaders\Vulkan\skybox.frag">
+      <Filter>Shaders\Vulkan</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\src\01_Transformations\Shaders\Vulkan\skybox.vert">
+      <Filter>Shaders\Vulkan</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
     <None Include="..\src\01_Transformations\Shaders\D3D12\skybox.vert">
       <Filter>Shaders\D3D12</Filter>
     </None>
@@ -33,28 +52,5 @@
     <None Include="..\src\01_Transformations\Shaders\D3D12\profile.vert">
       <Filter>Shaders\D3D12</Filter>
     </None>
-    <None Include="..\src\01_Transformations\Shaders\Vulkan\basic.frag">
-      <Filter>Shaders\Vulkan</Filter>
-    </None>
-    <None Include="..\src\01_Transformations\Shaders\Vulkan\basic.vert">
-      <Filter>Shaders\Vulkan</Filter>
-    </None>
-    <None Include="..\src\01_Transformations\Shaders\Vulkan\profile.frag">
-      <Filter>Shaders\Vulkan</Filter>
-    </None>
-    <None Include="..\src\01_Transformations\Shaders\Vulkan\profile.vert">
-      <Filter>Shaders\Vulkan</Filter>
-    </None>
-    <None Include="..\src\01_Transformations\Shaders\Vulkan\skybox.frag">
-      <Filter>Shaders\Vulkan</Filter>
-    </None>
-    <None Include="..\src\01_Transformations\Shaders\Vulkan\skybox.vert">
-      <Filter>Shaders\Vulkan</Filter>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\src\01_Transformations\01_Transformations.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
 </Project>

@@ -1,4 +1,32 @@
+/*
+ * Copyright (c) 2018-2019 Confetti Interactive Inc.
+ *
+ * This file is part of The-Forge
+ * (see https://github.com/ConfettiFX/The-Forge).
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+*/
+
+// Unit Test for testing transformations using a solar system.
+// Tests the basic mat4 transformations, such as scaling, rotation, and translation.
+
 #define MAX_PLANETS 20    // Does not affect test, just for allocating space in uniform block. Must match with shader.
+
 
 //Interfaces
 #include "../../../../Common_3/OS/Interfaces/ICameraController.h"
@@ -20,8 +48,14 @@
 /// Demo structures
 struct PlanetInfoStruct
 {
-	mat4  mTransform;
+	uint  mParentIndex;
 	vec4  mColor;
+	float mYOrbitSpeed;    // Rotation speed around parent
+	float mZOrbitSpeed;
+	float mRotationSpeed;    // Rotation speed around self
+	mat4  mTranslationMat;
+	mat4  mScaleMat;
+	mat4  mSharedMat;    // Matrix to pass down to children
 };
 
 struct UniformBlock
@@ -38,39 +72,42 @@ struct UniformBlock
 const uint32_t gImageCount = 3;
 bool           gMicroProfiler = false;
 bool           bPrevToggleMicroProfiler = false;
-const uint     gNumPlanets = 11;
+const int      gSphereResolution = 30;    // Increase for higher resolution spheres
+const float    gSphereDiameter = 0.5f;
+const uint     gNumPlanets = 11;        // Sun, Mercury -> Neptune, Pluto, Moon
+const uint     gTimeOffset = 600000;    // For visually better starting locations
+const float    gRotSelfScale = 0.0004f;
+const float    gRotOrbitYScale = 0.001f;
+const float    gRotOrbitZScale = 0.00001f;
 
 Renderer* pRenderer = NULL;
 
-Queue* pGraphicsQueue = NULL;
+Queue*   pGraphicsQueue = NULL;
 CmdPool* pCmdPool = NULL;
-Cmd** ppCmds = NULL;
+Cmd**    ppCmds = NULL;
 
-SwapChain* pSwapChain = NULL;
+SwapChain*    pSwapChain = NULL;
 RenderTarget* pDepthBuffer = NULL;
-Fence* pRenderCompleteFences[gImageCount] = { NULL };
-Semaphore* pImageAcquiredSemaphore = NULL;
-Semaphore* pRenderCompleteSemaphores[gImageCount] = { NULL };
+Fence*        pRenderCompleteFences[gImageCount] = { NULL };
+Semaphore*    pImageAcquiredSemaphore = NULL;
+Semaphore*    pRenderCompleteSemaphores[gImageCount] = { NULL };
 
-Shader* pSphereShader = NULL;
-Buffer* pSphereVertexBuffer = NULL;
+Shader*   pSphereShader = NULL;
+Buffer*   pSphereVertexBuffer = NULL;
 Pipeline* pSpherePipeline = NULL;
 
-Shader* pSkyBoxDrawShader = NULL;
-Buffer* pSkyBoxVertexBuffer = NULL;
-Pipeline* pSkyBoxDrawPipeline = NULL;
+Shader*        pSkyBoxDrawShader = NULL;
+Buffer*        pSkyBoxVertexBuffer = NULL;
+Pipeline*      pSkyBoxDrawPipeline = NULL;
 RootSignature* pRootSignature = NULL;
-Sampler* pSamplerSkyBox = NULL;
-Texture* pSkyBoxTextures[6];
+Sampler*       pSamplerSkyBox = NULL;
+Texture*       pSkyBoxTextures[6];
 DescriptorSet* pDescriptorSetTexture = { NULL };
 DescriptorSet* pDescriptorSetUniforms = { NULL };
 VirtualJoystickUI gVirtualJoystick;
-DepthState* pDepth = NULL;
+DepthState*      pDepth = NULL;
 RasterizerState* pSkyboxRast = NULL;
 RasterizerState* pSphereRast = NULL;
-
-//Can reuse the entire sphere pipeline!
-Buffer* pCubeVertexBuffer = NULL;
 
 Buffer* pProjViewUniformBuffer[gImageCount] = { NULL };
 Buffer* pSkyboxUniformBuffer[gImageCount] = { NULL };
@@ -86,7 +123,7 @@ ICameraController* pCameraController = NULL;
 
 /// UI
 UIApp gAppUI;
-GpuProfiler* pGpuProfiler = NULL;
+GpuProfiler*       pGpuProfiler = NULL;
 
 const char* pSkyBoxImageFileNames[] = { "Skybox_right1",  "Skybox_left2",  "Skybox_top3",
 										"Skybox_bottom4", "Skybox_front5", "Skybox_back6" };
@@ -95,26 +132,26 @@ TextDrawDesc gFrameTimeDraw = TextDrawDesc(0, 0xff00ffff, 18);
 
 GuiComponent* pGui = NULL;
 
-class Transformations : public IApp
+class Transformations: public IApp
 {
 public:
 	bool Init()
 	{
-		// FILE PATHS
-		PathHandle programDirectory = fsCopyProgramDirectoryPath();
-		if (!fsPlatformUsesBundledResources())
-		{
-			PathHandle resourceDirRoot = fsAppendPathComponent(programDirectory, "../../../src/01_Transformations");
-			fsSetResourceDirectoryRootPath(resourceDirRoot);
-
-			fsSetRelativePathForResourceDirectory(RD_TEXTURES, "../../UnitTestResources/Textures");
-			fsSetRelativePathForResourceDirectory(RD_MESHES, "../../UnitTestResources/Meshes");
-			fsSetRelativePathForResourceDirectory(RD_BUILTIN_FONTS, "../../UnitTestResources/Fonts");
-			fsSetRelativePathForResourceDirectory(RD_ANIMATIONS, "../../UnitTestResources/Animation");
-			fsSetRelativePathForResourceDirectory(RD_MIDDLEWARE_TEXT, "../../../../Middleware_3/Text");
-			fsSetRelativePathForResourceDirectory(RD_MIDDLEWARE_UI, "../../../../Middleware_3/UI");
-		}
-
+        // FILE PATHS
+        PathHandle programDirectory = fsCopyProgramDirectoryPath();
+        if (!fsPlatformUsesBundledResources())
+        {
+            PathHandle resourceDirRoot = fsAppendPathComponent(programDirectory, "../../../src/01_Transformations");
+            fsSetResourceDirectoryRootPath(resourceDirRoot);
+            
+            fsSetRelativePathForResourceDirectory(RD_TEXTURES,        "../../UnitTestResources/Textures");
+            fsSetRelativePathForResourceDirectory(RD_MESHES,          "../../UnitTestResources/Meshes");
+            fsSetRelativePathForResourceDirectory(RD_BUILTIN_FONTS,    "../../UnitTestResources/Fonts");
+            fsSetRelativePathForResourceDirectory(RD_ANIMATIONS,      "../../UnitTestResources/Animation");
+            fsSetRelativePathForResourceDirectory(RD_MIDDLEWARE_TEXT,  "../../../../Middleware_3/Text");
+            fsSetRelativePathForResourceDirectory(RD_MIDDLEWARE_UI,    "../../../../Middleware_3/UI");
+        }
+        
 		// window and renderer setup
 		RendererDesc settings = { 0 };
 		initRenderer(GetName(), &settings, &pRenderer);
@@ -141,7 +178,7 @@ public:
 		// Loads Skybox Textures
 		for (int i = 0; i < 6; ++i)
 		{
-			PathHandle textureFilePath = fsCopyPathInResourceDirectory(RD_TEXTURES, pSkyBoxImageFileNames[i]);
+            PathHandle textureFilePath = fsCopyPathInResourceDirectory(RD_TEXTURES, pSkyBoxImageFileNames[i]);
 			TextureLoadDesc textureDesc = {};
 			textureDesc.pFilePath = textureFilePath;
 			textureDesc.ppTexture = &pSkyBoxTextures[i];
@@ -172,8 +209,8 @@ public:
 									ADDRESS_MODE_CLAMP_TO_EDGE };
 		addSampler(pRenderer, &samplerDesc, &pSamplerSkyBox);
 
-		Shader* shaders[] = { pSphereShader, pSkyBoxDrawShader };
-		const char* pStaticSamplers[] = { "uSampler0" };
+		Shader*           shaders[] = { pSphereShader, pSkyBoxDrawShader };
+		const char*       pStaticSamplers[] = { "uSampler0" };
 		RootSignatureDesc rootDesc = {};
 		rootDesc.mStaticSamplerCount = 1;
 		rootDesc.ppStaticSamplerNames = pStaticSamplers;
@@ -201,9 +238,11 @@ public:
 		depthStateDesc.mDepthFunc = CMP_LEQUAL;
 		addDepthState(pRenderer, &depthStateDesc, &pDepth);
 
+		// Generate sphere vertex buffer
 		float* pSpherePoints;
-		generateSpherePoints(&pSpherePoints, &gNumberOfSpherePoints, 10, 5.0f);
-		uint64_t sphereDataSize = gNumberOfSpherePoints * sizeof(float);
+		generateSpherePoints(&pSpherePoints, &gNumberOfSpherePoints, gSphereResolution, gSphereDiameter);
+
+		uint64_t       sphereDataSize = gNumberOfSpherePoints * sizeof(float);
 		BufferLoadDesc sphereVbDesc = {};
 		sphereVbDesc.mDesc.mDescriptors = DESCRIPTOR_TYPE_VERTEX_BUFFER;
 		sphereVbDesc.mDesc.mMemoryUsage = RESOURCE_MEMORY_USAGE_GPU_ONLY;
@@ -212,21 +251,9 @@ public:
 		sphereVbDesc.pData = pSpherePoints;
 		sphereVbDesc.ppBuffer = &pSphereVertexBuffer;
 		addResource(&sphereVbDesc);
-		conf_free(pSpherePoints);
 
-		int cubeVertexDataIndices;
-		float* pCubePoints;
-		generateCuboidPoints(&pCubePoints, &cubeVertexDataIndices);
-		uint64_t cubeDataSize = cubeVertexDataIndices * sizeof(float);
-		BufferLoadDesc cubeVbDesc = {};
-		cubeVbDesc.mDesc.mDescriptors = DESCRIPTOR_TYPE_VERTEX_BUFFER;
-		cubeVbDesc.mDesc.mMemoryUsage = RESOURCE_MEMORY_USAGE_GPU_ONLY;
-		cubeVbDesc.mDesc.mSize = cubeDataSize;
-		cubeVbDesc.mDesc.mVertexStride = sizeof(float) * 6;
-		cubeVbDesc.pData = pCubePoints;
-		cubeVbDesc.ppBuffer = &pCubeVertexBuffer;
-		addResource(&cubeVbDesc);
-		conf_free(pCubePoints);
+		// Need to free memory;
+		conf_free(pSpherePoints);
 
 		//Generate sky box vertex buffer
 		float skyBoxPoints[] = {
@@ -280,9 +307,106 @@ public:
 		}
 		finishResourceLoading();
 
+		// Setup planets (Rotation speeds are relative to Earth's, some values randomly given)
+
 		// Sun
-		gPlanetInfoData[0].mTransform = mat4::identity();
+		gPlanetInfoData[0].mParentIndex = 0;
+		gPlanetInfoData[0].mYOrbitSpeed = 0;    // Earth years for one orbit
+		gPlanetInfoData[0].mZOrbitSpeed = 0;
+		gPlanetInfoData[0].mRotationSpeed = 24.0f;    // Earth days for one rotation
+		gPlanetInfoData[0].mTranslationMat = mat4::identity();
+		gPlanetInfoData[0].mScaleMat = mat4::scale(vec3(10.0f));
 		gPlanetInfoData[0].mColor = vec4(0.9f, 0.6f, 0.1f, 0.0f);
+
+		// Mercury
+		gPlanetInfoData[1].mParentIndex = 0;
+		gPlanetInfoData[1].mYOrbitSpeed = 0.5f;
+		gPlanetInfoData[1].mZOrbitSpeed = 0.0f;
+		gPlanetInfoData[1].mRotationSpeed = 58.7f;
+		gPlanetInfoData[1].mTranslationMat = mat4::translation(vec3(10.0f, 0, 0));
+		gPlanetInfoData[1].mScaleMat = mat4::scale(vec3(1.0f));
+		gPlanetInfoData[1].mColor = vec4(0.7f, 0.3f, 0.1f, 1.0f);
+
+		// Venus
+		gPlanetInfoData[2].mParentIndex = 0;
+		gPlanetInfoData[2].mYOrbitSpeed = 0.8f;
+		gPlanetInfoData[2].mZOrbitSpeed = 0.0f;
+		gPlanetInfoData[2].mRotationSpeed = 243.0f;
+		gPlanetInfoData[2].mTranslationMat = mat4::translation(vec3(20.0f, 0, 5));
+		gPlanetInfoData[2].mScaleMat = mat4::scale(vec3(2));
+		gPlanetInfoData[2].mColor = vec4(0.8f, 0.6f, 0.1f, 1.0f);
+
+		// Earth
+		gPlanetInfoData[3].mParentIndex = 0;
+		gPlanetInfoData[3].mYOrbitSpeed = 1.0f;
+		gPlanetInfoData[3].mZOrbitSpeed = 0.0f;
+		gPlanetInfoData[3].mRotationSpeed = 1.0f;
+		gPlanetInfoData[3].mTranslationMat = mat4::translation(vec3(30.0f, 0, 0));
+		gPlanetInfoData[3].mScaleMat = mat4::scale(vec3(4));
+		gPlanetInfoData[3].mColor = vec4(0.3f, 0.2f, 0.8f, 1.0f);
+
+		// Mars
+		gPlanetInfoData[4].mParentIndex = 0;
+		gPlanetInfoData[4].mYOrbitSpeed = 2.0f;
+		gPlanetInfoData[4].mZOrbitSpeed = 0.0f;
+		gPlanetInfoData[4].mRotationSpeed = 1.1f;
+		gPlanetInfoData[4].mTranslationMat = mat4::translation(vec3(40.0f, 0, 0));
+		gPlanetInfoData[4].mScaleMat = mat4::scale(vec3(3));
+		gPlanetInfoData[4].mColor = vec4(0.9f, 0.3f, 0.1f, 1.0f);
+
+		// Jupiter
+		gPlanetInfoData[5].mParentIndex = 0;
+		gPlanetInfoData[5].mYOrbitSpeed = 11.0f;
+		gPlanetInfoData[5].mZOrbitSpeed = 0.0f;
+		gPlanetInfoData[5].mRotationSpeed = 0.4f;
+		gPlanetInfoData[5].mTranslationMat = mat4::translation(vec3(50.0f, 0, 0));
+		gPlanetInfoData[5].mScaleMat = mat4::scale(vec3(8));
+		gPlanetInfoData[5].mColor = vec4(0.6f, 0.4f, 0.4f, 1.0f);
+
+		// Saturn
+		gPlanetInfoData[6].mParentIndex = 0;
+		gPlanetInfoData[6].mYOrbitSpeed = 29.4f;
+		gPlanetInfoData[6].mZOrbitSpeed = 0.0f;
+		gPlanetInfoData[6].mRotationSpeed = 0.5f;
+		gPlanetInfoData[6].mTranslationMat = mat4::translation(vec3(60.0f, 0, 0));
+		gPlanetInfoData[6].mScaleMat = mat4::scale(vec3(6));
+		gPlanetInfoData[6].mColor = vec4(0.7f, 0.7f, 0.5f, 1.0f);
+
+		// Uranus
+		gPlanetInfoData[7].mParentIndex = 0;
+		gPlanetInfoData[7].mYOrbitSpeed = 84.07f;
+		gPlanetInfoData[7].mZOrbitSpeed = 0.0f;
+		gPlanetInfoData[7].mRotationSpeed = 0.8f;
+		gPlanetInfoData[7].mTranslationMat = mat4::translation(vec3(70.0f, 0, 0));
+		gPlanetInfoData[7].mScaleMat = mat4::scale(vec3(7));
+		gPlanetInfoData[7].mColor = vec4(0.4f, 0.4f, 0.6f, 1.0f);
+
+		// Neptune
+		gPlanetInfoData[8].mParentIndex = 0;
+		gPlanetInfoData[8].mYOrbitSpeed = 164.81f;
+		gPlanetInfoData[8].mZOrbitSpeed = 0.0f;
+		gPlanetInfoData[8].mRotationSpeed = 0.9f;
+		gPlanetInfoData[8].mTranslationMat = mat4::translation(vec3(80.0f, 0, 0));
+		gPlanetInfoData[8].mScaleMat = mat4::scale(vec3(8));
+		gPlanetInfoData[8].mColor = vec4(0.5f, 0.2f, 0.9f, 1.0f);
+
+		// Pluto - Not a planet XDD
+		gPlanetInfoData[9].mParentIndex = 0;
+		gPlanetInfoData[9].mYOrbitSpeed = 247.7f;
+		gPlanetInfoData[9].mZOrbitSpeed = 1.0f;
+		gPlanetInfoData[9].mRotationSpeed = 7.0f;
+		gPlanetInfoData[9].mTranslationMat = mat4::translation(vec3(90.0f, 0, 0));
+		gPlanetInfoData[9].mScaleMat = mat4::scale(vec3(1.0f));
+		gPlanetInfoData[9].mColor = vec4(0.7f, 0.5f, 0.5f, 1.0f);
+
+		// Moon
+		gPlanetInfoData[10].mParentIndex = 3;
+		gPlanetInfoData[10].mYOrbitSpeed = 1.0f;
+		gPlanetInfoData[10].mZOrbitSpeed = 200.0f;
+		gPlanetInfoData[10].mRotationSpeed = 27.0f;
+		gPlanetInfoData[10].mTranslationMat = mat4::translation(vec3(5.0f, 0, 0));
+		gPlanetInfoData[10].mScaleMat = mat4::scale(vec3(1));
+		gPlanetInfoData[10].mColor = vec4(0.3f, 0.3f, 0.4f, 1.0f);
 
 		if (!gAppUI.Init(pRenderer))
 			return false;
@@ -298,8 +422,7 @@ public:
 
 		pGui->AddWidget(CheckboxWidget("Toggle Micro Profiler", &gMicroProfiler));
 
-		//CameraMotionParameters cmp{ 160.0f, 600.0f, 200.0f };
-		CameraMotionParameters cmp{ 16.0f, 60.0f, 20.0f };
+		CameraMotionParameters cmp{ 160.0f, 600.0f, 200.0f };
 		vec3                   camPos{ 48.0f, 48.0f, 20.0f };
 		vec3                   lookAt{ 0 };
 
@@ -310,14 +433,14 @@ public:
 		if (!initInputSystem(pWindow))
 			return false;
 
-		// Initialize microprofiler and it's UI.
-		initProfiler();
-
-		// Gpu profiler can only be added after initProfile.
-		addGpuProfiler(pRenderer, pGraphicsQueue, &pGpuProfiler, "GpuProfiler");
+    // Initialize microprofiler and it's UI.
+    initProfiler();
+    
+    // Gpu profiler can only be added after initProfile.
+    addGpuProfiler(pRenderer, pGraphicsQueue, &pGpuProfiler, "GpuProfiler");
 
 		// App Actions
-		InputActionDesc actionDesc = { InputBindings::BUTTON_FULLSCREEN, [](InputActionContext* ctx) { toggleFullscreen(((IApp*)ctx->pUserData)->pWindow); return true; }, this };
+    InputActionDesc actionDesc = { InputBindings::BUTTON_FULLSCREEN, [](InputActionContext* ctx) { toggleFullscreen(((IApp*)ctx->pUserData)->pWindow); return true; }, this };
 		addInputAction(&actionDesc);
 		actionDesc = { InputBindings::BUTTON_EXIT, [](InputActionContext* ctx) { requestShutdown(); return true; } };
 		addInputAction(&actionDesc);
@@ -347,7 +470,7 @@ public:
 		addInputAction(&actionDesc);
 		actionDesc = { InputBindings::BUTTON_NORTH, [](InputActionContext* ctx) { pCameraController->resetView(); return true; } };
 		addInputAction(&actionDesc);
-
+		
 		// Prepare descriptor sets
 		DescriptorData params[6] = {};
 		params[0].pName = "RightText";
@@ -391,7 +514,7 @@ public:
 		gAppUI.Exit();
 
 		// Exit profile
-		exitProfiler();
+    exitProfiler();
 
 		for (uint32_t i = 0; i < gImageCount; ++i)
 		{
@@ -402,7 +525,6 @@ public:
 		removeDescriptorSet(pRenderer, pDescriptorSetTexture);
 		removeDescriptorSet(pRenderer, pDescriptorSetUniforms);
 
-		removeResource(pCubeVertexBuffer);
 		removeResource(pSphereVertexBuffer);
 		removeResource(pSkyBoxVertexBuffer);
 
@@ -516,11 +638,14 @@ public:
 	void Update(float deltaTime)
 	{
 		updateInputSystem(mSettings.mWidth, mSettings.mHeight);
-		pCameraController->update(deltaTime);
 
+		pCameraController->update(deltaTime);
+		/************************************************************************/
+		// Scene Update
+		/************************************************************************/
 		static float currentTime = 0.0f;
 		currentTime += deltaTime * 1000.0f;
-
+	
 		// update camera with time
 		mat4 viewMat = pCameraController->getViewMatrix();
 
@@ -531,22 +656,46 @@ public:
 
 		// point light parameters
 		gUniformData.mLightPosition = vec3(0, 0, 0);
-		gUniformData.mLightColor = vec3(0.9f, 0.9f, 0.7f);
+		gUniformData.mLightColor = vec3(0.9f, 0.9f, 0.7f);    // Pale Yellow
 
-		gUniformData.mToWorldMat[0] = gPlanetInfoData[0].mTransform;
-		gUniformData.mColor[0] = gPlanetInfoData[0].mColor;
+		// update planet transformations
+		for (unsigned int i = 0; i < gNumPlanets; i++)
+		{
+			mat4 rotSelf, rotOrbitY, rotOrbitZ, trans, scale, parentMat;
+			rotSelf = rotOrbitY = rotOrbitZ = trans = scale = parentMat = mat4::identity();
+			if (gPlanetInfoData[i].mRotationSpeed > 0.0f)
+				rotSelf = mat4::rotationY(gRotSelfScale * (currentTime + gTimeOffset) / gPlanetInfoData[i].mRotationSpeed);
+			if (gPlanetInfoData[i].mYOrbitSpeed > 0.0f)
+				rotOrbitY = mat4::rotationY(gRotOrbitYScale * (currentTime + gTimeOffset) / gPlanetInfoData[i].mYOrbitSpeed);
+			if (gPlanetInfoData[i].mZOrbitSpeed > 0.0f)
+				rotOrbitZ = mat4::rotationZ(gRotOrbitZScale * (currentTime + gTimeOffset) / gPlanetInfoData[i].mZOrbitSpeed);
+			if (gPlanetInfoData[i].mParentIndex > 0)
+				parentMat = gPlanetInfoData[gPlanetInfoData[i].mParentIndex].mSharedMat;
 
-		//Zero the translation for the skybox view matrix.
-		viewMat.setTranslation(vec3(0.0f));
+			trans = gPlanetInfoData[i].mTranslationMat;
+			scale = gPlanetInfoData[i].mScaleMat;
+
+			gPlanetInfoData[i].mSharedMat = parentMat * rotOrbitY * trans;
+			gUniformData.mToWorldMat[i] = parentMat * rotOrbitY * rotOrbitZ * trans * rotSelf * scale;
+			gUniformData.mColor[i] = gPlanetInfoData[i].mColor;
+		}
+
+		viewMat.setTranslation(vec3(0));
 		gUniformDataSky = gUniformData;
 		gUniformDataSky.mProjectView = projMat * viewMat;
+		/************************************************************************/
+		/************************************************************************/
 
-		if (gMicroProfiler != bPrevToggleMicroProfiler)
-		{
-			toggleProfiler();
-			bPrevToggleMicroProfiler = gMicroProfiler;
-		}
-		gAppUI.Update(deltaTime);
+    if(gMicroProfiler != bPrevToggleMicroProfiler)
+    {
+       toggleProfiler();
+       bPrevToggleMicroProfiler = gMicroProfiler;
+    }
+
+    /************************************************************************/
+    // Update GUI
+    /************************************************************************/
+    gAppUI.Update(deltaTime);  
 	}
 
 	void Draw()
@@ -554,10 +703,10 @@ public:
 		acquireNextImage(pRenderer, pSwapChain, pImageAcquiredSemaphore, NULL, &gFrameIndex);
 
 		RenderTarget* pRenderTarget = pSwapChain->ppSwapchainRenderTargets[gFrameIndex];
-		Semaphore* pRenderCompleteSemaphore = pRenderCompleteSemaphores[gFrameIndex];
-		Fence* pRenderCompleteFence = pRenderCompleteFences[gFrameIndex];
+		Semaphore*    pRenderCompleteSemaphore = pRenderCompleteSemaphores[gFrameIndex];
+		Fence*        pRenderCompleteFence = pRenderCompleteFences[gFrameIndex];
 
-		// Stall if CPU is ahead of the GPU.
+		// Stall if CPU is running "Swap Chain Buffer Count" frames ahead of GPU
 		FenceStatus fenceStatus;
 		getFenceStatus(pRenderer, pRenderCompleteFence, &fenceStatus);
 		if (fenceStatus == FENCE_STATUS_INCOMPLETE)
@@ -583,6 +732,7 @@ public:
 
 		Cmd* cmd = ppCmds[gFrameIndex];
 		beginCmd(cmd);
+
 		cmdBeginGpuFrameProfile(cmd, pGpuProfiler);
 
 		TextureBarrier barriers[] = {
@@ -594,50 +744,61 @@ public:
 		cmdBindRenderTargets(cmd, 1, &pRenderTarget, pDepthBuffer, &loadActions, NULL, NULL, -1, -1);
 		cmdSetViewport(cmd, 0.0f, 0.0f, (float)pRenderTarget->mDesc.mWidth, (float)pRenderTarget->mDesc.mHeight, 0.0f, 1.0f);
 		cmdSetScissor(cmd, 0, 0, pRenderTarget->mDesc.mWidth, pRenderTarget->mDesc.mHeight);
-		cmdBindDescriptorSet(cmd, 0, pDescriptorSetTexture);
 
+		cmdBindDescriptorSet(cmd, 0, pDescriptorSetTexture);
+    
 		//// draw skybox
+		cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw skybox", true);
 		cmdBindPipeline(cmd, pSkyBoxDrawPipeline);
 		cmdBindDescriptorSet(cmd, gFrameIndex * 2 + 0, pDescriptorSetUniforms);
 		cmdBindVertexBuffer(cmd, 1, &pSkyBoxVertexBuffer, NULL);
 		cmdDraw(cmd, 36, 0);
+		cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
 
-		//// draw planets
+		////// draw planets
+		cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw Planets", true);
 		cmdBindPipeline(cmd, pSpherePipeline);
 		cmdBindDescriptorSet(cmd, gFrameIndex * 2 + 1, pDescriptorSetUniforms);
 		cmdBindVertexBuffer(cmd, 1, &pSphereVertexBuffer, NULL);
 		cmdDrawInstanced(cmd, gNumberOfSpherePoints / 6, 0, gNumPlanets, 0);
+		cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
 
-		loadActions = {};
-		loadActions.mLoadActionsColor[0] = LOAD_ACTION_LOAD;
-		cmdBindRenderTargets(cmd, 1, &pRenderTarget, NULL, &loadActions, NULL, NULL, -1, -1);
-		cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw UI", true);
+
+	loadActions = {};
+	loadActions.mLoadActionsColor[0] = LOAD_ACTION_LOAD;
+	cmdBindRenderTargets(cmd, 1, &pRenderTarget, NULL, &loadActions, NULL, NULL, -1, -1);
+    cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw UI", true);
 		static HiresTimer gTimer;
 		gTimer.GetUSec(true);
 
 		gVirtualJoystick.Draw(cmd, { 1.0f, 1.0f, 1.0f, 1.0f });
+
 		gAppUI.DrawText(cmd, float2(8, 15), eastl::string().sprintf("CPU %f ms", gTimer.GetUSecAverage() / 1000.0f).c_str(), &gFrameTimeDraw);
 
 #if !defined(__ANDROID__)
-		gAppUI.DrawText(cmd, float2(8, 40), eastl::string().sprintf("GPU %f ms", (float)pGpuProfiler->mCumulativeTime * 1000.0f).c_str(), &gFrameTimeDraw);
-		gAppUI.DrawDebugGpuProfile(cmd, float2(8, 65), pGpuProfiler, NULL);
+    gAppUI.DrawText(
+      cmd, float2(8, 40), eastl::string().sprintf("GPU %f ms", (float)pGpuProfiler->mCumulativeTime * 1000.0f).c_str(),
+      &gFrameTimeDraw);
+    gAppUI.DrawDebugGpuProfile(cmd, float2(8, 65), pGpuProfiler, NULL);
 #endif
-		cmdDrawProfiler();
 
-		gAppUI.Gui(pGui);
+    cmdDrawProfiler();
+
+    gAppUI.Gui(pGui);
+
 		gAppUI.Draw(cmd);
 		cmdBindRenderTargets(cmd, 0, NULL, NULL, NULL, NULL, NULL, -1, -1);
-		cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
+    cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
 
 		barriers[0] = { pRenderTarget->pTexture, RESOURCE_STATE_PRESENT };
 		cmdResourceBarrier(cmd, 0, NULL, 1, barriers);
 
-		cmdEndGpuFrameProfile(cmd, pGpuProfiler);
+    cmdEndGpuFrameProfile(cmd, pGpuProfiler);
 		endCmd(cmd);
 
 		queueSubmit(pGraphicsQueue, 1, &cmd, pRenderCompleteFence, 1, &pImageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);
 		queuePresent(pGraphicsQueue, pSwapChain, gFrameIndex, 1, &pRenderCompleteSemaphore);
-		flipProfiler();
+    flipProfiler();
 	}
 
 	const char* GetName() { return "01_Transformations"; }
