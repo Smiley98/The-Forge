@@ -65,7 +65,7 @@ namespace p2 {
 	{
 		int numberOfSphereAttributes;
 		float* pSpherePoints;
-		generateSpherePoints(&pSpherePoints, &numberOfSphereAttributes, 10, 5.0f);
+		generateSpherePoints(&pSpherePoints, &numberOfSphereAttributes, 10);
 		uint64_t sphereDataSize = numberOfSphereAttributes * sizeof(float);
 		BufferLoadDesc sphereVbDesc = {};
 		sphereVbDesc.mDesc.mDescriptors = DESCRIPTOR_TYPE_VERTEX_BUFFER;

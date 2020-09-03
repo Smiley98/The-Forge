@@ -94,7 +94,7 @@ private:
 	void present(Cmd* cmd);
 	void bindTexture(Cmd* cmd);
 	void setView(Cmd* cmd);
-	void clear(Cmd* cmd);
+	void bindRenderTarget(Cmd* cmd, bool clear = false);
 	void drawCube(Cmd* cmd);
 	void drawSphere(Cmd* cmd);
 	void drawSkybox(Cmd* cmd);
@@ -400,6 +400,9 @@ public:
 		mat4 projMat = mat4::perspective(horizontal_fov, aspectInverse, 0.1f, 1000.0f);
 		gUniformData.mProjectionView = projMat * viewMat;
 
+		//Reset to identity matrix with a scale of 5.
+		gPlanetInfoData[0].mTransform = mat4::scale(vec3(5.0f));
+
 		// point light parameters
 		gUniformData.mLightPosition = vec3(0, 0, 0);
 		gUniformData.mWorldMatrices[0] = gPlanetInfoData[0].mTransform;
@@ -436,12 +439,10 @@ public:
 		getFenceStatus(pRenderer, pRenderCompleteFence, &fenceStatus);
 		if (fenceStatus == FENCE_STATUS_INCOMPLETE)
 			waitForFences(pRenderer, 1, &pRenderCompleteFence);
-
-		//Haven't figured out which "things" (ie texture, render target, viewport, scissor) are persistent yet.
-		//Will require a deep dive ;)
+		
 		beginCmd(cmd);
 		setView(cmd);
-		clear(cmd);
+		bindRenderTarget(cmd, true);
 		bindTexture(cmd);
 		drawSkybox(cmd);
 		drawSphere(cmd);
@@ -451,11 +452,14 @@ public:
 		getFenceStatus(pRenderer, pRenderCompleteFence, &fenceStatus);
 		if (fenceStatus == FENCE_STATUS_INCOMPLETE)
 			waitForFences(pRenderer, 1, &pRenderCompleteFence);
-
+		
 		gUniformData.mColors[0] = vec4(0.0f, 1.0f, 0.0f, 1.0f);
+		gUniformData.mWorldMatrices[0].setTranslation(vec3(10.0f, 0.0f, 0.0f));
 		updateResource(&viewProjCbv);
-
+		
 		beginCmd(cmd);
+		setView(cmd);
+		bindRenderTarget(cmd);
 		drawCube(cmd);
 		endCmd(cmd);
 		queueSubmit(queueManager.m_graphicsQueue, 1, &cmd, pRenderCompleteFence, 1, &syncManager.m_imageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);
@@ -530,19 +534,24 @@ void Transformations::setView(Cmd* cmd)
 	cmdSetScissor(cmd, 0, 0, pRenderTarget->mDesc.mWidth, pRenderTarget->mDesc.mHeight);
 }
 
-void Transformations::clear(Cmd* cmd)
+void Transformations::bindRenderTarget(Cmd* cmd, bool clear)
 {
 	RenderTarget* pRenderTarget = syncManager.m_swapChain->ppSwapchainRenderTargets[gFrameIndex];
-	LoadActionsDesc loadActions = {};
-	loadActions.mLoadActionsColor[0] = LOAD_ACTION_CLEAR;
-	loadActions.mClearColorValues[0].r = 1.0f;
-	loadActions.mClearColorValues[0].g = 1.0f;
-	loadActions.mClearColorValues[0].b = 1.0f;
-	loadActions.mClearColorValues[0].a = 1.0f;
-	loadActions.mLoadActionDepth = LOAD_ACTION_CLEAR;
-	loadActions.mClearDepth.depth = 1.0f;
-	loadActions.mClearDepth.stencil = 0;
-	cmdBindRenderTargets(cmd, 1, &pRenderTarget, syncManager.m_depthBuffer, &loadActions, NULL, NULL, -1, -1);
+	if (clear)
+	{
+		LoadActionsDesc loadActions = {};
+		loadActions.mLoadActionsColor[0] = LOAD_ACTION_CLEAR;
+		loadActions.mClearColorValues[0].r = 1.0f;
+		loadActions.mClearColorValues[0].g = 1.0f;
+		loadActions.mClearColorValues[0].b = 1.0f;
+		loadActions.mClearColorValues[0].a = 1.0f;
+		loadActions.mLoadActionDepth = LOAD_ACTION_CLEAR;
+		loadActions.mClearDepth.depth = 1.0f;
+		loadActions.mClearDepth.stencil = 0;
+		cmdBindRenderTargets(cmd, 1, &pRenderTarget, syncManager.m_depthBuffer, &loadActions, NULL, NULL, -1, -1);
+	}
+	else
+		cmdBindRenderTargets(cmd, 1, &pRenderTarget, syncManager.m_depthBuffer, NULL, NULL, NULL, -1, -1);
 }
 
 void Transformations::drawCube(Cmd* cmd)
