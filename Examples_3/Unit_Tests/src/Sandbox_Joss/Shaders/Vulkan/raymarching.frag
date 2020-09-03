@@ -7,7 +7,7 @@ layout (std140, UPDATE_FREQ_PER_FRAME, binding=0) uniform uniformBlock {
     mat4 inverseWorldMatrices[MAX_PLANETS];
     mat4 invView;
     vec4 resolution;
-    vec4 scalings[MAX_PLANETS];
+    float scalings[MAX_PLANETS];
 } u_input;
 
 #define AA 1   // make this 1 is your machine is too slow
@@ -190,37 +190,37 @@ vec2 map( in vec3 pos )
     vec2 plane = vec2( distPlane, 1.0 );
     res = plane;
 
-    vec2 sun = marchPlanet(pos4, u_input.inverseWorldMatrices[0], u_input.scalings[0].x, 46.9);
+    vec2 sun = marchPlanet(pos4, u_input.inverseWorldMatrices[0], u_input.scalings[0], 46.9);
     res = opU(res, sun);
     
-    vec2 mercury = marchPlanet(pos4, u_input.inverseWorldMatrices[1], u_input.scalings[1].x, 46.9);
+    vec2 mercury = marchPlanet(pos4, u_input.inverseWorldMatrices[1], u_input.scalings[1], 46.9);
     res = opU(res, mercury);
     
-    vec2 venus = marchPlanet(pos4, u_input.inverseWorldMatrices[2], u_input.scalings[2].x, 46.9);
+    vec2 venus = marchPlanet(pos4, u_input.inverseWorldMatrices[2], u_input.scalings[2], 46.9);
     res = opU(res, venus);
     
-    vec2 earth = marchPlanet(pos4, u_input.inverseWorldMatrices[3], u_input.scalings[3].x, 46.9);
+    vec2 earth = marchPlanet(pos4, u_input.inverseWorldMatrices[3], u_input.scalings[3], 46.9);
     res = opU(res, earth);
 
-    vec2 mars = marchPlanet(pos4, u_input.inverseWorldMatrices[4], u_input.scalings[4].x, 46.9);
+    vec2 mars = marchPlanet(pos4, u_input.inverseWorldMatrices[4], u_input.scalings[4], 46.9);
     res = opU(res, mars);
 
-    vec2 jupiter = marchPlanet(pos4, u_input.inverseWorldMatrices[5], u_input.scalings[5].x, 46.9);
+    vec2 jupiter = marchPlanet(pos4, u_input.inverseWorldMatrices[5], u_input.scalings[5], 46.9);
     res = opU(res, jupiter);
 
-    vec2 saturn = marchPlanet(pos4, u_input.inverseWorldMatrices[6], u_input.scalings[6].x, 46.9);
+    vec2 saturn = marchPlanet(pos4, u_input.inverseWorldMatrices[6], u_input.scalings[6], 46.9);
     res = opU(res, saturn);
 
-    vec2 uranus = marchPlanet(pos4, u_input.inverseWorldMatrices[7], u_input.scalings[7].x, 46.9);
+    vec2 uranus = marchPlanet(pos4, u_input.inverseWorldMatrices[7], u_input.scalings[7], 46.9);
     res = opU(res, uranus);
 
-    vec2 neptune = marchPlanet(pos4, u_input.inverseWorldMatrices[8], u_input.scalings[8].x, 46.9);
+    vec2 neptune = marchPlanet(pos4, u_input.inverseWorldMatrices[8], u_input.scalings[8], 46.9);
     res = opU(res, neptune);
 
-    vec2 pluto = marchPlanet(pos4, u_input.inverseWorldMatrices[9], u_input.scalings[9].x, 46.9);
+    vec2 pluto = marchPlanet(pos4, u_input.inverseWorldMatrices[9], u_input.scalings[9], 46.9);
     res = opU(res, pluto);
 
-    vec2 moon = marchPlanet(pos4, u_input.inverseWorldMatrices[10], u_input.scalings[10].x, 46.9);
+    vec2 moon = marchPlanet(pos4, u_input.inverseWorldMatrices[10], u_input.scalings[10], 46.9);
     res = opU(res, moon);
 
     return res;
