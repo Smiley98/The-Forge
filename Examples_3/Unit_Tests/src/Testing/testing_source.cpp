@@ -101,8 +101,8 @@ Buffer*        pSkyBoxVertexBuffer = NULL;
 Pipeline*      pSkyBoxDrawPipeline = NULL;
 RootSignature* pRootSignature = NULL;
 Sampler*       pSamplerSkyBox = NULL;
-Texture*       pSkyBoxTextures[6];
-Texture*	   pTestTexture = NULL;
+Texture*       pSkyBoxTextures[7];
+//Texture*	   pTestTexture = NULL;
 DescriptorSet* pDescriptorSetTextures = { NULL };
 DescriptorSet* pDescriptorSetUniforms = { NULL };
 VirtualJoystickUI gVirtualJoystick;
@@ -128,8 +128,8 @@ GpuProfiler*       pGpuProfiler = NULL;
 
 //Resource loader automatically appends supported extensions, defaults to .dds
 const char* pSkyBoxImageFileNames[] = { "Skybox_right1",  "Skybox_left2",  "Skybox_top3",
-										"Skybox_bottom4", "Skybox_front5", "Skybox_back6" };
-const char* pTestImageFileName = "test_image";
+										"Skybox_bottom4", "Skybox_front5", "Skybox_back6", "test_image" };
+//const char* pTestImageFileName = "test_image";
 
 TextDrawDesc gFrameTimeDraw = TextDrawDesc(0, 0xff00ffff, 18);
 
@@ -179,7 +179,7 @@ public:
 		initResourceLoaderInterface(pRenderer);
 
 		// Loads Skybox Textures
-		for (int i = 0; i < 6; ++i)
+		for (int i = 0; i < /*6*/7; ++i)
 		{
             PathHandle textureFilePath = fsCopyPathInResourceDirectory(RD_TEXTURES, pSkyBoxImageFileNames[i]);
 			TextureLoadDesc textureDesc = {};
@@ -189,13 +189,13 @@ public:
 		}
 
 		//Load test texture
-		{
-			PathHandle textureFilePath = fsCopyPathInResourceDirectory(RD_TEXTURES, pTestImageFileName);
-			TextureLoadDesc textureDesc = {};
-			textureDesc.pFilePath = textureFilePath;
-			textureDesc.ppTexture = &pTestTexture;
-			addResource(&textureDesc);
-		}
+		//{
+		//	PathHandle textureFilePath = fsCopyPathInResourceDirectory(RD_TEXTURES, pTestImageFileName);
+		//	TextureLoadDesc textureDesc = {};
+		//	textureDesc.pFilePath = textureFilePath;
+		//	textureDesc.ppTexture = &pTestTexture;
+		//	addResource(&textureDesc);
+		//}
 
 		if (!gVirtualJoystick.Init(pRenderer, "circlepad", RD_TEXTURES))
 		{
@@ -485,7 +485,6 @@ public:
 		
 		// Prepare descriptor sets
 		DescriptorData params[7] = {};
-		//DescriptorData params[6] = {};
 		params[0].pName = "RightText";
 		params[0].ppTextures = &pSkyBoxTextures[0];
 		params[1].pName = "LeftText";
@@ -498,10 +497,9 @@ public:
 		params[4].ppTextures = &pSkyBoxTextures[4];
 		params[5].pName = "BackText";
 		params[5].ppTextures = &pSkyBoxTextures[5];
-		//params[6].pName = "TestText";
-		//params[6].ppTextures = &pTestTexture;
-		//updateDescriptorSet(pRenderer, 0, pDescriptorSetTextures, 7, params);
-		updateDescriptorSet(pRenderer, 0, pDescriptorSetTextures, 6, params);
+		params[6].pName = "TestText";
+		params[6].ppTextures = &pSkyBoxTextures[6];
+		updateDescriptorSet(pRenderer, 0, pDescriptorSetTextures, 7, params);
 		//Note: index is local to the descriptor set. 0 - 7 describes the update range in this case.
 		//Binding is based on the handle rather than the index which is why we can bind both textures and uniforms at "index" 0.
 
@@ -546,7 +544,7 @@ public:
 		removeResource(pSphereVertexBuffer);
 		removeResource(pSkyBoxVertexBuffer);
 
-		for (uint i = 0; i < 6; ++i)
+		for (uint i = 0; i < /*6*/7; ++i)
 			removeResource(pSkyBoxTextures[i]);
 
 		removeSampler(pRenderer, pSamplerSkyBox);
