@@ -102,7 +102,8 @@ Pipeline*      pSkyBoxDrawPipeline = NULL;
 RootSignature* pRootSignature = NULL;
 Sampler*       pSamplerSkyBox = NULL;
 Texture*       pSkyBoxTextures[6];
-DescriptorSet* pDescriptorSetTexture = { NULL };
+Texture*	   pTestTexture = NULL;
+DescriptorSet* pDescriptorSetTextures = { NULL };
 DescriptorSet* pDescriptorSetUniforms = { NULL };
 VirtualJoystickUI gVirtualJoystick;
 DepthState*      pDepth = NULL;
@@ -125,8 +126,10 @@ ICameraController* pCameraController = NULL;
 UIApp gAppUI;
 GpuProfiler*       pGpuProfiler = NULL;
 
+//Resource loader automatically appends supported extensions, defaults to .dds
 const char* pSkyBoxImageFileNames[] = { "Skybox_right1",  "Skybox_left2",  "Skybox_top3",
 										"Skybox_bottom4", "Skybox_front5", "Skybox_back6" };
+const char* pTestImageFileName = "test_image";
 
 TextDrawDesc gFrameTimeDraw = TextDrawDesc(0, 0xff00ffff, 18);
 
@@ -185,6 +188,15 @@ public:
 			addResource(&textureDesc, true);
 		}
 
+		//Load test texture
+		{
+			PathHandle textureFilePath = fsCopyPathInResourceDirectory(RD_TEXTURES, pTestImageFileName);
+			TextureLoadDesc textureDesc = {};
+			textureDesc.pFilePath = textureFilePath;
+			textureDesc.ppTexture = &pTestTexture;
+			addResource(&textureDesc);
+		}
+
 		if (!gVirtualJoystick.Init(pRenderer, "circlepad", RD_TEXTURES))
 		{
 			LOGF(LogLevel::eERROR, "Could not initialize Virtual Joystick.");
@@ -220,7 +232,7 @@ public:
 		addRootSignature(pRenderer, &rootDesc, &pRootSignature);
 
 		DescriptorSetDesc desc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_NONE, 1 };
-		addDescriptorSet(pRenderer, &desc, &pDescriptorSetTexture);
+		addDescriptorSet(pRenderer, &desc, &pDescriptorSetTextures);
 		desc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_PER_FRAME, gImageCount * 2 };
 		addDescriptorSet(pRenderer, &desc, &pDescriptorSetUniforms);
 
@@ -472,7 +484,8 @@ public:
 		addInputAction(&actionDesc);
 		
 		// Prepare descriptor sets
-		DescriptorData params[6] = {};
+		DescriptorData params[7] = {};
+		//DescriptorData params[6] = {};
 		params[0].pName = "RightText";
 		params[0].ppTextures = &pSkyBoxTextures[0];
 		params[1].pName = "LeftText";
@@ -485,7 +498,12 @@ public:
 		params[4].ppTextures = &pSkyBoxTextures[4];
 		params[5].pName = "BackText";
 		params[5].ppTextures = &pSkyBoxTextures[5];
-		updateDescriptorSet(pRenderer, 0, pDescriptorSetTexture, 6, params);
+		//params[6].pName = "TestText";
+		//params[6].ppTextures = &pTestTexture;
+		//updateDescriptorSet(pRenderer, 0, pDescriptorSetTextures, 7, params);
+		updateDescriptorSet(pRenderer, 0, pDescriptorSetTextures, 6, params);
+		//Note: index is local to the descriptor set. 0 - 7 describes the update range in this case.
+		//Binding is based on the handle rather than the index which is why we can bind both textures and uniforms at "index" 0.
 
 		for (uint32_t i = 0; i < gImageCount; ++i)
 		{
@@ -522,7 +540,7 @@ public:
 			removeResource(pSkyboxUniformBuffer[i]);
 		}
 
-		removeDescriptorSet(pRenderer, pDescriptorSetTexture);
+		removeDescriptorSet(pRenderer, pDescriptorSetTextures);
 		removeDescriptorSet(pRenderer, pDescriptorSetUniforms);
 
 		removeResource(pSphereVertexBuffer);
@@ -744,12 +762,11 @@ public:
 		cmdBindRenderTargets(cmd, 1, &pRenderTarget, pDepthBuffer, &loadActions, NULL, NULL, -1, -1);
 		cmdSetViewport(cmd, 0.0f, 0.0f, (float)pRenderTarget->mDesc.mWidth, (float)pRenderTarget->mDesc.mHeight, 0.0f, 1.0f);
 		cmdSetScissor(cmd, 0, 0, pRenderTarget->mDesc.mWidth, pRenderTarget->mDesc.mHeight);
-
-		cmdBindDescriptorSet(cmd, 0, pDescriptorSetTexture);
     
 		//// draw skybox
 		cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw skybox", true);
 		cmdBindPipeline(cmd, pSkyBoxDrawPipeline);
+		cmdBindDescriptorSet(cmd, 0, pDescriptorSetTextures);
 		cmdBindDescriptorSet(cmd, gFrameIndex * 2 + 0, pDescriptorSetUniforms);
 		cmdBindVertexBuffer(cmd, 1, &pSkyBoxVertexBuffer, NULL);
 		cmdDraw(cmd, 36, 0);
@@ -758,6 +775,7 @@ public:
 		////// draw planets
 		cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw Planets", true);
 		cmdBindPipeline(cmd, pSpherePipeline);
+		cmdBindDescriptorSet(cmd, 0, pDescriptorSetTextures);
 		cmdBindDescriptorSet(cmd, gFrameIndex * 2 + 1, pDescriptorSetUniforms);
 		cmdBindVertexBuffer(cmd, 1, &pSphereVertexBuffer, NULL);
 		cmdDrawInstanced(cmd, gNumberOfSpherePoints / 6, 0, gNumPlanets, 0);

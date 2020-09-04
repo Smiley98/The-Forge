@@ -43,6 +43,7 @@ layout (UPDATE_FREQ_NONE, binding=4) uniform texture2D  BotText;
 layout (UPDATE_FREQ_NONE, binding=5) uniform texture2D  FrontText;
 layout (UPDATE_FREQ_NONE, binding=6) uniform texture2D  BackText;
 layout (UPDATE_FREQ_NONE, binding=7) uniform sampler   uSampler0;
+
 layout(location = 0) in INVOCATION
 {
   vec4 texcoord;
