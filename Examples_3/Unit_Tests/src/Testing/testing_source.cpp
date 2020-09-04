@@ -101,9 +101,8 @@ Buffer*        pSkyBoxVertexBuffer = NULL;
 Pipeline*      pSkyBoxDrawPipeline = NULL;
 RootSignature* pRootSignature = NULL;
 Sampler*       pSamplerSkyBox = NULL;
-Texture*       pSkyBoxTextures[7];
-//Texture*	   pTestTexture = NULL;
-DescriptorSet* pDescriptorSetTextures = { NULL };
+Texture*       pSkyBoxTextures[6];
+DescriptorSet* pDescriptorSetTexture = { NULL };
 DescriptorSet* pDescriptorSetUniforms = { NULL };
 VirtualJoystickUI gVirtualJoystick;
 DepthState*      pDepth = NULL;
@@ -126,35 +125,33 @@ ICameraController* pCameraController = NULL;
 UIApp gAppUI;
 GpuProfiler*       pGpuProfiler = NULL;
 
-//Resource loader automatically appends supported extensions, defaults to .dds
 const char* pSkyBoxImageFileNames[] = { "Skybox_right1",  "Skybox_left2",  "Skybox_top3",
-										"Skybox_bottom4", "Skybox_front5", "Skybox_back6", "test_image" };
-//const char* pTestImageFileName = "test_image";
+										"Skybox_bottom4", "Skybox_front5", "Skybox_back6" };
 
 TextDrawDesc gFrameTimeDraw = TextDrawDesc(0, 0xff00ffff, 18);
 
 GuiComponent* pGui = NULL;
 
-class Transformations: public IApp
+class Transformations : public IApp
 {
 public:
 	bool Init()
 	{
-        // FILE PATHS
-        PathHandle programDirectory = fsCopyProgramDirectoryPath();
-        if (!fsPlatformUsesBundledResources())
-        {
-            PathHandle resourceDirRoot = fsAppendPathComponent(programDirectory, "../../../src/01_Transformations");
-            fsSetResourceDirectoryRootPath(resourceDirRoot);
-            
-            fsSetRelativePathForResourceDirectory(RD_TEXTURES,        "../../UnitTestResources/Textures");
-            fsSetRelativePathForResourceDirectory(RD_MESHES,          "../../UnitTestResources/Meshes");
-            fsSetRelativePathForResourceDirectory(RD_BUILTIN_FONTS,    "../../UnitTestResources/Fonts");
-            fsSetRelativePathForResourceDirectory(RD_ANIMATIONS,      "../../UnitTestResources/Animation");
-            fsSetRelativePathForResourceDirectory(RD_MIDDLEWARE_TEXT,  "../../../../Middleware_3/Text");
-            fsSetRelativePathForResourceDirectory(RD_MIDDLEWARE_UI,    "../../../../Middleware_3/UI");
-        }
-        
+		// FILE PATHS
+		PathHandle programDirectory = fsCopyProgramDirectoryPath();
+		if (!fsPlatformUsesBundledResources())
+		{
+			PathHandle resourceDirRoot = fsAppendPathComponent(programDirectory, "../../../src/01_Transformations");
+			fsSetResourceDirectoryRootPath(resourceDirRoot);
+
+			fsSetRelativePathForResourceDirectory(RD_TEXTURES, "../../UnitTestResources/Textures");
+			fsSetRelativePathForResourceDirectory(RD_MESHES, "../../UnitTestResources/Meshes");
+			fsSetRelativePathForResourceDirectory(RD_BUILTIN_FONTS, "../../UnitTestResources/Fonts");
+			fsSetRelativePathForResourceDirectory(RD_ANIMATIONS, "../../UnitTestResources/Animation");
+			fsSetRelativePathForResourceDirectory(RD_MIDDLEWARE_TEXT, "../../../../Middleware_3/Text");
+			fsSetRelativePathForResourceDirectory(RD_MIDDLEWARE_UI, "../../../../Middleware_3/UI");
+		}
+
 		// window and renderer setup
 		RendererDesc settings = { 0 };
 		initRenderer(GetName(), &settings, &pRenderer);
@@ -179,23 +176,14 @@ public:
 		initResourceLoaderInterface(pRenderer);
 
 		// Loads Skybox Textures
-		for (int i = 0; i < /*6*/7; ++i)
+		for (int i = 0; i < 6; ++i)
 		{
-            PathHandle textureFilePath = fsCopyPathInResourceDirectory(RD_TEXTURES, pSkyBoxImageFileNames[i]);
+			PathHandle textureFilePath = fsCopyPathInResourceDirectory(RD_TEXTURES, pSkyBoxImageFileNames[i]);
 			TextureLoadDesc textureDesc = {};
 			textureDesc.pFilePath = textureFilePath;
 			textureDesc.ppTexture = &pSkyBoxTextures[i];
 			addResource(&textureDesc, true);
 		}
-
-		//Load test texture
-		//{
-		//	PathHandle textureFilePath = fsCopyPathInResourceDirectory(RD_TEXTURES, pTestImageFileName);
-		//	TextureLoadDesc textureDesc = {};
-		//	textureDesc.pFilePath = textureFilePath;
-		//	textureDesc.ppTexture = &pTestTexture;
-		//	addResource(&textureDesc);
-		//}
 
 		if (!gVirtualJoystick.Init(pRenderer, "circlepad", RD_TEXTURES))
 		{
@@ -232,7 +220,7 @@ public:
 		addRootSignature(pRenderer, &rootDesc, &pRootSignature);
 
 		DescriptorSetDesc desc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_NONE, 1 };
-		addDescriptorSet(pRenderer, &desc, &pDescriptorSetTextures);
+		addDescriptorSet(pRenderer, &desc, &pDescriptorSetTexture);
 		desc = { pRootSignature, DESCRIPTOR_UPDATE_FREQ_PER_FRAME, gImageCount * 2 };
 		addDescriptorSet(pRenderer, &desc, &pDescriptorSetUniforms);
 
@@ -445,14 +433,14 @@ public:
 		if (!initInputSystem(pWindow))
 			return false;
 
-    // Initialize microprofiler and it's UI.
-    initProfiler();
-    
-    // Gpu profiler can only be added after initProfile.
-    addGpuProfiler(pRenderer, pGraphicsQueue, &pGpuProfiler, "GpuProfiler");
+		// Initialize microprofiler and it's UI.
+		initProfiler();
+
+		// Gpu profiler can only be added after initProfile.
+		addGpuProfiler(pRenderer, pGraphicsQueue, &pGpuProfiler, "GpuProfiler");
 
 		// App Actions
-    InputActionDesc actionDesc = { InputBindings::BUTTON_FULLSCREEN, [](InputActionContext* ctx) { toggleFullscreen(((IApp*)ctx->pUserData)->pWindow); return true; }, this };
+		InputActionDesc actionDesc = { InputBindings::BUTTON_FULLSCREEN, [](InputActionContext* ctx) { toggleFullscreen(((IApp*)ctx->pUserData)->pWindow); return true; }, this };
 		addInputAction(&actionDesc);
 		actionDesc = { InputBindings::BUTTON_EXIT, [](InputActionContext* ctx) { requestShutdown(); return true; } };
 		addInputAction(&actionDesc);
@@ -466,7 +454,7 @@ public:
 			}, this
 		};
 		addInputAction(&actionDesc);
-		typedef bool (*CameraInputHandler)(InputActionContext* ctx, uint32_t index);
+		typedef bool(*CameraInputHandler)(InputActionContext* ctx, uint32_t index);
 		static CameraInputHandler onCameraInput = [](InputActionContext* ctx, uint32_t index)
 		{
 			if (!gMicroProfiler && !gAppUI.IsFocused() && *ctx->pCaptured)
@@ -482,9 +470,9 @@ public:
 		addInputAction(&actionDesc);
 		actionDesc = { InputBindings::BUTTON_NORTH, [](InputActionContext* ctx) { pCameraController->resetView(); return true; } };
 		addInputAction(&actionDesc);
-		
+
 		// Prepare descriptor sets
-		DescriptorData params[7] = {};
+		DescriptorData params[6] = {};
 		params[0].pName = "RightText";
 		params[0].ppTextures = &pSkyBoxTextures[0];
 		params[1].pName = "LeftText";
@@ -497,11 +485,7 @@ public:
 		params[4].ppTextures = &pSkyBoxTextures[4];
 		params[5].pName = "BackText";
 		params[5].ppTextures = &pSkyBoxTextures[5];
-		params[6].pName = "TestText";
-		params[6].ppTextures = &pSkyBoxTextures[6];
-		updateDescriptorSet(pRenderer, 0, pDescriptorSetTextures, 7, params);
-		//Note: index is local to the descriptor set. 0 - 7 describes the update range in this case.
-		//Binding is based on the handle rather than the index which is why we can bind both textures and uniforms at "index" 0.
+		updateDescriptorSet(pRenderer, 0, pDescriptorSetTexture, 6, params);
 
 		for (uint32_t i = 0; i < gImageCount; ++i)
 		{
@@ -530,7 +514,7 @@ public:
 		gAppUI.Exit();
 
 		// Exit profile
-    exitProfiler();
+		exitProfiler();
 
 		for (uint32_t i = 0; i < gImageCount; ++i)
 		{
@@ -538,13 +522,13 @@ public:
 			removeResource(pSkyboxUniformBuffer[i]);
 		}
 
-		removeDescriptorSet(pRenderer, pDescriptorSetTextures);
+		removeDescriptorSet(pRenderer, pDescriptorSetTexture);
 		removeDescriptorSet(pRenderer, pDescriptorSetUniforms);
 
 		removeResource(pSphereVertexBuffer);
 		removeResource(pSkyBoxVertexBuffer);
 
-		for (uint i = 0; i < /*6*/7; ++i)
+		for (uint i = 0; i < 6; ++i)
 			removeResource(pSkyBoxTextures[i]);
 
 		removeSampler(pRenderer, pSamplerSkyBox);
@@ -661,7 +645,7 @@ public:
 		/************************************************************************/
 		static float currentTime = 0.0f;
 		currentTime += deltaTime * 1000.0f;
-	
+
 		// update camera with time
 		mat4 viewMat = pCameraController->getViewMatrix();
 
@@ -702,16 +686,16 @@ public:
 		/************************************************************************/
 		/************************************************************************/
 
-    if(gMicroProfiler != bPrevToggleMicroProfiler)
-    {
-       toggleProfiler();
-       bPrevToggleMicroProfiler = gMicroProfiler;
-    }
+		if (gMicroProfiler != bPrevToggleMicroProfiler)
+		{
+			toggleProfiler();
+			bPrevToggleMicroProfiler = gMicroProfiler;
+		}
 
-    /************************************************************************/
-    // Update GUI
-    /************************************************************************/
-    gAppUI.Update(deltaTime);  
+		/************************************************************************/
+		// Update GUI
+		/************************************************************************/
+		gAppUI.Update(deltaTime);
 	}
 
 	void Draw()
@@ -760,11 +744,12 @@ public:
 		cmdBindRenderTargets(cmd, 1, &pRenderTarget, pDepthBuffer, &loadActions, NULL, NULL, -1, -1);
 		cmdSetViewport(cmd, 0.0f, 0.0f, (float)pRenderTarget->mDesc.mWidth, (float)pRenderTarget->mDesc.mHeight, 0.0f, 1.0f);
 		cmdSetScissor(cmd, 0, 0, pRenderTarget->mDesc.mWidth, pRenderTarget->mDesc.mHeight);
-    
+
+		cmdBindDescriptorSet(cmd, 0, pDescriptorSetTexture);
+
 		//// draw skybox
 		cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw skybox", true);
 		cmdBindPipeline(cmd, pSkyBoxDrawPipeline);
-		cmdBindDescriptorSet(cmd, 0, pDescriptorSetTextures);
 		cmdBindDescriptorSet(cmd, gFrameIndex * 2 + 0, pDescriptorSetUniforms);
 		cmdBindVertexBuffer(cmd, 1, &pSkyBoxVertexBuffer, NULL);
 		cmdDraw(cmd, 36, 0);
@@ -773,17 +758,16 @@ public:
 		////// draw planets
 		cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw Planets", true);
 		cmdBindPipeline(cmd, pSpherePipeline);
-		cmdBindDescriptorSet(cmd, 0, pDescriptorSetTextures);
 		cmdBindDescriptorSet(cmd, gFrameIndex * 2 + 1, pDescriptorSetUniforms);
 		cmdBindVertexBuffer(cmd, 1, &pSphereVertexBuffer, NULL);
 		cmdDrawInstanced(cmd, gNumberOfSpherePoints / 6, 0, gNumPlanets, 0);
 		cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
 
 
-	loadActions = {};
-	loadActions.mLoadActionsColor[0] = LOAD_ACTION_LOAD;
-	cmdBindRenderTargets(cmd, 1, &pRenderTarget, NULL, &loadActions, NULL, NULL, -1, -1);
-    cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw UI", true);
+		loadActions = {};
+		loadActions.mLoadActionsColor[0] = LOAD_ACTION_LOAD;
+		cmdBindRenderTargets(cmd, 1, &pRenderTarget, NULL, &loadActions, NULL, NULL, -1, -1);
+		cmdBeginGpuTimestampQuery(cmd, pGpuProfiler, "Draw UI", true);
 		static HiresTimer gTimer;
 		gTimer.GetUSec(true);
 
@@ -792,29 +776,29 @@ public:
 		gAppUI.DrawText(cmd, float2(8, 15), eastl::string().sprintf("CPU %f ms", gTimer.GetUSecAverage() / 1000.0f).c_str(), &gFrameTimeDraw);
 
 #if !defined(__ANDROID__)
-    gAppUI.DrawText(
-      cmd, float2(8, 40), eastl::string().sprintf("GPU %f ms", (float)pGpuProfiler->mCumulativeTime * 1000.0f).c_str(),
-      &gFrameTimeDraw);
-    gAppUI.DrawDebugGpuProfile(cmd, float2(8, 65), pGpuProfiler, NULL);
+		gAppUI.DrawText(
+			cmd, float2(8, 40), eastl::string().sprintf("GPU %f ms", (float)pGpuProfiler->mCumulativeTime * 1000.0f).c_str(),
+			&gFrameTimeDraw);
+		gAppUI.DrawDebugGpuProfile(cmd, float2(8, 65), pGpuProfiler, NULL);
 #endif
 
-    cmdDrawProfiler();
+		cmdDrawProfiler();
 
-    gAppUI.Gui(pGui);
+		gAppUI.Gui(pGui);
 
 		gAppUI.Draw(cmd);
 		cmdBindRenderTargets(cmd, 0, NULL, NULL, NULL, NULL, NULL, -1, -1);
-    cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
+		cmdEndGpuTimestampQuery(cmd, pGpuProfiler);
 
 		barriers[0] = { pRenderTarget->pTexture, RESOURCE_STATE_PRESENT };
 		cmdResourceBarrier(cmd, 0, NULL, 1, barriers);
 
-    cmdEndGpuFrameProfile(cmd, pGpuProfiler);
+		cmdEndGpuFrameProfile(cmd, pGpuProfiler);
 		endCmd(cmd);
 
 		queueSubmit(pGraphicsQueue, 1, &cmd, pRenderCompleteFence, 1, &pImageAcquiredSemaphore, 1, &pRenderCompleteSemaphore);
 		queuePresent(pGraphicsQueue, pSwapChain, gFrameIndex, 1, &pRenderCompleteSemaphore);
-    flipProfiler();
+		flipProfiler();
 	}
 
 	const char* GetName() { return "01_Transformations"; }
