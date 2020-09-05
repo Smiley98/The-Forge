@@ -34,6 +34,7 @@ layout (UPDATE_FREQ_NONE, binding=7) uniform sampler uSampler0;
 
 void main ()
 {
+	vec2 coords = vec2(gl_FragCoord.x / 1920.0f, gl_FragCoord.y / 1080.0f);
 	outColor  =  texture(sampler2D(BackText, uSampler0), gl_FragCoord.xy);
-	//outColor = Color;
+	outColor = Color;
 }

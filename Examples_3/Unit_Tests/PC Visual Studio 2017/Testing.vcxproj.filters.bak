@@ -8,53 +8,53 @@
       <UniqueIdentifier>{4c26721a-0e41-44aa-bf82-504ae9916ff5}</UniqueIdentifier>
     </Filter>
     <Filter Include="Shaders\D3D12">
-      <UniqueIdentifier>{aefc2de0-dcc7-4c72-a116-920150bc57e5}</UniqueIdentifier>
+      <UniqueIdentifier>{594ea1ec-8020-489c-b9f0-0d98e4ae4d21}</UniqueIdentifier>
     </Filter>
     <Filter Include="Shaders\Vulkan">
-      <UniqueIdentifier>{997edba5-41d1-43a3-9b15-dcf8b79a3836}</UniqueIdentifier>
+      <UniqueIdentifier>{ff0d1fc1-0b85-4f21-946f-00cfca47bc16}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\src\Testing\Shaders\D3D12\basic.frag">
-      <Filter>Shaders\D3D12</Filter>
-    </None>
-    <None Include="..\..\src\Testing\Shaders\D3D12\basic.vert">
-      <Filter>Shaders\D3D12</Filter>
-    </None>
-    <None Include="..\..\src\Testing\Shaders\D3D12\profile.frag">
-      <Filter>Shaders\D3D12</Filter>
-    </None>
-    <None Include="..\..\src\Testing\Shaders\D3D12\profile.vert">
-      <Filter>Shaders\D3D12</Filter>
-    </None>
-    <None Include="..\..\src\Testing\Shaders\D3D12\skybox.frag">
-      <Filter>Shaders\D3D12</Filter>
-    </None>
-    <None Include="..\..\src\Testing\Shaders\D3D12\skybox.vert">
-      <Filter>Shaders\D3D12</Filter>
-    </None>
-    <None Include="..\..\src\Testing\Shaders\Vulkan\basic.frag">
-      <Filter>Shaders\Vulkan</Filter>
-    </None>
-    <None Include="..\..\src\Testing\Shaders\Vulkan\basic.vert">
-      <Filter>Shaders\Vulkan</Filter>
-    </None>
-    <None Include="..\..\src\Testing\Shaders\Vulkan\profile.frag">
-      <Filter>Shaders\Vulkan</Filter>
-    </None>
-    <None Include="..\..\src\Testing\Shaders\Vulkan\profile.vert">
-      <Filter>Shaders\Vulkan</Filter>
-    </None>
-    <None Include="..\..\src\Testing\Shaders\Vulkan\skybox.frag">
-      <Filter>Shaders\Vulkan</Filter>
-    </None>
-    <None Include="..\..\src\Testing\Shaders\Vulkan\skybox.vert">
-      <Filter>Shaders\Vulkan</Filter>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\src\Testing\testing_source.cpp">
+    <ClCompile Include="..\src\01_Transformations\01_Transformations.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\src\Testing\Shaders\D3D12\basic.frag">
+      <Filter>Shaders\D3D12</Filter>
+    </None>
+    <None Include="..\src\Testing\Shaders\D3D12\basic.vert">
+      <Filter>Shaders\D3D12</Filter>
+    </None>
+    <None Include="..\src\Testing\Shaders\D3D12\profile.frag">
+      <Filter>Shaders\D3D12</Filter>
+    </None>
+    <None Include="..\src\Testing\Shaders\D3D12\profile.vert">
+      <Filter>Shaders\D3D12</Filter>
+    </None>
+    <None Include="..\src\Testing\Shaders\D3D12\skybox.frag">
+      <Filter>Shaders\D3D12</Filter>
+    </None>
+    <None Include="..\src\Testing\Shaders\D3D12\skybox.vert">
+      <Filter>Shaders\D3D12</Filter>
+    </None>
+    <None Include="..\src\Testing\Shaders\Vulkan\basic.frag">
+      <Filter>Shaders\Vulkan</Filter>
+    </None>
+    <None Include="..\src\Testing\Shaders\Vulkan\basic.vert">
+      <Filter>Shaders\Vulkan</Filter>
+    </None>
+    <None Include="..\src\Testing\Shaders\Vulkan\profile.frag">
+      <Filter>Shaders\Vulkan</Filter>
+    </None>
+    <None Include="..\src\Testing\Shaders\Vulkan\profile.vert">
+      <Filter>Shaders\Vulkan</Filter>
+    </None>
+    <None Include="..\src\Testing\Shaders\Vulkan\skybox.frag">
+      <Filter>Shaders\Vulkan</Filter>
+    </None>
+    <None Include="..\src\Testing\Shaders\Vulkan\skybox.vert">
+      <Filter>Shaders\Vulkan</Filter>
+    </None>
   </ItemGroup>
 </Project>

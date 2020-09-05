@@ -29,7 +29,12 @@ layout(location = 0) in vec4 Color;
 
 layout(location = 0) out vec4 outColor;
 
+layout (UPDATE_FREQ_NONE, binding=6) uniform texture2D  BackText;
+layout (UPDATE_FREQ_NONE, binding=7) uniform sampler uSampler0;
+
 void main ()
 {
-	outColor = Color;
+	vec2 coords = vec2(gl_FragCoord.x / 1920.0f, gl_FragCoord.y / 1080.0f);
+	outColor  =  texture(sampler2D(BackText, uSampler0), gl_FragCoord.xy);
+	//outColor = Color;
 }

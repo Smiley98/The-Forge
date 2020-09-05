@@ -27,21 +27,21 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\src\01_Transformations\Shaders\D3D12\basic.frag" />
-    <None Include="..\src\01_Transformations\Shaders\D3D12\basic.vert" />
-    <None Include="..\src\01_Transformations\Shaders\D3D12\profile.frag" />
-    <None Include="..\src\01_Transformations\Shaders\D3D12\profile.vert" />
-    <None Include="..\src\01_Transformations\Shaders\D3D12\skybox.frag" />
-    <None Include="..\src\01_Transformations\Shaders\D3D12\skybox.vert" />
-    <None Include="..\src\01_Transformations\Shaders\Vulkan\basic.frag" />
-    <None Include="..\src\01_Transformations\Shaders\Vulkan\basic.vert" />
-    <None Include="..\src\01_Transformations\Shaders\Vulkan\profile.frag" />
-    <None Include="..\src\01_Transformations\Shaders\Vulkan\profile.vert" />
-    <None Include="..\src\01_Transformations\Shaders\Vulkan\skybox.frag" />
-    <None Include="..\src\01_Transformations\Shaders\Vulkan\skybox.vert" />
+    <ClCompile Include="..\src\Testing\testing_source.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\01_Transformations\01_Transformations.cpp" />
+    <None Include="..\src\Testing\Shaders\D3D12\basic.frag" />
+    <None Include="..\src\Testing\Shaders\D3D12\basic.vert" />
+    <None Include="..\src\Testing\Shaders\D3D12\profile.frag" />
+    <None Include="..\src\Testing\Shaders\D3D12\profile.vert" />
+    <None Include="..\src\Testing\Shaders\D3D12\skybox.frag" />
+    <None Include="..\src\Testing\Shaders\D3D12\skybox.vert" />
+    <None Include="..\src\Testing\Shaders\Vulkan\basic.frag" />
+    <None Include="..\src\Testing\Shaders\Vulkan\basic.vert" />
+    <None Include="..\src\Testing\Shaders\Vulkan\profile.frag" />
+    <None Include="..\src\Testing\Shaders\Vulkan\profile.vert" />
+    <None Include="..\src\Testing\Shaders\Vulkan\skybox.frag" />
+    <None Include="..\src\Testing\Shaders\Vulkan\skybox.vert" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{d77cd5e9-b462-4c1a-a60c-4d57ea700a5d}</ProjectGuid>
